@@ -16,6 +16,8 @@
 .chat-group.user {
   flex-direction: row-reverse;
   justify-content: flex-start;
+  margin-left: 16px;
+  margin-right: 4px;
 }
 
 .chat-group-messages {

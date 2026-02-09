@@ -58,9 +58,9 @@ export function normalizeMessage(message: unknown): NormalizedMessage {
  */
 export function normalizeRoleForGrouping(role: string): string {
   const lower = role.toLowerCase();
-  // Preserve original casing when it's already a core role.
-  if (role === "user" || role === "User") {
-    return role;
+  // Always return lowercase "user" for consistent CSS class application.
+  if (role === "user" || role === "User" || lower === "user") {
+    return "user";
   }
   if (role === "assistant") {
     return "assistant";
