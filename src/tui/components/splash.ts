@@ -37,9 +37,18 @@ const DONKEY_COLORS: Record<string, string> = {
   W: "#E8E8E8", // eye whites
   P: "#2A2A2A", // pupils
   G: "#5CB85C", // green collar
+  F: "#555555", // glasses frame
 };
 
-// 24 rows x 16 cols = 12 terminal lines.
+// Sombrero palette (ties into donkey colors).
+const SOMBRERO_COLORS: Record<string, string> = {
+  S: "#C4A882", // straw brim (matches donkey tan)
+  D: "#8B7355", // crown (matches donkey brown)
+  R: "#CC3333", // red band
+};
+
+// Donkey with glasses. 24 rows x 16 cols = 12 terminal lines.
+// Plain version (no glasses) preserved in git at 161fdccfe.
 const DONKEY_PIXELS = [
   "....BB......BB..",
   "...BLLB....BLLB.",
@@ -47,9 +56,9 @@ const DONKEY_PIXELS = [
   "...BLLB....BLLB.",
   "...BLLB....BLLB.",
   "...BBBBBBBBBBBB.",
-  "....BBBBBBBBBB..",
-  "...BWPBBBBBBWPB.",
-  "...BBBBBBBBBBBB.",
+  "...BFFFFBFFFFBB.",
+  "...BFWPFFFWPFBB.",
+  "...BFFFFBFFFFBB.",
   "....BMMMMMMMB...",
   "....BM..MM..MB..",
   "....BMMMMMMMB...",
@@ -67,18 +76,32 @@ const DONKEY_PIXELS = [
   "................",
 ];
 
-function renderPixelDonkey(): string[] {
+// Sombrero. 6 rows x 12 cols = 3 terminal lines.
+const SOMBRERO_PIXELS = [
+  ".....DD.....",
+  "....DDDD....",
+  "...DDDDDD...",
+  "..SRRRRRRSS.",
+  ".SSSSSSSSSS.",
+  "SSSSSSSSSSSS",
+];
+
+// Generic half-block pixel art renderer for any grid + color map.
+function renderPixelArt(
+  pixels: string[],
+  colors: Record<string, string>,
+): string[] {
   const lines: string[] = [];
-  for (let y = 0; y < DONKEY_PIXELS.length; y += 2) {
-    const topRow = DONKEY_PIXELS[y] ?? "";
-    const botRow = DONKEY_PIXELS[y + 1] ?? "";
+  for (let y = 0; y < pixels.length; y += 2) {
+    const topRow = pixels[y] ?? "";
+    const botRow = pixels[y + 1] ?? "";
     const width = Math.max(topRow.length, botRow.length);
     let line = "";
     for (let x = 0; x < width; x++) {
       const tc = topRow[x] ?? ".";
       const bc = botRow[x] ?? ".";
-      const topClr = tc !== "." ? DONKEY_COLORS[tc] : null;
-      const botClr = bc !== "." ? DONKEY_COLORS[bc] : null;
+      const topClr = tc !== "." ? (colors[tc] ?? null) : null;
+      const botClr = bc !== "." ? (colors[bc] ?? null) : null;
       if (!topClr && !botClr) {
         line += " ";
       } else if (topClr && botClr && topClr === botClr) {
@@ -96,7 +119,9 @@ function renderPixelDonkey(): string[] {
   return lines;
 }
 
-const DONKEY_WIDTH = 54;
+// DONKEY text is the widest logo line. COLD text is narrower.
+const DONKEY_TEXT_WIDTH = 54;
+const COLD_TEXT_WIDTH = 34;
 
 function padRight(str: string, targetLen: number): string {
   if (str.length >= targetLen) return str;
@@ -134,17 +159,31 @@ export class SplashComponent extends Container {
       [...line].map(colorLogoChar).join("");
 
     const gap = "   ";
-    const donkeyLines = renderPixelDonkey();
+    const donkeyLines = renderPixelArt(DONKEY_PIXELS, DONKEY_COLORS);
+    const sombreroLines = renderPixelArt(SOMBRERO_PIXELS, SOMBRERO_COLORS);
 
     const allLogoLines = [
-      ...LOGO_COLD.map((line) => padRight(line, DONKEY_WIDTH)),
+      ...LOGO_COLD.map((line) => padRight(line, DONKEY_TEXT_WIDTH)),
       ...LOGO_DONKEY,
     ];
 
+    // Composite: logo text + sombrero (floats in COLD padding) + donkey mascot.
+    // Sombrero (3 lines) sits on COLD lines 0-2, in the padding after the text.
+    const SOMBRERO_VIS_WIDTH = 12;
+    const SOMBRERO_GAP = 3;
     for (let i = 0; i < allLogoLines.length; i++) {
-      const logoLine = allLogoLines[i] ?? "";
+      let textPart: string;
+      if (i < LOGO_COLD.length && i < sombreroLines.length) {
+        // COLD line with sombrero: color text, then append pre-colored sombrero.
+        const coldPadded = padRight(LOGO_COLD[i]!, COLD_TEXT_WIDTH);
+        const coloredCold = colorLogoLine(coldPadded);
+        const padAfter = DONKEY_TEXT_WIDTH - COLD_TEXT_WIDTH - SOMBRERO_GAP - SOMBRERO_VIS_WIDTH;
+        textPart = coloredCold + " ".repeat(SOMBRERO_GAP) + sombreroLines[i]! + " ".repeat(Math.max(0, padAfter));
+      } else {
+        textPart = colorLogoLine(allLogoLines[i] ?? "");
+      }
       const mascot = donkeyLines[i] ?? "";
-      const combined = colorLogoLine(logoLine) + gap + mascot;
+      const combined = textPart + gap + mascot;
       this.addChild(new Text(combined, 3, 0));
     }
 
