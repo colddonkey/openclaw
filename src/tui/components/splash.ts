@@ -37,7 +37,8 @@ const DONKEY_COLORS: Record<string, string> = {
   W: "#E8E8E8", // eye whites
   P: "#2A2A2A", // pupils
   G: "#5CB85C", // green collar
-  F: "#555555", // glasses frame
+  F: "#333333", // sunglasses frame (dark)
+  T: "#2C3E50", // tinted lens (dark blue-gray)
 };
 
 // Sombrero palette (ties into donkey colors).
@@ -56,9 +57,9 @@ const DONKEY_PIXELS = [
   "...BLLB....BLLB.",
   "...BLLB....BLLB.",
   "...BBBBBBBBBBBB.",
-  "...BFFFFBFFFFBB.",
-  "...BFWPFFFWPFBB.",
-  "...BFFFFBFFFFBB.",
+  "..FBFFFFBFFFFBBF",
+  "..FBFTTFFFTTFBBF",
+  "..FBFFFFBFFFFBBF",
   "....BMMMMMMMB...",
   "....BM..MM..MB..",
   "....BMMMMMMMB...",
@@ -76,14 +77,15 @@ const DONKEY_PIXELS = [
   "................",
 ];
 
-// Sombrero. 6 rows x 12 cols = 3 terminal lines.
+// Sombrero. 6 rows x 14 cols = 3 terminal lines.
+// Classic shape with upturned brim edges.
 const SOMBRERO_PIXELS = [
-  ".....DD.....",
-  "....DDDD....",
-  "...DDDDDD...",
-  "..SRRRRRRSS.",
-  ".SSSSSSSSSS.",
-  "SSSSSSSSSSSS",
+  "......DD......",
+  ".....DDDD.....",
+  "....DDDDDD....",
+  "..SSRRRRRRSS..",
+  ".SSSSSSSSSSSS.",
+  "SS..........SS",
 ];
 
 // Generic half-block pixel art renderer for any grid + color map.
@@ -169,7 +171,7 @@ export class SplashComponent extends Container {
 
     // Composite: logo text + sombrero (floats in COLD padding) + donkey mascot.
     // Sombrero (3 lines) sits on COLD lines 0-2, in the padding after the text.
-    const SOMBRERO_VIS_WIDTH = 12;
+    const SOMBRERO_VIS_WIDTH = 14;
     const SOMBRERO_GAP = 3;
     for (let i = 0; i < allLogoLines.length; i++) {
       let textPart: string;
