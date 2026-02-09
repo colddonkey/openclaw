@@ -22,8 +22,6 @@ const DONKEY_COLORS: Record<string, string> = {
 
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
-// Animation interval in milliseconds.
-const ANIM_INTERVAL_MS = 900;
 
 // Donkey with sunglasses, waving arm, curled tail.
 // 24 rows x 16 cols = 12 terminal lines.
@@ -54,19 +52,6 @@ const DONKEY_PIXELS = [
   "................",
   "................",
 ];
-
-// Alternate frame: tail swings down, arm expands. Only changed rows.
-const DONKEY_ALT_ROWS: Record<number, string> = {
-  16: "......LLLLLL.BB.",
-  17: "......BLLLLB....",
-  18: ".....BBBBBBB....",
-  19: ".....BB...BB..B.",
-  20: ".....BB...BB...B",
-};
-
-function buildAltPixels(): string[] {
-  return DONKEY_PIXELS.map((row, i) => DONKEY_ALT_ROWS[i] ?? row);
-}
 
 // Generic half-block pixel art renderer for any grid + color map.
 function renderPixelArt(
@@ -131,9 +116,7 @@ const SHORTCUTS = [
 ];
 
 export class SplashComponent extends Container {
-  private _animTimer: ReturnType<typeof setInterval> | null = null;
-
-  constructor(bannerText = "COLD\nDONKEY", requestRender?: () => void) {
+  constructor(bannerText = "COLD\nDONKEY") {
     super();
     this.addChild(new Spacer(1));
 
@@ -152,46 +135,23 @@ export class SplashComponent extends Container {
       [...line].map(colorLogoChar).join("");
 
     const gap = "   ";
-
-    // Pre-render both animation frames.
-    const frame0 = renderPixelArt(DONKEY_PIXELS, DONKEY_COLORS);
-    const frame1 = renderPixelArt(buildAltPixels(), DONKEY_COLORS);
+    const donkeyLines = renderPixelArt(DONKEY_PIXELS, DONKEY_COLORS);
 
     // Render the banner text with figlet.
     const logoLines = renderBannerText(bannerText);
     const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
     // Vertically center the text when it's shorter than the donkey mascot.
-    const totalLines = Math.max(logoLines.length, frame0.length);
+    const totalLines = Math.max(logoLines.length, donkeyLines.length);
     const textOffset = Math.max(0, Math.floor((totalLines - logoLines.length) / 2));
 
-    // Pre-build the logo portion (doesn't change between frames).
-    const logoParts: string[] = [];
+    // Composite: figlet text (centered) + gap + donkey mascot.
     for (let i = 0; i < totalLines; i++) {
       const textIdx = i - textOffset;
       const rawText = textIdx >= 0 && textIdx < logoLines.length ? logoLines[textIdx]! : "";
-      logoParts.push(colorLogoLine(padRight(rawText, maxWidth)));
-    }
-
-    // Build full lines for both frames and find which lines differ.
-    const fullFrame0: string[] = [];
-    const fullFrame1: string[] = [];
-    const animatedIndices: number[] = [];
-    for (let i = 0; i < totalLines; i++) {
-      const logo = logoParts[i]!;
-      const line0 = logo + gap + (frame0[i] ?? "");
-      const line1 = logo + gap + (frame1[i] ?? "");
-      fullFrame0.push(line0);
-      fullFrame1.push(line1);
-      if (line0 !== line1) animatedIndices.push(i);
-    }
-
-    // Create Text components and store refs for animated lines.
-    const textRefs: Text[] = [];
-    for (let i = 0; i < totalLines; i++) {
-      const t = new Text(fullFrame0[i]!, 3, 0);
-      textRefs.push(t);
-      this.addChild(t);
+      const textPart = colorLogoLine(padRight(rawText, maxWidth));
+      const mascot = donkeyLines[i] ?? "";
+      this.addChild(new Text(textPart + gap + mascot, 3, 0));
     }
 
     this.addChild(new Spacer(1));
@@ -201,26 +161,5 @@ export class SplashComponent extends Container {
     }
 
     this.addChild(new Spacer(1));
-
-    // Subtle idle animation: alternate frames on a slow timer.
-    if (requestRender && animatedIndices.length > 0) {
-      let currentFrame = 0;
-      this._animTimer = setInterval(() => {
-        currentFrame = currentFrame === 0 ? 1 : 0;
-        const frame = currentFrame === 0 ? fullFrame0 : fullFrame1;
-        for (const idx of animatedIndices) {
-          textRefs[idx]!.setText(frame[idx]!);
-        }
-        requestRender();
-      }, ANIM_INTERVAL_MS);
-    }
-  }
-
-  /** Stop the animation timer. Call before removing the component. */
-  dispose(): void {
-    if (this._animTimer) {
-      clearInterval(this._animTimer);
-      this._animTimer = null;
-    }
   }
 }
