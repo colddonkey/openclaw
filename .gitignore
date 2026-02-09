@@ -70,6 +70,8 @@ USER.md
 
 # local tooling
 .serena/
+.cursor/
+start-gateway.ps1
 
 # Agent credentials and memory (NEVER COMMIT)
 /memory/
