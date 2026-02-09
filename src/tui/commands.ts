@@ -2,6 +2,7 @@ import type { SlashCommand } from "@mariozechner/pi-tui";
 import type { OpenClawConfig } from "../config/types.js";
 import { listChatCommands, listChatCommandsForConfig } from "../auto-reply/commands-registry.js";
 import { formatThinkingLevels, listThinkingLevelLabels } from "../auto-reply/thinking.js";
+import { listThemePresets } from "./theme/theme.js";
 
 const VERBOSE_LEVELS = ["on", "off"];
 const REASONING_LEVELS = ["on", "off"];
@@ -113,6 +114,30 @@ export function getSlashCommands(options: SlashCommandOptions = {}): SlashComman
           label: value,
         })),
     },
+    {
+      name: "timestamps",
+      description: "Toggle message timestamps on/off",
+      getArgumentCompletions: (prefix) =>
+        ["on", "off"]
+          .filter((v) => v.startsWith(prefix.toLowerCase()))
+          .map((value) => ({ value, label: value })),
+    },
+    {
+      name: "compact",
+      description: "Toggle compact mode on/off",
+      getArgumentCompletions: (prefix) =>
+        ["on", "off"]
+          .filter((v) => v.startsWith(prefix.toLowerCase()))
+          .map((value) => ({ value, label: value })),
+    },
+    {
+      name: "theme",
+      description: "Switch color theme",
+      getArgumentCompletions: (prefix) =>
+        listThemePresets()
+          .filter((v) => v.startsWith(prefix.toLowerCase()))
+          .map((value) => ({ value, label: value })),
+    },
     { name: "abort", description: "Abort active run" },
     { name: "new", description: "Reset the session" },
     { name: "reset", description: "Reset the session" },
@@ -155,6 +180,9 @@ export function helpText(options: SlashCommandOptions = {}): string {
     "/elevated <on|off|ask|full>",
     "/elev <on|off|ask|full>",
     "/activation <mention|always>",
+    `/theme <${listThemePresets().join("|")}>`,
+    "/timestamps <on|off>",
+    "/compact <on|off>",
     "/new or /reset",
     "/abort",
     "/settings",

@@ -24,8 +24,9 @@ import {
 import { getSlashCommands } from "./commands.js";
 import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
+import { SplashComponent } from "./components/splash.js";
 import { GatewayChatClient } from "./gateway-chat.js";
-import { editorTheme, theme } from "./theme/theme.js";
+import { currentThemeName, editorTheme, theme } from "./theme/theme.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
 import { createEventHandlers } from "./tui-event-handlers.js";
 import { formatTokens } from "./tui-formatters.js";
@@ -95,6 +96,8 @@ export async function runTui(opts: TuiOptions) {
   let wasDisconnected = false;
   let toolsExpanded = false;
   let showThinking = false;
+  let showTimestamps = false;
+  let compactMode = false;
   const localRunIds = new Set<string>();
 
   const deliverDefault = opts.deliver ?? false;
@@ -199,6 +202,20 @@ export async function runTui(opts: TuiOptions) {
     },
     set showThinking(value) {
       showThinking = value;
+    },
+    get showTimestamps() {
+      return showTimestamps;
+    },
+    set showTimestamps(value) {
+      showTimestamps = value;
+      chatLog.showTimestamps = value;
+    },
+    get compactMode() {
+      return compactMode;
+    },
+    set compactMode(value) {
+      compactMode = value;
+      chatLog.compactMode = value;
     },
     get connectionStatus() {
       return connectionStatus;
@@ -510,6 +527,7 @@ export async function runTui(opts: TuiOptions) {
     const reasoning = sessionInfo.reasoningLevel ?? "off";
     const reasoningLabel =
       reasoning === "on" ? "reasoning" : reasoning === "stream" ? "reasoning:stream" : null;
+    const themeName = currentThemeName();
     const footerParts = [
       `agent ${agentLabel}`,
       `session ${sessionLabel}`,
@@ -518,6 +536,7 @@ export async function runTui(opts: TuiOptions) {
       verbose !== "off" ? `verbose ${verbose}` : null,
       reasoningLabel,
       tokens,
+      themeName !== "default" ? `theme ${themeName}` : null,
     ].filter(Boolean);
     footer.setText(theme.dim(footerParts.join(" | ")));
   };
@@ -694,6 +713,9 @@ export async function runTui(opts: TuiOptions) {
     setConnectionStatus(`event gap: expected ${info.expected}, got ${info.received}`, 5000);
     tui.requestRender();
   };
+
+  // Show startup splash.
+  chatLog.addChild(new SplashComponent());
 
   updateHeader();
   setConnectionStatus("connecting");

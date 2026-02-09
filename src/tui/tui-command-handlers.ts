@@ -18,6 +18,12 @@ import { formatRelativeTimestamp } from "../infra/format-time/format-relative.ts
 import { normalizeAgentId } from "../routing/session-key.js";
 import { helpText, parseCommand } from "./commands.js";
 import {
+  applyThemePreset,
+  currentThemeName,
+  listThemePresets,
+  THEME_PRESETS,
+} from "./theme/theme.js";
+import {
   createFilterableSelectList,
   createSearchableSelectList,
   createSettingsList,
@@ -214,6 +220,18 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         currentValue: state.showThinking ? "on" : "off",
         values: ["off", "on"],
       },
+      {
+        id: "timestamps",
+        label: "Timestamps",
+        currentValue: state.showTimestamps ? "on" : "off",
+        values: ["off", "on"],
+      },
+      {
+        id: "compact",
+        label: "Compact mode",
+        currentValue: state.compactMode ? "on" : "off",
+        values: ["off", "on"],
+      },
     ];
     const settings = createSettingsList(
       items,
@@ -224,6 +242,13 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         }
         if (id === "thinking") {
           state.showThinking = value === "on";
+          void loadHistory();
+        }
+        if (id === "timestamps") {
+          state.showTimestamps = value === "on";
+        }
+        if (id === "compact") {
+          state.compactMode = value === "on";
           void loadHistory();
         }
         tui.requestRender();
@@ -446,6 +471,52 @@ export function createCommandHandlers(context: CommandHandlerContext) {
       case "abort":
         await abortActive();
         break;
+      case "timestamps": {
+        const val = args.toLowerCase();
+        if (val === "on" || val === "off") {
+          state.showTimestamps = val === "on";
+        } else {
+          state.showTimestamps = !state.showTimestamps;
+        }
+        chatLog.addSystem(`timestamps ${state.showTimestamps ? "on" : "off"}`);
+        break;
+      }
+      case "compact": {
+        const val = args.toLowerCase();
+        if (val === "on" || val === "off") {
+          state.compactMode = val === "on";
+        } else {
+          state.compactMode = !state.compactMode;
+        }
+        chatLog.addSystem(`compact mode ${state.compactMode ? "on" : "off"}`);
+        // Reload history to re-render messages with/without extra spacing.
+        void loadHistory();
+        break;
+      }
+      case "theme": {
+        if (!args) {
+          // No argument – list available themes.
+          const presets = listThemePresets();
+          const lines = presets.map((name) => {
+            const p = THEME_PRESETS[name];
+            const marker = name === currentThemeName() ? " (active)" : "";
+            return `  ${name}${marker} – ${p?.label ?? name}`;
+          });
+          chatLog.addSystem(`Available themes:\n${lines.join("\n")}\n\nUsage: /theme <name>`);
+        } else {
+          const requested = args.toLowerCase();
+          if (applyThemePreset(requested)) {
+            chatLog.addSystem(`Theme switched to "${requested}".`);
+            // Force full repaint with the new colors.
+            void loadHistory();
+          } else {
+            chatLog.addSystem(
+              `Unknown theme "${args}". Available: ${listThemePresets().join(", ")}`,
+            );
+          }
+        }
+        break;
+      }
       case "settings":
         openSettings();
         break;

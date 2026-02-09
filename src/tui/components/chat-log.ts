@@ -8,6 +8,8 @@ export class ChatLog extends Container {
   private toolById = new Map<string, ToolExecutionComponent>();
   private streamingRuns = new Map<string, AssistantMessageComponent>();
   private toolsExpanded = false;
+  showTimestamps = false;
+  compactMode = false;
 
   clearAll() {
     this.clear();
@@ -20,8 +22,9 @@ export class ChatLog extends Container {
     this.addChild(new Text(theme.system(text), 1, 0));
   }
 
-  addUser(text: string) {
-    this.addChild(new UserMessageComponent(text));
+  addUser(text: string, opts?: { timestamp?: boolean }) {
+    const ts = opts?.timestamp ?? this.showTimestamps;
+    this.addChild(new UserMessageComponent(text, { timestamp: ts, compact: this.compactMode }));
   }
 
   private resolveRunId(runId?: string) {
@@ -29,7 +32,10 @@ export class ChatLog extends Container {
   }
 
   startAssistant(text: string, runId?: string) {
-    const component = new AssistantMessageComponent(text);
+    const component = new AssistantMessageComponent(text, {
+      timestamp: this.showTimestamps,
+      compact: this.compactMode,
+    });
     this.streamingRuns.set(this.resolveRunId(runId), component);
     this.addChild(component);
     return component;
@@ -53,7 +59,12 @@ export class ChatLog extends Container {
       this.streamingRuns.delete(effectiveRunId);
       return;
     }
-    this.addChild(new AssistantMessageComponent(text));
+    this.addChild(
+      new AssistantMessageComponent(text, {
+        timestamp: this.showTimestamps,
+        compact: this.compactMode,
+      }),
+    );
   }
 
   startTool(toolCallId: string, toolName: string, args: unknown) {
