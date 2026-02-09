@@ -135,21 +135,41 @@ const writeBuildStamp = () => {
 if (!shouldBuild()) {
   runNode();
 } else {
-  logRunner("Building TypeScript (dist is stale).");
+  // Suppress build output by default; only show if the build fails.
+  // Set OPENCLAW_BUILD_VERBOSE=1 to see build output regardless.
+  const verbose = env.OPENCLAW_BUILD_VERBOSE === "1";
+  if (verbose) {
+    logRunner("Building TypeScript (dist is stale).");
+  }
   const buildCmd = process.platform === "win32" ? "cmd.exe" : "pnpm";
   const buildArgs =
     process.platform === "win32" ? ["/d", "/s", "/c", "pnpm", ...compilerArgs] : compilerArgs;
   const build = spawn(buildCmd, buildArgs, {
     cwd,
     env,
-    stdio: "inherit",
+    stdio: verbose ? "inherit" : "pipe",
   });
+
+  // Capture output so we can replay it on failure.
+  const chunks = [];
+  if (!verbose) {
+    build.stdout?.on("data", (chunk) => chunks.push(chunk));
+    build.stderr?.on("data", (chunk) => chunks.push(chunk));
+  }
 
   build.on("exit", (code, signal) => {
     if (signal) {
+      if (!verbose && chunks.length > 0) {
+        process.stderr.write(Buffer.concat(chunks));
+      }
+      process.stderr.write("[openclaw] Build killed by signal.\n");
       process.exit(1);
     }
     if (code !== 0 && code !== null) {
+      if (!verbose && chunks.length > 0) {
+        process.stderr.write(Buffer.concat(chunks));
+      }
+      process.stderr.write(`[openclaw] Build failed (exit ${code}).\n`);
       process.exit(code);
     }
     writeBuildStamp();
