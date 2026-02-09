@@ -580,7 +580,7 @@ export async function runTui(opts: TuiOptions) {
     clearLocalRunIds,
     onHistoryCleared: () => {
       // Re-add the splash at the top after history clear.
-      chatLog.children.unshift(new SplashComponent(bannerText));
+      chatLog.children.unshift(new SplashComponent(bannerText, () => tui.requestRender()));
     },
   });
   const {
@@ -630,7 +630,8 @@ export async function runTui(opts: TuiOptions) {
         // Replace the splash component (always the first child) with a fresh one.
         const first = chatLog.children[0];
         if (first instanceof SplashComponent) {
-          chatLog.children[0] = new SplashComponent(state.bannerText);
+          first.dispose();
+          chatLog.children[0] = new SplashComponent(state.bannerText, () => tui.requestRender());
         }
       },
     });
@@ -740,7 +741,7 @@ export async function runTui(opts: TuiOptions) {
   };
 
   // Show startup splash.
-  chatLog.addChild(new SplashComponent(bannerText));
+  chatLog.addChild(new SplashComponent(bannerText, () => tui.requestRender()));
 
   updateHeader();
   setConnectionStatus("connecting");
