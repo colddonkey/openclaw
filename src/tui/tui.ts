@@ -25,8 +25,9 @@ import { getSlashCommands } from "./commands.js";
 import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { SplashComponent } from "./components/splash.js";
+import { StatusBar } from "./components/status-bar.js";
 import { GatewayChatClient } from "./gateway-chat.js";
-import { currentThemeName, editorTheme, theme } from "./theme/theme.js";
+import { editorTheme, theme } from "./theme/theme.js";
 import { applyTuiPrefs, saveTuiPrefs } from "./tui-config.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
 import { createEventHandlers } from "./tui-event-handlers.js";
@@ -281,7 +282,7 @@ export async function runTui(opts: TuiOptions) {
   const tui = new TUI(new ProcessTerminal());
   const header = new Text("", 1, 0);
   const statusContainer = new Container();
-  const footer = new Text("", 1, 0);
+  const footer = new StatusBar();
   const chatLog = new ChatLog();
   chatLog.showTimestamps = showTimestamps;
   chatLog.compactMode = compactMode;
@@ -530,23 +531,16 @@ export async function runTui(opts: TuiOptions) {
         : sessionInfo.model
       : "unknown";
     const tokens = formatTokens(sessionInfo.totalTokens ?? null, sessionInfo.contextTokens ?? null);
-    const think = sessionInfo.thinkingLevel ?? "off";
-    const verbose = sessionInfo.verboseLevel ?? "off";
-    const reasoning = sessionInfo.reasoningLevel ?? "off";
-    const reasoningLabel =
-      reasoning === "on" ? "reasoning" : reasoning === "stream" ? "reasoning:stream" : null;
-    const themeName = currentThemeName();
-    const footerParts = [
-      `agent ${agentLabel}`,
-      `session ${sessionLabel}`,
-      modelLabel,
-      think !== "off" ? `think ${think}` : null,
-      verbose !== "off" ? `verbose ${verbose}` : null,
-      reasoningLabel,
+    footer.update({
+      agent: agentLabel,
+      session: sessionLabel,
+      model: modelLabel,
+      think: sessionInfo.thinkingLevel ?? "off",
+      verbose: sessionInfo.verboseLevel ?? "off",
+      reasoning: sessionInfo.reasoningLevel ?? "off",
       tokens,
-      themeName !== "default" ? `theme ${themeName}` : null,
-    ].filter(Boolean);
-    footer.setText(theme.dim(footerParts.join(" | ")));
+      connectionStatus,
+    });
   };
 
   const { openOverlay, closeOverlay } = createOverlayHandlers(tui, editor);
