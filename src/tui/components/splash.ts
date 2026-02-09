@@ -142,10 +142,15 @@ export class SplashComponent extends Container {
     const logoLines = renderBannerText(bannerText);
     const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
-    // Composite: figlet text (padded to max width) + gap + donkey mascot.
+    // Vertically center the text when it's shorter than the donkey mascot.
     const totalLines = Math.max(logoLines.length, donkeyLines.length);
+    const textOffset = Math.max(0, Math.floor((totalLines - logoLines.length) / 2));
+
+    // Composite: figlet text (centered) + gap + donkey mascot.
     for (let i = 0; i < totalLines; i++) {
-      const textPart = colorLogoLine(padRight(logoLines[i] ?? "", maxWidth));
+      const textIdx = i - textOffset;
+      const rawText = textIdx >= 0 && textIdx < logoLines.length ? logoLines[textIdx]! : "";
+      const textPart = colorLogoLine(padRight(rawText, maxWidth));
       const mascot = donkeyLines[i] ?? "";
       const combined = textPart + gap + mascot;
       this.addChild(new Text(combined, 3, 0));
