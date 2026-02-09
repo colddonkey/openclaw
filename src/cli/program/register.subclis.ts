@@ -8,6 +8,7 @@ type SubCliRegistrar = (program: Command) => Promise<void> | void;
 
 type SubCliEntry = {
   name: string;
+  aliases?: string[];
   description: string;
   register: SubCliRegistrar;
 };
@@ -122,6 +123,7 @@ const entries: SubCliEntry[] = [
   },
   {
     name: "tui",
+    aliases: ["dk", "cd"],
     description: "Terminal UI",
     register: async (program) => {
       const mod = await import("../tui-cli.js");
@@ -254,7 +256,10 @@ function removeCommand(program: Command, command: Command) {
 }
 
 export async function registerSubCliByName(program: Command, name: string): Promise<boolean> {
-  const entry = entries.find((candidate) => candidate.name === name);
+  const entry = entries.find(
+    (candidate) =>
+      candidate.name === name || (candidate.aliases?.includes(name) ?? false),
+  );
   if (!entry) {
     return false;
   }
@@ -298,7 +303,10 @@ export function registerSubCliCommands(program: Command, argv: string[] = proces
   }
   const primary = getPrimaryCommand(argv);
   if (primary && shouldRegisterPrimaryOnly(argv)) {
-    const entry = entries.find((candidate) => candidate.name === primary);
+    const entry = entries.find(
+      (candidate) =>
+        candidate.name === primary || (candidate.aliases?.includes(primary) ?? false),
+    );
     if (entry) {
       registerLazyCommand(program, entry);
       return;
