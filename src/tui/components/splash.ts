@@ -25,21 +25,21 @@ const LOGO_DONKEY = [
   "╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ",
 ];
 
-// Donkey face -- 12 lines, solid pixel art using block characters.
-// Long ears (the defining donkey feature), expressive eyes, muzzle with nostrils.
+// Donkey face -- 12 lines, 28 chars wide. Solid pixel art with block characters.
+// Tall separated ears, expressive eyes, defined muzzle with nostrils.
 const DONKEY_FACE = [
-  " ▄██▄    ▄██▄ ",
-  " ████    ████ ",
-  " ████▄▄▄▄████ ",
-  "  ██████████  ",
-  "  ██ ◉  ◉ ██  ",
-  "  ██████████  ",
-  "  ██ ▄▄▄▄ ██  ",
-  "  █ ▐●  ●▌ █  ",
-  "  ██ ▀▀▀▀ ██  ",
-  "  ██████████  ",
-  "   ▀██████▀   ",
-  "     ▀▀▀▀     ",
+  "    ▄████▄          ▄████▄  ",
+  "    ██████          ██████  ",
+  "    ██████          ██████  ",
+  "    ██████▄▄▄▄▄▄▄▄▄▄██████  ",
+  "     ████████████████████   ",
+  "     ████   ◉    ◉   ████   ",
+  "     ████████████████████   ",
+  "     ████  ▄▄▄▄▄▄▄▄  ████   ",
+  "     ███  ▐●      ●▌  ███   ",
+  "     ████  ▀▀▀▀▀▀▀▀  ████   ",
+  "      ▀████████████████▀    ",
+  "         ▀▀▀▀▀▀▀▀▀▀         ",
 ];
 
 // DONKEY text is widest at 54 chars. Pad COLD lines to match.
