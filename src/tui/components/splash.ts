@@ -23,31 +23,32 @@ const DONKEY_COLORS: Record<string, string> = {
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
 
-// Donkey with glasses. 24 rows x 16 cols = 12 terminal lines.
-// Plain version (no glasses) preserved in git at 161fdccfe.
+// Donkey with sunglasses, waving arm, curled tail.
+// 24 rows x 16 cols = 12 terminal lines.
+// Previous versions in git: plain (161fdccfe), first glasses (cb85db437).
 const DONKEY_PIXELS = [
   "....BB......BB..",
+  "...BBLB....BLBB.",
   "...BLLB....BLLB.",
   "...BLLB....BLLB.",
-  "...BLLB....BLLB.",
-  "...BLLB....BLLB.",
-  "...BBBBBBBBBBBB.",
+  "...BBLB....BLBB.",
+  "....BBBBBBBBBB..",
   "..FBFFFFBFFFFBBF",
   "..FBFTTFFFTTFBBF",
   "..FBFFFFBFFFFBBF",
-  "....BMMMMMMMB...",
-  "....BM..MM..MB..",
-  "....BMMMMMMMB...",
-  ".....BGGGGGB....",
-  ".....BLLLLBB....",
+  "...BMMMMMMMMMMB.",
+  "...BM...MM...MB.",
+  "...BMMMMMMMMMMB.",
+  "....BBGGGGGGBB..",
   "....BBLLLLLLBB..",
-  "...BB.LLLLLL.B..",
-  "......LLLLLL.B..",
-  "......BLLLLBB.B.",
-  "......BBBBBB....",
-  "......BB..BB....",
-  "......BB..BB....",
-  "......BB..BB....",
+  "...BBBLLLLLLBBB.",
+  "..BB..LLLLLL.BB.",
+  "..B...LLLLLL..B.",
+  "......BLLLLB..B.",
+  ".....BBBBBBB..B.",
+  ".....BB...BB..B.",
+  ".....BB...BB.B..",
+  ".....BB...BB....",
   "................",
   "................",
 ];
