@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { palette } from "../theme/theme.js";
 
 // ---------------------------------------------------------------------------
-// ANSI Shadow figlet font for "COLD" + "DONKEY" with a donkey face beside it.
+// ANSI Shadow figlet font for "COLD" + "DONKEY" with a filled donkey face.
 // Uses full-block and box-drawing chars -- universal terminal support.
 // ---------------------------------------------------------------------------
 
@@ -25,21 +25,21 @@ const LOGO_DONKEY = [
   "╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ",
 ];
 
-// Donkey face -- 12 lines tall to span both COLD (6) and DONKEY (6) blocks.
-// Long ears, expressive eyes, little snout. Box-drawing for clean lines.
+// Donkey face -- 12 lines, solid pixel art using block characters.
+// Long ears (the defining donkey feature), expressive eyes, muzzle with nostrils.
 const DONKEY_FACE = [
-  " ╭─╮    ╭─╮",
-  " │ │    │ │",
-  " │ │    │ │",
-  " │ │    │ │",
-  " │ ╰────╯ │",
-  " │         │",
-  " │  ●   ●  │",
-  " │         │",
-  " │   ╭─╮   │",
-  " │   ╰─╯   │",
-  " │         │",
-  " ╰─────────╯",
+  " ▄██▄    ▄██▄ ",
+  " ████    ████ ",
+  " ████▄▄▄▄████ ",
+  "  ██████████  ",
+  "  ██ ◉  ◉ ██  ",
+  "  ██████████  ",
+  "  ██ ▄▄▄▄ ██  ",
+  "  █ ▐●  ●▌ █  ",
+  "  ██ ▀▀▀▀ ██  ",
+  "  ██████████  ",
+  "   ▀██████▀   ",
+  "     ▀▀▀▀     ",
 ];
 
 // DONKEY text is widest at 54 chars. Pad COLD lines to match.
@@ -62,6 +62,7 @@ export class SplashComponent extends Container {
 
     const accentFn = (t: string) => chalk.hex(palette.accent)(t);
     const dimFn = (t: string) => chalk.hex(palette.dim)(t);
+    const mutedFn = (t: string) => chalk.hex(palette.accentSoft)(t);
 
     const gap = "   ";
 
@@ -74,7 +75,7 @@ export class SplashComponent extends Container {
     for (let i = 0; i < allLogoLines.length; i++) {
       const logoLine = allLogoLines[i] ?? "";
       const faceLine = DONKEY_FACE[i] ?? "";
-      const combined = accentFn(logoLine) + gap + dimFn(faceLine);
+      const combined = accentFn(logoLine) + gap + mutedFn(faceLine);
       this.addChild(new Text(combined, 3, 0));
     }
 
