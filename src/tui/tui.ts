@@ -27,6 +27,7 @@ import { CustomEditor } from "./components/custom-editor.js";
 import { SplashComponent } from "./components/splash.js";
 import { GatewayChatClient } from "./gateway-chat.js";
 import { currentThemeName, editorTheme, theme } from "./theme/theme.js";
+import { applyTuiPrefs, saveTuiPrefs } from "./tui-config.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
 import { createEventHandlers } from "./tui-event-handlers.js";
 import { formatTokens } from "./tui-formatters.js";
@@ -80,6 +81,7 @@ export function createEditorSubmitHandler(params: {
 
 export async function runTui(opts: TuiOptions) {
   const config = loadConfig();
+  const tuiPrefs = applyTuiPrefs(config);
   const initialSessionInput = (opts.session ?? "").trim();
   let sessionScope: SessionScope = (config.session?.scope ?? "per-sender") as SessionScope;
   let sessionMainKey = normalizeMainKey(config.session?.mainKey);
@@ -94,10 +96,10 @@ export async function runTui(opts: TuiOptions) {
   let historyLoaded = false;
   let isConnected = false;
   let wasDisconnected = false;
-  let toolsExpanded = false;
-  let showThinking = false;
-  let showTimestamps = false;
-  let compactMode = false;
+  let toolsExpanded = tuiPrefs.toolsExpanded;
+  let showThinking = tuiPrefs.showThinking;
+  let showTimestamps = tuiPrefs.showTimestamps;
+  let compactMode = tuiPrefs.compactMode;
   const localRunIds = new Set<string>();
 
   const deliverDefault = opts.deliver ?? false;
@@ -196,12 +198,14 @@ export async function runTui(opts: TuiOptions) {
     },
     set toolsExpanded(value) {
       toolsExpanded = value;
+      saveTuiPrefs({ toolsExpanded: value });
     },
     get showThinking() {
       return showThinking;
     },
     set showThinking(value) {
       showThinking = value;
+      saveTuiPrefs({ showThinking: value });
     },
     get showTimestamps() {
       return showTimestamps;
@@ -209,6 +213,7 @@ export async function runTui(opts: TuiOptions) {
     set showTimestamps(value) {
       showTimestamps = value;
       chatLog.showTimestamps = value;
+      saveTuiPrefs({ showTimestamps: value });
     },
     get compactMode() {
       return compactMode;
@@ -216,6 +221,7 @@ export async function runTui(opts: TuiOptions) {
     set compactMode(value) {
       compactMode = value;
       chatLog.compactMode = value;
+      saveTuiPrefs({ compactMode: value });
     },
     get connectionStatus() {
       return connectionStatus;
@@ -277,6 +283,8 @@ export async function runTui(opts: TuiOptions) {
   const statusContainer = new Container();
   const footer = new Text("", 1, 0);
   const chatLog = new ChatLog();
+  chatLog.showTimestamps = showTimestamps;
+  chatLog.compactMode = compactMode;
   const editor = new CustomEditor(tui, editorTheme);
   const root = new Container();
   root.addChild(header);

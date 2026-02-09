@@ -23,6 +23,7 @@ import {
   listThemePresets,
   THEME_PRESETS,
 } from "./theme/theme.js";
+import { saveTuiPrefs } from "./tui-config.js";
 import {
   createFilterableSelectList,
   createSearchableSelectList,
@@ -507,6 +508,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           const requested = args.toLowerCase();
           if (applyThemePreset(requested)) {
             chatLog.addSystem(`Theme switched to "${requested}".`);
+            saveTuiPrefs({ theme: requested });
             // Force full repaint with the new colors.
             void loadHistory();
           } else {

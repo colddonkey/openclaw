@@ -71,6 +71,7 @@ const GROUP_LABELS: Record<string, string> = {
   discovery: "Discovery",
   presence: "Presence",
   voicewake: "Voice Wake",
+  tui: "TUI",
 };
 
 const GROUP_ORDER: Record<string, number> = {
@@ -98,6 +99,7 @@ const GROUP_ORDER: Record<string, number> = {
   discovery: 210,
   presence: 220,
   voicewake: 230,
+  tui: 240,
   logging: 900,
 };
 
@@ -394,6 +396,11 @@ const FIELD_LABELS: Record<string, string> = {
   "plugins.installs.*.installPath": "Plugin Install Path",
   "plugins.installs.*.version": "Plugin Install Version",
   "plugins.installs.*.installedAt": "Plugin Install Time",
+  "tui.theme": "Color Theme",
+  "tui.showTimestamps": "Show Timestamps",
+  "tui.compactMode": "Compact Mode",
+  "tui.showThinking": "Show Thinking",
+  "tui.toolsExpanded": "Tools Expanded",
 };
 
 const FIELD_HELP: Record<string, string> = {
@@ -648,6 +655,12 @@ const FIELD_HELP: Record<string, string> = {
     "Resolved install directory (usually ~/.openclaw/extensions/<id>).",
   "plugins.installs.*.version": "Version recorded at install time (if available).",
   "plugins.installs.*.installedAt": "ISO timestamp of last install/update.",
+  "tui.theme":
+    'Color theme preset for the TUI (e.g. "default", "midnight", "forest", "warm", "ocean", "rose").',
+  "tui.showTimestamps": "Show timestamps on chat messages (default: false).",
+  "tui.compactMode": "Compact mode with less vertical spacing between messages (default: false).",
+  "tui.showThinking": "Show model thinking output in the chat log (default: false).",
+  "tui.toolsExpanded": "Expand tool execution output by default (default: false).",
   "agents.list.*.identity.avatar":
     "Agent avatar (workspace-relative path, http(s) URL, or data URI).",
   "agents.defaults.model.primary": "Primary model (provider/model).",

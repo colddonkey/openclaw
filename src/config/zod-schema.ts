@@ -512,6 +512,16 @@ export const OpenClawSchema = z
       .strict()
       .optional(),
     memory: MemorySchema,
+    tui: z
+      .object({
+        theme: z.string().optional(),
+        showTimestamps: z.boolean().optional(),
+        compactMode: z.boolean().optional(),
+        showThinking: z.boolean().optional(),
+        toolsExpanded: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
     skills: z
       .object({
         allowBundled: z.array(z.string()).optional(),

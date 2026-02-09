@@ -97,6 +97,20 @@ export type OpenClawConfig = {
   talk?: TalkConfig;
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
+  tui?: TuiConfig;
+};
+
+export type TuiConfig = {
+  /** Color theme preset name (e.g. "default", "midnight", "ocean"). */
+  theme?: string;
+  /** Show timestamps on chat messages. */
+  showTimestamps?: boolean;
+  /** Compact mode – less vertical spacing between messages. */
+  compactMode?: boolean;
+  /** Show model thinking output in the chat log. */
+  showThinking?: boolean;
+  /** Expand tool execution output by default. */
+  toolsExpanded?: boolean;
 };
 
 export type ConfigValidationIssue = {
