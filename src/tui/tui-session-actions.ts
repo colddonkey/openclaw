@@ -25,6 +25,8 @@ type SessionActionContext = {
   updateAutocompleteProvider: () => void;
   setActivityStatus: (text: string) => void;
   clearLocalRunIds?: () => void;
+  /** Called after chatLog is cleared so the caller can re-add the splash. */
+  onHistoryCleared?: () => void;
 };
 
 type SessionInfoDefaults = {
@@ -66,6 +68,7 @@ export function createSessionActions(context: SessionActionContext) {
     updateAutocompleteProvider,
     setActivityStatus,
     clearLocalRunIds,
+    onHistoryCleared,
   } = context;
   let refreshSessionInfoPromise: Promise<void> = Promise.resolve();
   let lastSessionDefaults: SessionInfoDefaults | null = null;
@@ -293,7 +296,73 @@ export function createSessionActions(context: SessionActionContext) {
     applySessionInfo({ entry, force: true });
   };
 
-  const loadHistory = async () => {
+  // Track whether we've done the very first history load (used for collapse).
+  let firstHistoryLoad = true;
+  // Cache the last loaded history so /history can expand it.
+  let cachedHistoryRecord: {
+    messages?: unknown[];
+    sessionId?: string;
+    thinkingLevel?: string;
+    verboseLevel?: string;
+  } | null = null;
+
+  /** Render all messages from a history record into the chat log. */
+  const renderHistoryMessages = (
+    record: { messages?: unknown[] },
+    showTools: boolean,
+  ) => {
+    for (const entry of record.messages ?? []) {
+      if (!entry || typeof entry !== "object") {
+        continue;
+      }
+      const message = entry as Record<string, unknown>;
+      if (isCommandMessage(message)) {
+        const text = extractTextFromMessage(message);
+        if (text) {
+          chatLog.addSystem(text);
+        }
+        continue;
+      }
+      if (message.role === "user") {
+        const text = extractTextFromMessage(message);
+        if (text) {
+          chatLog.addUser(text);
+        }
+        continue;
+      }
+      if (message.role === "assistant") {
+        const text = extractTextFromMessage(message, {
+          includeThinking: state.showThinking,
+        });
+        if (text) {
+          chatLog.finalizeAssistant(text);
+        }
+        continue;
+      }
+      if (message.role === "toolResult") {
+        if (!showTools) {
+          continue;
+        }
+        const toolCallId = asString(message.toolCallId, "");
+        const toolName = asString(message.toolName, "tool");
+        const component = chatLog.startTool(toolCallId, toolName, {});
+        component.setResult(
+          {
+            content: Array.isArray(message.content)
+              ? (message.content as Record<string, unknown>[])
+              : [],
+            details:
+              typeof message.details === "object" && message.details
+                ? (message.details as Record<string, unknown>)
+                : undefined,
+          },
+          { isError: Boolean(message.isError) },
+        );
+      }
+    }
+  };
+
+  const loadHistory = async (opts_?: { expand?: boolean }) => {
     try {
       const history = await client.loadHistory({
         sessionKey: state.currentSessionKey,
@@ -305,66 +374,57 @@ export function createSessionActions(context: SessionActionContext) {
         thinkingLevel?: string;
         verboseLevel?: string;
       };
+      cachedHistoryRecord = record;
       state.currentSessionId = typeof record.sessionId === "string" ? record.sessionId : null;
       state.sessionInfo.thinkingLevel = record.thinkingLevel ?? state.sessionInfo.thinkingLevel;
       state.sessionInfo.verboseLevel = record.verboseLevel ?? state.sessionInfo.verboseLevel;
       const showTools = (state.sessionInfo.verboseLevel ?? "off") !== "off";
       chatLog.clearAll();
-      chatLog.addSystem(`session ${state.currentSessionKey}`);
-      for (const entry of record.messages ?? []) {
-        if (!entry || typeof entry !== "object") {
-          continue;
-        }
-        const message = entry as Record<string, unknown>;
-        if (isCommandMessage(message)) {
-          const text = extractTextFromMessage(message);
-          if (text) {
-            chatLog.addSystem(text);
-          }
-          continue;
-        }
-        if (message.role === "user") {
-          const text = extractTextFromMessage(message);
-          if (text) {
-            chatLog.addUser(text);
-          }
-          continue;
-        }
-        if (message.role === "assistant") {
-          const text = extractTextFromMessage(message, {
-            includeThinking: state.showThinking,
-          });
-          if (text) {
-            chatLog.finalizeAssistant(text);
-          }
-          continue;
-        }
-        if (message.role === "toolResult") {
-          if (!showTools) {
-            continue;
-          }
-          const toolCallId = asString(message.toolCallId, "");
-          const toolName = asString(message.toolName, "tool");
-          const component = chatLog.startTool(toolCallId, toolName, {});
-          component.setResult(
-            {
-              content: Array.isArray(message.content)
-                ? (message.content as Record<string, unknown>[])
-                : [],
-              details:
-                typeof message.details === "object" && message.details
-                  ? (message.details as Record<string, unknown>)
-                  : undefined,
-            },
-            { isError: Boolean(message.isError) },
-          );
-        }
+      onHistoryCleared?.();
+
+      const msgCount = (record.messages ?? []).length;
+      const shouldCollapse = firstHistoryLoad && msgCount > 0 && !opts_?.expand;
+
+      if (shouldCollapse) {
+        // Show a compact summary instead of the full history.
+        const userCount = (record.messages ?? []).filter(
+          (m) => m && typeof m === "object" && (m as Record<string, unknown>).role === "user",
+        ).length;
+        const assistantCount = (record.messages ?? []).filter(
+          (m) => m && typeof m === "object" && (m as Record<string, unknown>).role === "assistant",
+        ).length;
+        const parts = [`${msgCount} messages`];
+        if (userCount > 0) parts.push(`${userCount} from you`);
+        if (assistantCount > 0) parts.push(`${assistantCount} from assistant`);
+        chatLog.addSystem(
+          `Previous session (${parts.join(", ")}). Type /history to expand.`,
+        );
+      } else {
+        chatLog.addSystem(`session ${state.currentSessionKey}`);
+        renderHistoryMessages(record, showTools);
       }
+
+      firstHistoryLoad = false;
       state.historyLoaded = true;
     } catch (err) {
       chatLog.addSystem(`history failed: ${String(err)}`);
     }
     await refreshSessionInfo();
+    tui.requestRender();
+  };
+
+  /** Expand the cached history (called by /history command). */
+  const expandHistory = () => {
+    if (!cachedHistoryRecord) {
+      chatLog.addSystem("No history to expand.");
+      tui.requestRender();
+      return;
+    }
+    const showTools = (state.sessionInfo.verboseLevel ?? "off") !== "off";
+    chatLog.clearAll();
+    onHistoryCleared?.();
+    chatLog.addSystem(`session ${state.currentSessionKey}`);
+    renderHistoryMessages(cachedHistoryRecord, showTools);
     tui.requestRender();
   };
 
@@ -406,6 +466,7 @@ export function createSessionActions(context: SessionActionContext) {
     refreshSessionInfo,
     applySessionInfoFromPatch,
     loadHistory,
+    expandHistory,
     setSession,
     abortActive,
   };

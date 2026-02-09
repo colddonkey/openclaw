@@ -570,12 +570,18 @@ export async function runTui(opts: TuiOptions) {
     updateAutocompleteProvider,
     setActivityStatus,
     clearLocalRunIds,
+    onHistoryCleared: () => {
+      // Re-add the splash at the top after history clear.
+      const splash = new SplashComponent();
+      chatLog.children.unshift(splash);
+    },
   });
   const {
     refreshAgents,
     refreshSessionInfo,
     applySessionInfoFromPatch,
     loadHistory,
+    expandHistory,
     setSession,
     abortActive,
   } = sessionActions;
@@ -605,6 +611,7 @@ export async function runTui(opts: TuiOptions) {
       refreshSessionInfo,
       applySessionInfoFromPatch,
       loadHistory,
+      expandHistory,
       setSession,
       refreshAgents,
       abortActive,

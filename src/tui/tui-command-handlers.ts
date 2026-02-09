@@ -41,7 +41,8 @@ type CommandHandlerContext = {
   openOverlay: (component: Component) => void;
   closeOverlay: () => void;
   refreshSessionInfo: () => Promise<void>;
-  loadHistory: () => Promise<void>;
+  loadHistory: (opts?: { expand?: boolean }) => Promise<void>;
+  expandHistory: () => void;
   setSession: (key: string) => Promise<void>;
   refreshAgents: () => Promise<void>;
   abortActive: () => Promise<void>;
@@ -64,6 +65,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     closeOverlay,
     refreshSessionInfo,
     loadHistory,
+    expandHistory,
     setSession,
     refreshAgents,
     abortActive,
@@ -494,6 +496,9 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         void loadHistory();
         break;
       }
+      case "history":
+        expandHistory();
+        break;
       case "theme": {
         if (!args) {
           // No argument – list available themes.
