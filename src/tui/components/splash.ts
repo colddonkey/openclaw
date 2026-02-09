@@ -113,8 +113,25 @@ export class SplashComponent extends Container {
     super();
     this.addChild(new Spacer(1));
 
-    const accentFn = (t: string) => chalk.hex(palette.accent)(t);
     const dimFn = (t: string) => chalk.hex(palette.dim)(t);
+
+    // Color the logo text to match the donkey mascot palette.
+    // Solid blocks in brown, decorative line chars in lighter tan.
+    const brownFn = chalk.hex(DONKEY_COLORS.B);
+    const tanFn = chalk.hex(DONKEY_COLORS.L);
+    const colorLogoChar = (ch: string): string => {
+      // Full blocks and half blocks get the brown body color.
+      if ("\u2588\u2591\u2592\u2593".includes(ch)) return brownFn(ch);
+      // Box-drawing / decorative chars get the lighter tan.
+      if ("\u2550\u2551\u2554\u2557\u255A\u255D\u2560\u2563\u2566\u2569\u256C\u2553\u2556\u2559\u255C".includes(ch))
+        return tanFn(ch);
+      // Space stays space.
+      if (ch === " ") return ch;
+      // Default: brown for everything else (block chars like half-blocks).
+      return brownFn(ch);
+    };
+    const colorLogoLine = (line: string): string =>
+      [...line].map(colorLogoChar).join("");
 
     const gap = "   ";
     const donkeyLines = renderPixelDonkey();
@@ -127,7 +144,7 @@ export class SplashComponent extends Container {
     for (let i = 0; i < allLogoLines.length; i++) {
       const logoLine = allLogoLines[i] ?? "";
       const mascot = donkeyLines[i] ?? "";
-      const combined = accentFn(logoLine) + gap + mascot;
+      const combined = colorLogoLine(logoLine) + gap + mascot;
       this.addChild(new Text(combined, 3, 0));
     }
 
