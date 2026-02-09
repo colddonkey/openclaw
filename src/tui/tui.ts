@@ -348,11 +348,13 @@ export async function runTui(opts: TuiOptions) {
   const updateHeader = () => {
     const sessionLabel = formatSessionKey(currentSessionKey);
     const agentLabel = formatAgentLabel(currentAgentId);
-    header.setText(
-      theme.header(
-        `openclaw tui - ${client.connection.url} - agent ${agentLabel} - session ${sessionLabel}`,
-      ),
-    );
+    const dimSep = theme.dim(" \u2502 ");
+    const brandPart = theme.header("colddonkey");
+    const infoParts = [
+      theme.dim(`agent ${agentLabel}`),
+      theme.dim(`session ${sessionLabel}`),
+    ].join(dimSep);
+    header.setText(`${brandPart}${dimSep}${infoParts}`);
   };
 
   const busyStates = new Set(["sending", "waiting", "streaming", "running"]);
