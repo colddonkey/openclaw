@@ -111,6 +111,8 @@ export type TuiConfig = {
   showThinking?: boolean;
   /** Expand tool execution output by default. */
   toolsExpanded?: boolean;
+  /** Custom banner text rendered in ANSI Shadow figlet on the splash screen. */
+  bannerText?: string;
 };
 
 export type ConfigValidationIssue = {

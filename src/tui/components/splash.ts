@@ -1,28 +1,7 @@
 import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 import chalk from "chalk";
+import figlet from "figlet";
 import { palette } from "../theme/theme.js";
-
-// ---------------------------------------------------------------------------
-// ANSI Shadow figlet font for "COLD" + "DONKEY" with pixel-art donkey mascot.
-// ---------------------------------------------------------------------------
-
-const LOGO_COLD = [
-  " ██████╗ ██████╗ ██╗     ██████╗ ",
-  "██╔════╝██╔═══██╗██║     ██╔══██╗",
-  "██║     ██║   ██║██║     ██║  ██║",
-  "██║     ██║   ██║██║     ██║  ██║",
-  "╚██████╗╚██████╔╝███████╗██████╔╝",
-  " ╚═════╝ ╚═════╝ ╚══════╝╚═════╝ ",
-];
-
-const LOGO_DONKEY = [
-  "██████╗  ██████╗ ███╗   ██╗██╗  ██╗███████╗██╗   ██╗",
-  "██╔══██╗██╔═══██╗████╗  ██║██║ ██╔╝██╔════╝╚██╗ ██╔╝",
-  "██║  ██║██║   ██║██╔██╗ ██║█████╔╝ █████╗   ╚████╔╝ ",
-  "██║  ██║██║   ██║██║╚██╗██║██╔═██╗ ██╔══╝    ╚██╔╝  ",
-  "██████╔╝╚██████╔╝██║ ╚████║██║  ██╗███████╗   ██║   ",
-  "╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ",
-];
 
 // ---------------------------------------------------------------------------
 // Pixel-art donkey mascot (half-block rendering, 24x16 pixel grid).
@@ -41,12 +20,8 @@ const DONKEY_COLORS: Record<string, string> = {
   T: "#2C3E50", // tinted lens (dark blue-gray)
 };
 
-// Sombrero palette (ties into donkey colors).
-const SOMBRERO_COLORS: Record<string, string> = {
-  S: "#C4A882", // straw brim (matches donkey tan)
-  D: "#8B7355", // crown (matches donkey brown)
-  R: "#CC3333", // red band
-};
+// Max words to render in the banner (each word = 6 figlet lines).
+const MAX_BANNER_WORDS = 3;
 
 // Donkey with glasses. 24 rows x 16 cols = 12 terminal lines.
 // Plain version (no glasses) preserved in git at 161fdccfe.
@@ -77,16 +52,6 @@ const DONKEY_PIXELS = [
   "................",
 ];
 
-// Sombrero. 6 rows x 14 cols = 3 terminal lines.
-// Classic shape with upturned brim edges.
-const SOMBRERO_PIXELS = [
-  "......DD......",
-  ".....DDDD.....",
-  "....DDDDDD....",
-  "..SSRRRRRRSS..",
-  ".SSSSSSSSSSSS.",
-  "SS..........SS",
-];
 
 // Generic half-block pixel art renderer for any grid + color map.
 function renderPixelArt(
@@ -121,13 +86,28 @@ function renderPixelArt(
   return lines;
 }
 
-// DONKEY text is the widest logo line. COLD text is narrower.
-const DONKEY_TEXT_WIDTH = 54;
-const COLD_TEXT_WIDTH = 34;
-
 function padRight(str: string, targetLen: number): string {
   if (str.length >= targetLen) return str;
   return str + " ".repeat(targetLen - str.length);
+}
+
+/**
+ * Render banner text using ANSI Shadow figlet font.
+ * Each word becomes a separate figlet block (6 lines each).
+ * Returns an array of plain-text lines.
+ */
+function renderBannerText(text: string): string[] {
+  const words = text
+    .split(/[\n\r]+|\s+/)
+    .filter(Boolean)
+    .slice(0, MAX_BANNER_WORDS);
+  if (words.length === 0) return [];
+  const allLines: string[] = [];
+  for (const word of words) {
+    const rendered = figlet.textSync(word, { font: "ANSI Shadow" });
+    allLines.push(...rendered.split("\n"));
+  }
+  return allLines;
 }
 
 const SHORTCUTS = [
@@ -136,25 +116,20 @@ const SHORTCUTS = [
 ];
 
 export class SplashComponent extends Container {
-  constructor() {
+  constructor(bannerText = "COLD\nDONKEY") {
     super();
     this.addChild(new Spacer(1));
 
     const dimFn = (t: string) => chalk.hex(palette.dim)(t);
 
-    // Color the logo text to match the donkey mascot palette.
-    // Solid blocks in brown, decorative line chars in lighter tan.
+    // Color figlet text to match the donkey mascot palette.
+    // Solid blocks in brown, box-drawing chars in lighter tan.
     const brownFn = chalk.hex(DONKEY_COLORS.B);
     const tanFn = chalk.hex(DONKEY_COLORS.L);
     const colorLogoChar = (ch: string): string => {
-      // Full blocks and half blocks get the brown body color.
-      if ("\u2588\u2591\u2592\u2593".includes(ch)) return brownFn(ch);
-      // Box-drawing / decorative chars get the lighter tan.
-      if ("\u2550\u2551\u2554\u2557\u255A\u255D\u2560\u2563\u2566\u2569\u256C\u2553\u2556\u2559\u255C".includes(ch))
-        return tanFn(ch);
-      // Space stays space.
       if (ch === " ") return ch;
-      // Default: brown for everything else (block chars like half-blocks).
+      const code = ch.charCodeAt(0);
+      if (code >= 0x2550 && code <= 0x256c) return tanFn(ch);
       return brownFn(ch);
     };
     const colorLogoLine = (line: string): string =>
@@ -162,28 +137,15 @@ export class SplashComponent extends Container {
 
     const gap = "   ";
     const donkeyLines = renderPixelArt(DONKEY_PIXELS, DONKEY_COLORS);
-    const sombreroLines = renderPixelArt(SOMBRERO_PIXELS, SOMBRERO_COLORS);
 
-    const allLogoLines = [
-      ...LOGO_COLD.map((line) => padRight(line, DONKEY_TEXT_WIDTH)),
-      ...LOGO_DONKEY,
-    ];
+    // Render the banner text with figlet.
+    const logoLines = renderBannerText(bannerText);
+    const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
-    // Composite: logo text + sombrero (floats in COLD padding) + donkey mascot.
-    // Sombrero (3 lines) sits on COLD lines 0-2, in the padding after the text.
-    const SOMBRERO_VIS_WIDTH = 14;
-    const SOMBRERO_GAP = 3;
-    for (let i = 0; i < allLogoLines.length; i++) {
-      let textPart: string;
-      if (i < LOGO_COLD.length && i < sombreroLines.length) {
-        // COLD line with sombrero: color text, then append pre-colored sombrero.
-        const coldPadded = padRight(LOGO_COLD[i]!, COLD_TEXT_WIDTH);
-        const coloredCold = colorLogoLine(coldPadded);
-        const padAfter = DONKEY_TEXT_WIDTH - COLD_TEXT_WIDTH - SOMBRERO_GAP - SOMBRERO_VIS_WIDTH;
-        textPart = coloredCold + " ".repeat(SOMBRERO_GAP) + sombreroLines[i]! + " ".repeat(Math.max(0, padAfter));
-      } else {
-        textPart = colorLogoLine(allLogoLines[i] ?? "");
-      }
+    // Composite: figlet text (padded to max width) + gap + donkey mascot.
+    const totalLines = Math.max(logoLines.length, donkeyLines.length);
+    for (let i = 0; i < totalLines; i++) {
+      const textPart = colorLogoLine(padRight(logoLines[i] ?? "", maxWidth));
       const mascot = donkeyLines[i] ?? "";
       const combined = textPart + gap + mascot;
       this.addChild(new Text(combined, 3, 0));

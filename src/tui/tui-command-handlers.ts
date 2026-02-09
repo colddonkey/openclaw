@@ -51,6 +51,7 @@ type CommandHandlerContext = {
   applySessionInfoFromPatch: (result: SessionsPatchResult) => void;
   noteLocalRunId: (runId: string) => void;
   forgetLocalRunId?: (runId: string) => void;
+  rebuildSplash: () => void;
 };
 
 export function createCommandHandlers(context: CommandHandlerContext) {
@@ -74,6 +75,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     applySessionInfoFromPatch,
     noteLocalRunId,
     forgetLocalRunId,
+    rebuildSplash,
   } = context;
 
   const setAgent = async (id: string) => {
@@ -494,6 +496,20 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         chatLog.addSystem(`compact mode ${state.compactMode ? "on" : "off"}`);
         // Reload history to re-render messages with/without extra spacing.
         void loadHistory();
+        break;
+      }
+      case "banner": {
+        const DEFAULT_BANNER = "COLD\nDONKEY";
+        if (!args || args.toLowerCase() === "reset") {
+          state.bannerText = DEFAULT_BANNER;
+          chatLog.addSystem("banner reset to COLD DONKEY");
+        } else {
+          // Each word becomes a separate figlet line (max 3 words).
+          const words = args.split(/\s+/).filter(Boolean).slice(0, 3);
+          state.bannerText = words.join("\n");
+          chatLog.addSystem(`banner set to: ${words.join(" ")}`);
+        }
+        rebuildSplash();
         break;
       }
       case "history":

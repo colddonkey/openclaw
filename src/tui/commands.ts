@@ -138,6 +138,7 @@ export function getSlashCommands(options: SlashCommandOptions = {}): SlashComman
           .filter((v) => v.startsWith(prefix.toLowerCase()))
           .map((value) => ({ value, label: value })),
     },
+    { name: "banner", description: "Set custom splash banner text" },
     { name: "history", description: "Expand collapsed chat history" },
     { name: "abort", description: "Abort active run" },
     { name: "new", description: "Reset the session" },
@@ -184,6 +185,7 @@ export function helpText(options: SlashCommandOptions = {}): string {
     `/theme <${listThemePresets().join("|")}>`,
     "/timestamps <on|off>",
     "/compact <on|off>",
+    "/banner <text> (set splash text, /banner reset to restore)",
     "/history",
     "/new or /reset",
     "/abort",

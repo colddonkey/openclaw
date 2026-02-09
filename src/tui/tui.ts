@@ -101,6 +101,7 @@ export async function runTui(opts: TuiOptions) {
   let showThinking = tuiPrefs.showThinking;
   let showTimestamps = tuiPrefs.showTimestamps;
   let compactMode = tuiPrefs.compactMode;
+  let bannerText = tuiPrefs.bannerText;
   const localRunIds = new Set<string>();
 
   const deliverDefault = opts.deliver ?? false;
@@ -247,6 +248,13 @@ export async function runTui(opts: TuiOptions) {
     },
     set lastCtrlCAt(value) {
       lastCtrlCAt = value;
+    },
+    get bannerText() {
+      return bannerText;
+    },
+    set bannerText(value) {
+      bannerText = value;
+      saveTuiPrefs({ bannerText: value });
     },
   };
 
@@ -572,8 +580,7 @@ export async function runTui(opts: TuiOptions) {
     clearLocalRunIds,
     onHistoryCleared: () => {
       // Re-add the splash at the top after history clear.
-      const splash = new SplashComponent();
-      chatLog.children.unshift(splash);
+      chatLog.children.unshift(new SplashComponent(bannerText));
     },
   });
   const {
@@ -619,6 +626,13 @@ export async function runTui(opts: TuiOptions) {
       formatSessionKey,
       noteLocalRunId,
       forgetLocalRunId,
+      rebuildSplash: () => {
+        // Replace the splash component (always the first child) with a fresh one.
+        const first = chatLog.children[0];
+        if (first instanceof SplashComponent) {
+          chatLog.children[0] = new SplashComponent(state.bannerText);
+        }
+      },
     });
 
   const { runLocalShellLine } = createLocalShellRunner({
@@ -726,7 +740,7 @@ export async function runTui(opts: TuiOptions) {
   };
 
   // Show startup splash.
-  chatLog.addChild(new SplashComponent());
+  chatLog.addChild(new SplashComponent(bannerText));
 
   updateHeader();
   setConnectionStatus("connecting");
