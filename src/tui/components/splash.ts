@@ -26,32 +26,32 @@ const TEXT_ACCENT = "#FF6B6B";
 const MAX_BANNER_WORDS = 3;
 
 // Cartoon ant. 24 rows x 16 cols = 12 terminal lines.
-// Big head, clear petiole waist, 3 pairs of legs, antennae.
+// Elbowed antennae, big head, clear petiole waist, 3 leg pairs.
 const ANT_PIXELS = [
+  "B.............B.",
   ".B...........B..",
   "..B.........B...",
-  "...B.......B....",
+  "...BB.....BB....",
   "....B.....B.....",
-  "....DBBBBBD.....",
-  "...BBBBBBBBB....",
-  "..BBBWWPBWWPBB..",
-  "..BBBBBBBBBBBBB.",
-  "...BBBBBBBBB....",
-  "....DBBMMBBD....",
+  "....B.....B.....",
   ".....BBBBB......",
-  "L...DBBBBBD...L.",
+  "....DBBBBBD.....",
+  "...BWWPBBBWWPB..",
+  "...BBBBBBBBBB...",
+  "....BBMMMBB.....",
+  ".....DBBBD......",
   "L....BBBBB....L.",
-  "......DBD.......",
-  ".L..DBBBBBD..L..",
-  "L..BBBBBBBBB..L.",
-  "...BBBDBDBBB....",
-  "....BBBBBBB.....",
+  "L...DBBBBBD...L.",
+  "L...DBBBBBD...L.",
   ".....BBBBB......",
   "......BBB.......",
-  "................",
-  "................",
-  "................",
-  "................",
+  "......BBB.......",
+  ".....BBBBB......",
+  "L..BBBBBBBBB..L.",
+  "...BBBDBDBBB....",
+  "...BBBBBBBBB....",
+  "....BBBBBBB.....",
+  ".....BBBBB......",
 ];
 
 // Generic half-block pixel art renderer for any grid + color map.
