@@ -499,10 +499,10 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         break;
       }
       case "banner": {
-        const DEFAULT_BANNER = "COLD\nDONKEY";
+        const DEFAULT_BANNER = "ANT";
         if (!args || args.toLowerCase() === "reset") {
           state.bannerText = DEFAULT_BANNER;
-          chatLog.addSystem("banner reset to COLD DONKEY");
+          chatLog.addSystem("banner reset to ANT");
         } else {
           // Each word becomes a separate figlet line (max 3 words).
           const words = args.split(/\s+/).filter(Boolean).slice(0, 3);

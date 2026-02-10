@@ -4,51 +4,52 @@ import figlet from "figlet";
 import { palette } from "../theme/theme.js";
 
 // ---------------------------------------------------------------------------
-// Pixel-art donkey mascot (half-block rendering, 24x16 pixel grid).
+// Pixel-art ant mascot (half-block rendering, 24x16 pixel grid).
 // Each char in the grid maps to a color. "." = transparent.
 // Pairs of rows render as one terminal line via half-blocks.
-// Inspired by Gemini-generated pixel art donkey.
+// Donkey mascot preserved in git at b6c52fe9a.
 // ---------------------------------------------------------------------------
-const DONKEY_COLORS: Record<string, string> = {
-  B: "#8B7355", // brown body
-  L: "#C4A882", // light (inner ears, belly)
-  M: "#D4C4A8", // muzzle
+const MASCOT_COLORS: Record<string, string> = {
+  B: "#CC3333", // red body
+  D: "#8B0000", // dark red (segment accents)
   W: "#E8E8E8", // eye whites
-  P: "#2A2A2A", // pupils
-  G: "#5CB85C", // green collar
-  F: "#333333", // sunglasses frame (dark)
-  T: "#2C3E50", // tinted lens (dark blue-gray)
+  P: "#1A1A1A", // pupils
+  M: "#DEB887", // mandibles (tan)
+  L: "#8B4513", // legs (brown)
 };
+
+// Text coloring (matches ant red theme).
+const TEXT_PRIMARY = "#CC3333";
+const TEXT_ACCENT = "#FF6B6B";
 
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
 
-// Donkey with sunglasses, waving arm, curled tail.
-// 24 rows x 16 cols = 12 terminal lines.
-// Previous versions in git: plain (161fdccfe), first glasses (cb85db437).
-const DONKEY_PIXELS = [
-  "....BB......BB..",
-  "...BBLB....BLBB.",
-  "...BLLB....BLLB.",
-  "...BLLB....BLLB.",
-  "...BBLB....BLBB.",
-  "....BBBBBBBBBB..",
-  "..FBFFFFBFFFFBBF",
-  "..FBFTTFFFTTFBBF",
-  "..FBFFFFBFFFFBBF",
-  "...BMMMMMMMMMMB.",
-  "...BM...MM...MB.",
-  "...BMMMMMMMMMMB.",
-  "....BBGGGGGGBB..",
-  "....BBLLLLLLBB..",
-  "...BBBLLLLLLBBB.",
-  "..BB..LLLLLL.BB.",
-  "..B...LLLLLL..B.",
-  "......BLLLLB..B.",
-  ".....BBBBBBB..B.",
-  ".....BB...BB..B.",
-  ".....BB...BB.B..",
-  ".....BB...BB....",
+// Cartoon ant. 24 rows x 16 cols = 12 terminal lines.
+// Big head, clear petiole waist, 3 pairs of legs, antennae.
+const ANT_PIXELS = [
+  ".B...........B..",
+  "..B.........B...",
+  "...B.......B....",
+  "....B.....B.....",
+  "....DBBBBBD.....",
+  "...BBBBBBBBB....",
+  "..BBBWWPBWWPBB..",
+  "..BBBBBBBBBBBBB.",
+  "...BBBBBBBBB....",
+  "....DBBMMBBD....",
+  ".....BBBBB......",
+  "L...DBBBBBD...L.",
+  "L....BBBBB....L.",
+  "......DBD.......",
+  ".L..DBBBBBD..L..",
+  "L..BBBBBBBBB..L.",
+  "...BBBDBDBBB....",
+  "....BBBBBBB.....",
+  ".....BBBBB......",
+  "......BBB.......",
+  "................",
+  "................",
   "................",
   "................",
 ];
@@ -116,41 +117,41 @@ const SHORTCUTS = [
 ];
 
 export class SplashComponent extends Container {
-  constructor(bannerText = "COLD\nDONKEY") {
+  constructor(bannerText = "ANT") {
     super();
     this.addChild(new Spacer(1));
 
     const dimFn = (t: string) => chalk.hex(palette.dim)(t);
 
-    // Color figlet text to match the donkey mascot palette.
-    const brownFn = chalk.hex(DONKEY_COLORS.B);
-    const tanFn = chalk.hex(DONKEY_COLORS.L);
+    // Color figlet text to match the ant mascot palette (red theme).
+    const primaryFn = chalk.hex(TEXT_PRIMARY);
+    const accentFn = chalk.hex(TEXT_ACCENT);
     const colorLogoChar = (ch: string): string => {
       if (ch === " ") return ch;
       const code = ch.charCodeAt(0);
-      if (code >= 0x2550 && code <= 0x256c) return tanFn(ch);
-      return brownFn(ch);
+      if (code >= 0x2550 && code <= 0x256c) return accentFn(ch);
+      return primaryFn(ch);
     };
     const colorLogoLine = (line: string): string =>
       [...line].map(colorLogoChar).join("");
 
     const gap = "   ";
-    const donkeyLines = renderPixelArt(DONKEY_PIXELS, DONKEY_COLORS);
+    const mascotLines = renderPixelArt(ANT_PIXELS, MASCOT_COLORS);
 
     // Render the banner text with figlet.
     const logoLines = renderBannerText(bannerText);
     const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
     // Vertically center the text when it's shorter than the donkey mascot.
-    const totalLines = Math.max(logoLines.length, donkeyLines.length);
+    const totalLines = Math.max(logoLines.length, mascotLines.length);
     const textOffset = Math.max(0, Math.floor((totalLines - logoLines.length) / 2));
 
-    // Composite: figlet text (centered) + gap + donkey mascot.
+    // Composite: figlet text (centered) + gap + ant mascot.
     for (let i = 0; i < totalLines; i++) {
       const textIdx = i - textOffset;
       const rawText = textIdx >= 0 && textIdx < logoLines.length ? logoLines[textIdx]! : "";
       const textPart = colorLogoLine(padRight(rawText, maxWidth));
-      const mascot = donkeyLines[i] ?? "";
+      const mascot = mascotLines[i] ?? "";
       this.addChild(new Text(textPart + gap + mascot, 3, 0));
     }
 

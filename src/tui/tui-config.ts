@@ -14,7 +14,7 @@ export function readTuiPrefs(config: OpenClawConfig): Required<TuiConfig> {
     compactMode: tui.compactMode ?? false,
     showThinking: tui.showThinking ?? false,
     toolsExpanded: tui.toolsExpanded ?? false,
-    bannerText: tui.bannerText ?? "COLD\nDONKEY",
+    bannerText: tui.bannerText ?? "ANT",
   };
 }
 
