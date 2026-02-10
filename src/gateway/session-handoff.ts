@@ -230,16 +230,45 @@ export async function performSessionHandoff(params: {
   // 2. Build a text representation of the conversation
   const transcriptText = extractTranscriptText(messages);
 
-  // 3. Resolve model and API key for summarization
+  // 3. Resolve model and API key for summarization (with fallback chain)
   const modelRef = resolveDefaultModelForAgent({ cfg, agentId });
-  const resolved = resolveModel(modelRef.provider, modelRef.model, undefined, cfg);
-  if (!resolved.model) {
+  const fallbackRefs = [
+    modelRef,
+    { provider: "anthropic", model: "claude-sonnet-4-5" },
+    { provider: "anthropic", model: "claude-haiku-4-5" },
+    { provider: "google", model: "gemini-2.0-flash" },
+    { provider: "openai", model: "gpt-4o-mini" },
+  ];
+
+  let resolvedModel: import("@mariozechner/pi-ai").Model<import("@mariozechner/pi-ai").Api> | undefined;
+  let apiKey: string | undefined;
+  let usedRef: { provider: string; model: string } | undefined;
+
+  for (const ref of fallbackRefs) {
+    try {
+      const resolved = resolveModel(ref.provider, ref.model, undefined, cfg);
+      if (!resolved.model) {
+        continue;
+      }
+      const auth = await getApiKeyForModel({ model: resolved.model, cfg });
+      const key = auth.apiKey?.trim();
+      if (!key) {
+        continue;
+      }
+      resolvedModel = resolved.model;
+      apiKey = key;
+      usedRef = ref;
+      break;
+    } catch {
+      // Try next fallback
+    }
+  }
+
+  if (!resolvedModel || !apiKey || !usedRef) {
     throw new Error(
-      `Could not resolve model ${modelRef.provider}/${modelRef.model} for session handoff.`,
+      `No working model found for session handoff. Tried: ${fallbackRefs.map((r) => `${r.provider}/${r.model}`).join(", ")}`,
     );
   }
-  const auth = await getApiKeyForModel({ model: resolved.model, cfg });
-  const apiKey = requireApiKey(auth, resolved.model.provider);
 
   // 4. Call model for summary
   const controller = new AbortController();
@@ -248,7 +277,7 @@ export async function performSessionHandoff(params: {
 
   try {
     const res = await completeSimple(
-      resolved.model,
+      resolvedModel,
       {
         messages: [
           {
@@ -326,7 +355,7 @@ export async function performSessionHandoff(params: {
     `- **Session Key**: ${params.sessionKey}\n` +
     `- **Created**: ${now.toISOString()}\n` +
     `- **Messages**: ${messages.length}\n` +
-    `- **Model**: ${modelRef.provider}/${modelRef.model}\n\n` +
+    `- **Model**: ${usedRef.provider}/${usedRef.model}\n\n` +
     `---\n\n`;
 
   fs.writeFileSync(summaryPath, summaryHeader + summary, "utf-8");
