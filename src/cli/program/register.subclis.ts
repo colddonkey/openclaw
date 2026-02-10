@@ -126,7 +126,7 @@ const entries: SubCliEntry[] = [
     aliases: ["tui", "dk", "cd"],
     description: "Terminal UI",
     register: async (program) => {
-      const mod = await import("../tui-cli.js");
+      const mod = await import("../ant-cli.js");
       mod.registerTuiCli(program);
     },
   },
