@@ -466,8 +466,42 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           state.sessionInfo.totalTokens = null;
           tui.requestRender();
 
-          await client.resetSession(state.currentSessionKey);
-          chatLog.addSystem(`session ${state.currentSessionKey} reset`);
+          // Try handoff (AI summary + archive) first, fall back to plain reset
+          const skipHandoff = args.toLowerCase() === "quick";
+          let handoffDone = false;
+
+          if (!skipHandoff) {
+            try {
+              chatLog.addSystem("summarizing session for handoff...");
+              tui.requestRender();
+              const result = await client.handoffSession(state.currentSessionKey);
+              if (result?.ok && result.handoff) {
+                const h = result.handoff;
+                chatLog.addSystem(
+                  `session handed off (${h.messageCount} messages summarized in ${Math.round(h.latencyMs / 1000)}s)`,
+                );
+                chatLog.addSystem(`summary saved to: ${h.summaryPath}`);
+                if (h.archivedTranscriptPath) {
+                  chatLog.addSystem(`transcript archived to: ${h.archivedTranscriptPath}`);
+                }
+                // Store the summary for automatic injection into the first message
+                state.pendingHandoffContext = h.summary;
+                chatLog.addSystem(
+                  "previous session context will be automatically injected with your next message",
+                );
+                handoffDone = true;
+              }
+            } catch {
+              // Handoff failed (model error, no API key, etc.) - fall back to plain reset
+              chatLog.addSystem("handoff summary skipped (model unavailable), resetting...");
+            }
+          }
+
+          if (!handoffDone) {
+            await client.resetSession(state.currentSessionKey);
+            chatLog.addSystem(`session ${state.currentSessionKey} reset`);
+          }
+
           await loadHistory();
         } catch (err) {
           chatLog.addSystem(`reset failed: ${String(err)}`);
@@ -510,6 +544,67 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           chatLog.addSystem(`banner set to: ${words.join(" ")}`);
         }
         rebuildSplash();
+        break;
+      }
+      case "context": {
+        const sub = args.toLowerCase().trim();
+        try {
+          const { listHandoffSummaries, readHandoffSummary, readLatestHandoffSummary } =
+            await import("../gateway/session-handoff.js");
+
+          if (sub === "list" || sub === "ls") {
+            const summaries = listHandoffSummaries();
+            if (summaries.length === 0) {
+              chatLog.addSystem("no session handoff summaries found");
+            } else {
+              const lines = summaries.slice(0, 10).map((s, i) => {
+                const date = s.createdAt.toLocaleDateString();
+                const time = s.createdAt.toLocaleTimeString();
+                const size = Math.round(s.sizeBytes / 1024);
+                return `  ${i + 1}. ${s.sessionId.slice(0, 8)}... (${date} ${time}, ${size}K)`;
+              });
+              chatLog.addSystem(
+                `Session handoff summaries (${summaries.length} total):\n${lines.join("\n")}\n\nUse /context latest to load most recent`,
+              );
+            }
+          } else if (sub === "latest" || sub === "last" || !sub) {
+            const latest = readLatestHandoffSummary();
+            if (!latest) {
+              chatLog.addSystem(
+                "no handoff summaries available. Run /new to create one when resetting a session.",
+              );
+            } else {
+              // Send the summary to the agent as a user message for context injection
+              chatLog.addSystem(`loading context from session ${latest.sessionId.slice(0, 8)}...`);
+              tui.requestRender();
+              await sendMessage(
+                `[Previous Session Context]\nHere is a summary of our previous session. Use this to understand what we were working on and pick up where we left off:\n\n${latest.summary}`,
+              );
+            }
+          } else {
+            // Try to load a specific session by partial ID
+            const summaries = listHandoffSummaries();
+            const match = summaries.find((s) => s.sessionId.startsWith(sub));
+            if (match) {
+              const summary = readHandoffSummary(match.sessionId);
+              if (summary) {
+                chatLog.addSystem(`loading context from session ${match.sessionId.slice(0, 8)}...`);
+                tui.requestRender();
+                await sendMessage(
+                  `[Previous Session Context]\nHere is a summary of a previous session. Use this to understand what was discussed:\n\n${summary}`,
+                );
+              } else {
+                chatLog.addSystem(`could not read summary for ${sub}`);
+              }
+            } else {
+              chatLog.addSystem(
+                `no matching session found for "${sub}". Use /context list to see available summaries.`,
+              );
+            }
+          }
+        } catch (err) {
+          chatLog.addSystem(`context command failed: ${String(err)}`);
+        }
         break;
       }
       case "history":
@@ -560,13 +655,26 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     try {
       chatLog.addUser(text);
       tui.requestRender();
+
+      // Inject pending handoff context into the first message after a session reset
+      let messageToSend = text;
+      if (state.pendingHandoffContext) {
+        messageToSend =
+          `[Previous Session Context]\n` +
+          `The following is a summary of our previous conversation session. Use it to understand what we were working on and seamlessly continue:\n\n` +
+          `${state.pendingHandoffContext}\n\n` +
+          `---\n\n` +
+          `[Current Message]\n${text}`;
+        state.pendingHandoffContext = null;
+      }
+
       const runId = randomUUID();
       noteLocalRunId(runId);
       state.activeChatRunId = runId;
       setActivityStatus("sending");
       await client.sendChat({
         sessionKey: state.currentSessionKey,
-        message: text,
+        message: messageToSend,
         thinking: opts.thinking,
         deliver: deliverDefault,
         timeoutMs: opts.timeoutMs,

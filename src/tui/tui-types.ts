@@ -107,4 +107,6 @@ export type TuiStateAccess = {
   statusTimeout: ReturnType<typeof setTimeout> | null;
   lastCtrlCAt: number;
   bannerText: string;
+  /** Pending handoff summary to inject into the first message of the new session */
+  pendingHandoffContext: string | null;
 };

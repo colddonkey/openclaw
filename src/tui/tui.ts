@@ -109,6 +109,7 @@ export async function runTui(opts: TuiOptions) {
   let autoMessageSent = false;
   let sessionInfo: SessionInfo = {};
   let lastCtrlCAt = 0;
+  let pendingHandoffContext: string | null = null;
   let activityStatus = "idle";
   let connectionStatus = "connecting";
   let statusTimeout: NodeJS.Timeout | null = null;
@@ -255,6 +256,12 @@ export async function runTui(opts: TuiOptions) {
     set bannerText(value) {
       bannerText = value;
       saveTuiPrefs({ bannerText: value });
+    },
+    get pendingHandoffContext() {
+      return pendingHandoffContext;
+    },
+    set pendingHandoffContext(value) {
+      pendingHandoffContext = value;
     },
   };
 

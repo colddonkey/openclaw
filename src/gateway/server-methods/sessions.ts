@@ -20,6 +20,7 @@ import {
   formatValidationErrors,
   validateSessionsCompactParams,
   validateSessionsDeleteParams,
+  validateSessionsHandoffParams,
   validateSessionsListParams,
   validateSessionsPatchParams,
   validateSessionsPreviewParams,
@@ -269,6 +270,109 @@ export const sessionsHandlers: GatewayRequestHandlers = {
       return nextEntry;
     });
     respond(true, { ok: true, key: target.canonicalKey, entry: next }, undefined);
+  },
+  "sessions.handoff": async ({ params, respond }) => {
+    if (!validateSessionsHandoffParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid sessions.handoff params: ${formatValidationErrors(validateSessionsHandoffParams.errors)}`,
+        ),
+      );
+      return;
+    }
+    const key = String((params as { key: string }).key ?? "").trim();
+    if (!key) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "key required"));
+      return;
+    }
+
+    const cfg = loadConfig();
+    const target = resolveGatewaySessionStoreTarget({ cfg, key });
+    const storePath = target.storePath;
+    const store = loadSessionStore(storePath);
+    const primaryKey = target.storeKeys[0] ?? key;
+    const existingKey = target.storeKeys.find((candidate) => store[candidate]);
+    const entry = store[existingKey ?? primaryKey];
+
+    if (!entry?.sessionId) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "no active session found"));
+      return;
+    }
+
+    // Perform handoff: summarize + archive
+    try {
+      const { performSessionHandoff } = await import("../session-handoff.js");
+      const result = await performSessionHandoff({
+        sessionKey: key,
+        sessionId: entry.sessionId,
+        storePath,
+        sessionFile: entry.sessionFile,
+        cfg,
+      });
+
+      // Now reset the session (same logic as sessions.reset)
+      const next = await updateSessionStore(storePath, (s) => {
+        const ek = target.storeKeys.find((candidate) => s[candidate]);
+        if (ek && ek !== primaryKey && !s[primaryKey]) {
+          s[primaryKey] = s[ek];
+          delete s[ek];
+        }
+        const current = s[primaryKey];
+        const now = Date.now();
+        const nextEntry: SessionEntry = {
+          sessionId: randomUUID(),
+          updatedAt: now,
+          systemSent: false,
+          abortedLastRun: false,
+          thinkingLevel: current?.thinkingLevel,
+          verboseLevel: current?.verboseLevel,
+          reasoningLevel: current?.reasoningLevel,
+          responseUsage: current?.responseUsage,
+          model: current?.model,
+          contextTokens: current?.contextTokens,
+          sendPolicy: current?.sendPolicy,
+          label: current?.label,
+          origin: snapshotSessionOrigin(current),
+          lastChannel: current?.lastChannel,
+          lastTo: current?.lastTo,
+          skillsSnapshot: current?.skillsSnapshot,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+        };
+        s[primaryKey] = nextEntry;
+        return nextEntry;
+      });
+
+      respond(
+        true,
+        {
+          ok: true,
+          key: target.canonicalKey,
+          entry: next,
+          handoff: {
+            summary: result.summary,
+            summaryPath: result.summaryPath,
+            archivedTranscriptPath: result.archivedTranscriptPath,
+            messageCount: result.messageCount,
+            latencyMs: result.latencyMs,
+          },
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.UNAVAILABLE,
+          `session handoff failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+    }
   },
   "sessions.delete": async ({ params, respond }) => {
     if (!validateSessionsDeleteParams(params)) {

@@ -208,6 +208,19 @@ export class GatewayChatClient {
     return await this.client.request("sessions.reset", { key });
   }
 
+  async handoffSession(key: string): Promise<{
+    ok: boolean;
+    handoff?: {
+      summary: string;
+      summaryPath: string;
+      archivedTranscriptPath: string | null;
+      messageCount: number;
+      latencyMs: number;
+    };
+  }> {
+    return await this.client.request("sessions.handoff", { key });
+  }
+
   async getStatus() {
     return await this.client.request("status");
   }
