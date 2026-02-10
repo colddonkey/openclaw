@@ -91,11 +91,50 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         tui.requestRender();
         return;
       }
-      const items = models.map((model) => ({
-        value: `${model.provider}/${model.id}`,
-        label: `${model.provider}/${model.id}`,
-        description: model.name && model.name !== model.id ? model.name : "",
-      }));
+
+      // Load user's configured model aliases to prioritize/filter
+      const { loadConfig } = await import("../config/config.js");
+      const cfg = loadConfig();
+      const configuredModels = cfg.agents?.defaults?.models ?? {};
+      const aliasKeys = new Set(Object.keys(configuredModels).map((k) => k.toLowerCase()));
+
+      // Separate configured (aliased) models from the rest
+      const aliased: typeof models = [];
+      const other: typeof models = [];
+      for (const model of models) {
+        const key = `${model.provider}/${model.id}`.toLowerCase();
+        if (aliasKeys.has(key)) {
+          aliased.push(model);
+        } else {
+          other.push(model);
+        }
+      }
+
+      // Build items: aliased models first with their alias shown, then others
+      const items: Array<{ value: string; label: string; description: string }> = [];
+      for (const model of aliased) {
+        const key = `${model.provider}/${model.id}`;
+        const entry = configuredModels[key] as { alias?: string } | undefined;
+        const alias = entry?.alias ? ` (/${entry.alias})` : "";
+        items.push({
+          value: key,
+          label: `${key}${alias}`,
+          description: model.name && model.name !== model.id ? model.name : "",
+        });
+      }
+
+      // Only show non-aliased models from the same providers as aliased models
+      // (i.e., providers the user actually has auth for)
+      const aliasedProviders = new Set(aliased.map((m) => m.provider.toLowerCase()));
+      for (const model of other) {
+        if (aliasedProviders.has(model.provider.toLowerCase())) {
+          items.push({
+            value: `${model.provider}/${model.id}`,
+            label: `${model.provider}/${model.id}`,
+            description: model.name && model.name !== model.id ? model.name : "",
+          });
+        }
+      }
       const selector = createSearchableSelectList(items, 9);
       selector.onSelect = (item) => {
         void (async () => {
