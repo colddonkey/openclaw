@@ -116,6 +116,7 @@ export async function runCommandWithTimeout(
     cwd,
     env: resolvedEnv,
     windowsVerbatimArguments,
+    windowsHide: true, // Prevent console window flash on Windows
   });
   // Spawn with inherited stdin (TTY) so tools like `pi` stay interactive when needed.
   return await new Promise((resolve, reject) => {

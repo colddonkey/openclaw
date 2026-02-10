@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ModelCatalogEntry } from "../agents/model-catalog.js";
+import { findModelInCatalog, type ModelCatalogEntry } from "../agents/model-catalog.js";
 import type { OpenClawConfig } from "../config/config.js";
 import type { SessionEntry } from "../config/sessions.js";
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
@@ -295,6 +295,20 @@ export async function applySessionsPatchToStore(params: {
           isDefault,
         },
       });
+
+      // If contextTokens was not set by the model-overrides lookup (e.g. the
+      // MODEL_CACHE hadn't loaded the model), fall back to the catalog entry
+      // which we already have loaded and which includes contextWindow.
+      if (next.contextTokens === undefined) {
+        const catalogEntry = findModelInCatalog(
+          catalog,
+          resolved.ref.provider,
+          resolved.ref.model,
+        );
+        if (catalogEntry?.contextWindow) {
+          next.contextTokens = catalogEntry.contextWindow;
+        }
+      }
     }
   }
 

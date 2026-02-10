@@ -1,4 +1,5 @@
 import type { SessionEntry } from "../config/sessions.js";
+import { lookupContextTokens } from "../agents/context.js";
 
 export type ModelOverrideSelection = {
   provider: string;
@@ -64,7 +65,17 @@ export function applyModelOverrideToSessionEntry(params: {
     }
   }
 
+  // When the model changes, update contextTokens to the new model's context
+  // window so the TUI/status display reflects the correct capacity immediately.
   if (updated) {
+    const effectiveModel = entry.modelOverride ?? selection.model;
+    const newContextTokens = lookupContextTokens(effectiveModel);
+    if (newContextTokens !== undefined) {
+      entry.contextTokens = newContextTokens;
+    } else {
+      // Clear stale contextTokens so it gets resolved fresh on next status.
+      delete entry.contextTokens;
+    }
     entry.updatedAt = Date.now();
   }
 

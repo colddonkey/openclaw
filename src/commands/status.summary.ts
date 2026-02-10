@@ -117,9 +117,9 @@ export async function getStatusSummary(): Promise<StatusSummary> {
       .map(([key, entry]) => {
         const updatedAt = entry?.updatedAt ?? null;
         const age = updatedAt ? now - updatedAt : null;
-        const model = entry?.model ?? configModel ?? null;
+        const model = entry?.modelOverride ?? entry?.model ?? configModel ?? null;
         const contextTokens =
-          entry?.contextTokens ?? lookupContextTokens(model) ?? configContextTokens ?? null;
+          lookupContextTokens(model) ?? entry?.contextTokens ?? configContextTokens ?? null;
         const input = entry?.inputTokens ?? 0;
         const output = entry?.outputTokens ?? 0;
         const total = entry?.totalTokens ?? input + output;

@@ -4,54 +4,59 @@ import figlet from "figlet";
 import { palette } from "../theme/theme.js";
 
 // ---------------------------------------------------------------------------
-// Pixel-art ant mascot (half-block rendering, 24x16 pixel grid).
-// Each char in the grid maps to a color. "." = transparent.
-// Pairs of rows render as one terminal line via half-blocks.
-// Donkey mascot preserved in git at b6c52fe9a.
+// Sticker-style 8-bit ant mascot (side-by-side with figlet banner text).
+// Bold outlines, big cute eyes, clean shapes -- like a die-cut sticker.
+// Previous designs: donkey (b6c52fe9a), small ant (984cde055), body-text ant (c7536c4aa).
 // ---------------------------------------------------------------------------
 const MASCOT_COLORS: Record<string, string> = {
-  B: "#CC3333", // red body
-  D: "#8B0000", // dark red (segment accents)
-  W: "#E8E8E8", // eye whites
-  P: "#1A1A1A", // pupils
-  M: "#DEB887", // mandibles (tan)
-  L: "#8B4513", // legs (brown)
+  B: "#DD3333", // bright red body
+  D: "#1A0808", // near-black outline (sticker border)
+  H: "#FF6655", // highlight / shine
+  W: "#FFFFFF", // eye/lens sparkle (white)
+  P: "#0A0A0A", // pupil / lens dark
+  M: "#DDAA77", // mouth (warm tan)
+  A: "#441111", // antennae (dark red-brown)
+  C: "#FFAAAA", // cheek blush (soft pink)
+  K: "#112233", // sunglasses lens (very dark blue-tint)
+  G: "#333333", // sunglasses frame (dark gray)
 };
 
 // Text coloring (matches ant red theme).
-const TEXT_PRIMARY = "#CC3333";
+const TEXT_PRIMARY = "#DD3333";
 const TEXT_ACCENT = "#FF6B6B";
 
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
 
-// Cartoon ant. 24 rows x 16 cols = 12 terminal lines.
-// Elbowed antennae, big head, clear petiole waist, 3 leg pairs.
+// Number of pixel rows that are antennae (used for centering on head only).
+const ANTENNA_ROWS = 4;
+
+// Sticker-style ant head with large sunglasses. 20 rows = 10 terminal lines.
+// Tall puffy head, oversized shades, cheek blush, cute smile. No body/legs.
+// Details: antenna bulbs, forehead sparkle, lens glint, subtle smile.
 const ANT_PIXELS = [
-  "B.............B.",
-  ".B...........B..",
-  "..B.........B...",
-  "...BB.....BB....",
-  "....B.....B.....",
-  "....B.....B.....",
-  ".....BBBBB......",
-  "....DBBBBBD.....",
-  "...BWWPBBBWWPB..",
-  "...BBBBBBBBBB...",
-  "....BBMMMBB.....",
-  ".....DBBBD......",
-  "L....BBBBB....L.",
-  "L...DBBBBBD...L.",
-  "L...DBBBBBD...L.",
-  ".....BBBBB......",
-  "......BBB.......",
-  "......BBB.......",
-  ".....BBBBB......",
-  "L..BBBBBBBBB..L.",
-  "...BBBDBDBBB....",
-  "...BBBBBBBBB....",
-  "....BBBBBBB.....",
-  ".....BBBBB......",
+  // -- antennae with bulb tips (4 rows, excluded from centering) --
+  "BD................DB.",
+  ".A..................A..",
+  "..AA..............AA..",
+  "....A............A....",
+  // -- head with large sunglasses (16 rows) --
+  "......DDDDDDDDDDDDD...",
+  ".....DBBBBBBBBBBBBBBD..",
+  "....DBBBBBBBBBBBBBBBBD.",
+  "....DBBBBHBWBBBBHBBBBD.",
+  "...DBBBBBBBBBBBBBBBBBBD",
+  "...DBBBBBBBBBBBBBBBBBBD",
+  "...GGKKKKKKKGGKKKKKKKGG",
+  "..GGKWKKKKKGGKKKKKWKGG.",
+  "...DBBBBBBBBBBBBBBBBBBD",
+  "...DBBBBBBBBBBBBBBBBBD.",
+  "....DBBCCBBBBBBCCBBBD..",
+  ".....DBBBBMMMMMBBBD....",
+  "......DDDDDDDDDDDDD...",
+  ".........DDDDDDD.......",
+  "..........DDDDD........",
+  "...........DDD.........",
 ];
 
 // Generic half-block pixel art renderer for any grid + color map.
@@ -123,7 +128,7 @@ export class SplashComponent extends Container {
 
     const dimFn = (t: string) => chalk.hex(palette.dim)(t);
 
-    // Color figlet text to match the ant mascot palette (red theme).
+    // Color figlet text to match the ant mascot palette.
     const primaryFn = chalk.hex(TEXT_PRIMARY);
     const accentFn = chalk.hex(TEXT_ACCENT);
     const colorLogoChar = (ch: string): string => {
@@ -142,11 +147,15 @@ export class SplashComponent extends Container {
     const logoLines = renderBannerText(bannerText);
     const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
-    // Vertically center the text when it's shorter than the donkey mascot.
-    const totalLines = Math.max(logoLines.length, mascotLines.length);
-    const textOffset = Math.max(0, Math.floor((totalLines - logoLines.length) / 2));
+    // Vertically center the text relative to the HEAD (exclude antenna rows).
+    const antennaTermLines = Math.ceil(ANTENNA_ROWS / 2);
+    const headTermLines = mascotLines.length - antennaTermLines;
+    const totalLines = Math.max(logoLines.length + antennaTermLines, mascotLines.length);
+    const headCenter = antennaTermLines + Math.floor(headTermLines / 2);
+    const textCenter = Math.floor(logoLines.length / 2);
+    const textOffset = Math.max(0, headCenter - textCenter);
 
-    // Composite: figlet text (centered) + gap + ant mascot.
+    // Composite: figlet text (vertically centered) + gap + ant mascot.
     for (let i = 0; i < totalLines; i++) {
       const textIdx = i - textOffset;
       const rawText = textIdx >= 0 && textIdx < logoLines.length ? logoLines[textIdx]! : "";
