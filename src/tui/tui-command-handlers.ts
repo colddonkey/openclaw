@@ -25,6 +25,7 @@ import {
 import { SplashComponent } from "./components/splash.js";
 import { getThemeName, getThemeNames, setTheme } from "./theme/theme.js";
 import { extractTextFromMessage } from "./tui-formatters.js";
+import { saveTuiPrefs } from "./tui-prefs.js";
 import { formatStatusSummary } from "./tui-status-summary.js";
 
 type CommandHandlerContext = {
@@ -435,6 +436,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
       case "banner": {
         const newBanner = args.trim() || "ANT";
         context.setBannerText(newBanner);
+        saveTuiPrefs({ bannerText: newBanner });
         // Replace the splash component (always first child) with a fresh one.
         const first = chatLog.children[0];
         if (first instanceof SplashComponent) {
@@ -453,6 +455,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           break;
         }
         if (setTheme(requested)) {
+          saveTuiPrefs({ theme: requested });
           // Re-render splash with new theme colors.
           const splashIdx = chatLog.children.findIndex((c) => c instanceof SplashComponent);
           if (splashIdx >= 0) {

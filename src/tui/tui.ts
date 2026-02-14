@@ -26,7 +26,8 @@ import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { SplashComponent } from "./components/splash.js";
 import { GatewayChatClient } from "./gateway-chat.js";
-import { editorTheme, theme } from "./theme/theme.js";
+import { editorTheme, setTheme, theme } from "./theme/theme.js";
+import { loadTuiPrefs } from "./tui-prefs.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
 import { createEventHandlers } from "./tui-event-handlers.js";
 import { formatTokens } from "./tui-formatters.js";
@@ -96,7 +97,12 @@ export async function runTui(opts: TuiOptions) {
   let wasDisconnected = false;
   let toolsExpanded = false;
   let showThinking = false;
-  let bannerText = "ANT";
+
+  // Load persisted TUI preferences (theme + banner text).
+  const tuiPrefs = loadTuiPrefs();
+  if (tuiPrefs.theme) setTheme(tuiPrefs.theme);
+  let bannerText = tuiPrefs.bannerText ?? "ANT";
+
   const localRunIds = new Set<string>();
 
   const deliverDefault = opts.deliver ?? false;
