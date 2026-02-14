@@ -21,9 +21,9 @@ const MASCOT_COLORS: Record<string, string> = {
   G: "#333333", // sunglasses frame (dark gray)
 };
 
-// Text coloring (matches ant red theme).
+// Text coloring -- exactly matches ant body red (#DD3333).
 const TEXT_PRIMARY = "#DD3333";
-const TEXT_ACCENT = "#FF6B6B";
+const TEXT_ACCENT = "#DD3333";
 
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
