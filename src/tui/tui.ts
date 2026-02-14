@@ -24,6 +24,7 @@ import {
 import { getSlashCommands } from "./commands.js";
 import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
+import { SplashComponent } from "./components/splash.js";
 import { GatewayChatClient } from "./gateway-chat.js";
 import { editorTheme, theme } from "./theme/theme.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
@@ -694,6 +695,9 @@ export async function runTui(opts: TuiOptions) {
     setConnectionStatus(`event gap: expected ${info.expected}, got ${info.received}`, 5000);
     tui.requestRender();
   };
+
+  // Show startup splash with ant mascot.
+  chatLog.addChild(new SplashComponent());
 
   updateHeader();
   setConnectionStatus("connecting");
