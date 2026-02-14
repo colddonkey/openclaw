@@ -1,8 +1,9 @@
 import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 import chalk from "chalk";
+import figlet from "figlet";
 
 // ---------------------------------------------------------------------------
-// Sticker-style 8-bit ant mascot splash screen.
+// Sticker-style 8-bit ant mascot splash screen with figlet banner text.
 // Bold outlines, big cute eyes, clean shapes -- like a die-cut sticker.
 // ---------------------------------------------------------------------------
 
@@ -11,7 +12,6 @@ const MASCOT_COLORS: Record<string, string> = {
   D: "#1A0808", // near-black outline (sticker border)
   H: "#FF6655", // highlight / shine
   W: "#FFFFFF", // eye/lens sparkle (white)
-  P: "#0A0A0A", // pupil / lens dark
   M: "#DDAA77", // mouth (warm tan)
   A: "#441111", // antennae (dark red-brown)
   C: "#FFAAAA", // cheek blush (soft pink)
@@ -20,8 +20,12 @@ const MASCOT_COLORS: Record<string, string> = {
 };
 
 const TEXT_PRIMARY = "#DD3333";
+const TEXT_ACCENT = "#DD3333";
 
-// Number of pixel rows that are antennae (used for centering).
+// Max words to render in the banner (each word = 6 figlet lines).
+const MAX_BANNER_WORDS = 3;
+
+// Number of pixel rows that are antennae (used for centering on head only).
 const ANTENNA_ROWS = 4;
 
 // Sticker-style ant head with large sunglasses. 20 rows = 10 terminal lines.
@@ -48,16 +52,6 @@ const ANT_PIXELS = [
   ".........DDDDDDD.......",
   "..........DDDDD........",
   "...........DDD.........",
-];
-
-// Hardcoded "ANT" in ANSI Shadow style (no figlet dependency needed).
-const ANT_ASCII = [
-  " ██████╗ ███╗   ██╗████████╗",
-  "██╔════╝ ████╗  ██║╚══██╔══╝",
-  "███████╗ ██╔██╗ ██║   ██║   ",
-  "██╔═══██╗██║╚██╗██║   ██║   ",
-  "╚██████╔╝██║ ╚████║   ██║   ",
-  " ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ",
 ];
 
 // Generic half-block pixel art renderer for any grid + color map.
@@ -100,22 +94,48 @@ function padRight(str: string, targetLen: number): string {
   return str + " ".repeat(targetLen - str.length);
 }
 
+/**
+ * Render banner text using ANSI Shadow figlet font.
+ * Each word becomes a separate figlet block (6 lines each).
+ */
+function renderBannerText(text: string): string[] {
+  const words = text
+    .split(/[\n\r]+|\s+/)
+    .filter(Boolean)
+    .slice(0, MAX_BANNER_WORDS);
+  if (words.length === 0) {
+    return [];
+  }
+  const allLines: string[] = [];
+  for (const word of words) {
+    const rendered = figlet.textSync(word, { font: "ANSI Shadow" });
+    allLines.push(...rendered.split("\n"));
+  }
+  return allLines;
+}
+
 const SHORTCUTS = [
-  "/help  commands        /model  change model   Ctrl+C x2  exit",
-  "/agent switch agent    /session  switch sess   Ctrl+O     tools",
+  "/help  commands        /model  change model    Ctrl+C x2  exit",
+  "/banner <text>         /theme  change theme    Ctrl+O     tools",
 ];
 
 export class SplashComponent extends Container {
-  constructor() {
+  constructor(bannerText = "ANT") {
     super();
     this.addChild(new Spacer(1));
 
     const dimFn = (t: string) => chalk.hex("#7B7F87")(t);
     const primaryFn = chalk.hex(TEXT_PRIMARY);
+    const accentFn = chalk.hex(TEXT_ACCENT);
 
+    // Color figlet characters: box-drawing chars get accent, rest get primary.
     const colorChar = (ch: string): string => {
       if (ch === " ") {
         return ch;
+      }
+      const code = ch.charCodeAt(0);
+      if (code >= 0x2550 && code <= 0x256c) {
+        return accentFn(ch);
       }
       return primaryFn(ch);
     };
@@ -124,7 +144,7 @@ export class SplashComponent extends Container {
 
     const gap = "   ";
     const mascotLines = renderPixelArt(ANT_PIXELS, MASCOT_COLORS);
-    const logoLines = ANT_ASCII;
+    const logoLines = renderBannerText(bannerText);
     const maxWidth = logoLines.reduce((max, l) => Math.max(max, l.length), 0);
 
     // Vertically center the text relative to the HEAD (exclude antenna rows).
@@ -135,7 +155,7 @@ export class SplashComponent extends Container {
     const textCenter = Math.floor(logoLines.length / 2);
     const textOffset = Math.max(0, headCenter - textCenter);
 
-    // Composite: ASCII text (vertically centered) + gap + ant mascot.
+    // Composite: figlet text (vertically centered) + gap + ant mascot.
     for (let i = 0; i < totalLines; i++) {
       const textIdx = i - textOffset;
       const rawText = textIdx >= 0 && textIdx < logoLines.length ? logoLines[textIdx]! : "";

@@ -22,6 +22,7 @@ import {
   createSearchableSelectList,
   createSettingsList,
 } from "./components/selectors.js";
+import { SplashComponent } from "./components/splash.js";
 import { formatStatusSummary } from "./tui-status-summary.js";
 
 type CommandHandlerContext = {
@@ -43,6 +44,8 @@ type CommandHandlerContext = {
   applySessionInfoFromPatch: (result: SessionsPatchResult) => void;
   noteLocalRunId: (runId: string) => void;
   forgetLocalRunId?: (runId: string) => void;
+  bannerText: string;
+  setBannerText: (text: string) => void;
 };
 
 export function createCommandHandlers(context: CommandHandlerContext) {
@@ -427,6 +430,19 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           chatLog.addSystem(`activation failed: ${String(err)}`);
         }
         break;
+      case "banner": {
+        const newBanner = args.trim() || "ANT";
+        context.setBannerText(newBanner);
+        // Replace the splash component (always first child) with a fresh one.
+        const first = chatLog.children[0];
+        if (first instanceof SplashComponent) {
+          chatLog.children[0] = new SplashComponent(newBanner);
+        } else {
+          chatLog.children.unshift(new SplashComponent(newBanner));
+        }
+        chatLog.addSystem(`banner set to "${newBanner}"`);
+        break;
+      }
       case "new":
       case "reset":
         try {

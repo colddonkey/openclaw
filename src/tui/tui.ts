@@ -96,6 +96,7 @@ export async function runTui(opts: TuiOptions) {
   let wasDisconnected = false;
   let toolsExpanded = false;
   let showThinking = false;
+  let bannerText = "ANT";
   const localRunIds = new Set<string>();
 
   const deliverDefault = opts.deliver ?? false;
@@ -590,6 +591,10 @@ export async function runTui(opts: TuiOptions) {
       formatSessionKey,
       noteLocalRunId,
       forgetLocalRunId,
+      bannerText,
+      setBannerText: (text: string) => {
+        bannerText = text;
+      },
     });
 
   const { runLocalShellLine } = createLocalShellRunner({
@@ -697,7 +702,7 @@ export async function runTui(opts: TuiOptions) {
   };
 
   // Show startup splash with ant mascot.
-  chatLog.addChild(new SplashComponent());
+  chatLog.addChild(new SplashComponent(bannerText));
 
   updateHeader();
   setConnectionStatus("connecting");
