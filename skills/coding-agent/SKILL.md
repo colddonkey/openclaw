@@ -1,15 +1,17 @@
 ---
 name: coding-agent
-description: Run Codex CLI, Claude Code, OpenCode, or Pi Coding Agent via background process for programmatic control.
+description: Run Codex CLI, Claude Code, OpenCode, or Pi Coding Agent via direct CLI commands. Simple bash execution, no MCP wrapper needed.
 metadata:
   {
     "openclaw": { "emoji": "🧩", "requires": { "anyBins": ["claude", "codex", "opencode", "pi"] } },
   }
 ---
 
-# Coding Agent (bash-first)
+# Coding Agent (Direct CLI)
 
-Use **bash** (with optional background mode) for all coding agent work. Simple and effective.
+Use **direct CLI commands** via bash for all coding agent work. Simple, fast, and effective.
+
+**No MCP wrapper needed** - just exec the commands directly with the right flags.
 
 ## ⚠️ PTY Mode Required!
 
@@ -157,12 +159,82 @@ gh pr comment <PR#> --body "<review content>"
 
 ## Claude Code
 
+**Direct CLI method** (preferred over MCP):
+
+```bash
+# Non-interactive mode with auto-approve (no PTY needed!)
+npx @anthropic-ai/claude-code -p --dangerously-skip-permissions "Your task here"
+
+# Select model (haiku, sonnet, opus)
+npx @anthropic-ai/claude-code -p --dangerously-skip-permissions --model sonnet "Your task"
+
+# With effort level (low/medium/high)
+npx @anthropic-ai/claude-code -p --dangerously-skip-permissions --model haiku --effort low "Quick task"
+
+# In a specific directory
+bash workdir:~/project command:"npx @anthropic-ai/claude-code -p --dangerously-skip-permissions --model haiku 'Your task'"
+
+# Background for longer tasks
+bash workdir:~/project background:true command:"npx @anthropic-ai/claude-code -p --dangerously-skip-permissions --model sonnet 'Your task'"
+
+# With budget limit and fallback model
+npx @anthropic-ai/claude-code -p --dangerously-skip-permissions --model sonnet --fallback-model haiku --max-budget-usd 1.00 "Task"
+```
+
+### Key Flags
+
+| Flag                             | Effect                                                            |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `-p, --print`                    | Non-interactive mode - prints output and exits                    |
+| `--dangerously-skip-permissions` | Bypasses ALL permission checks (auto-approve everything)          |
+| `--model <model>`                | Select model: `haiku`, `sonnet`, `opus`, or full name             |
+| `--effort <level>`               | Effort level: `low`, `medium`, `high`                             |
+| `--fallback-model <model>`       | Auto-fallback when primary overloaded (only with `-p`)            |
+| `--max-budget-usd <amount>`      | Spending limit in USD (only with `-p`)                            |
+| `--system-prompt <prompt>`       | Custom system prompt                                              |
+| `--append-system-prompt <text>`  | Append to default system prompt                                   |
+| `--tools <tools>`                | Specify tools: `""` (none), `"default"` (all), or names           |
+| `--output-format <format>`       | Output: `text` (default), `json`, `stream-json` (only with `-p`)  |
+| `--json-schema <schema>`         | JSON Schema for structured output validation                      |
+| `--no-session-persistence`       | Don't save session to disk (only with `-p`)                       |
+| `-c, --continue`                 | Continue most recent conversation in current directory            |
+| `-r, --resume [id]`              | Resume by session ID or open picker                               |
+| `--debug [filter]`               | Enable debug mode with optional category filter                   |
+
+### Model Selection
+
+Use aliases or full model names:
+- `--model haiku` → Latest Haiku (fast, cheap)
+- `--model sonnet` → Latest Sonnet (balanced)
+- `--model opus` → Latest Opus (powerful)
+- `--model claude-sonnet-4-5-20250929` → Specific version
+
+### Effort Levels
+
+- `--effort low` → Faster, less thorough
+- `--effort medium` → Balanced (default)
+- `--effort high` → More thorough, slower
+
+### Structured Output
+
+```bash
+# Request JSON output with schema validation
+npx @anthropic-ai/claude-code -p --dangerously-skip-permissions \
+  --output-format json \
+  --json-schema '{"type":"object","properties":{"summary":{"type":"string"},"count":{"type":"number"}},"required":["summary","count"]}' \
+  "Analyze the codebase and return summary + file count"
+```
+
+**Note:** The `-p --dangerously-skip-permissions` combo makes Claude Code work like `codex --yolo` - fast, non-interactive, auto-approved. Perfect for automation.
+
+### Interactive Mode (fallback)
+
 ```bash
 # With PTY for proper terminal output
-bash pty:true workdir:~/project command:"claude 'Your task'"
+bash pty:true workdir:~/project command:"claude --model haiku 'Your task'"
 
 # Background
-bash pty:true workdir:~/project background:true command:"claude 'Your task'"
+bash pty:true workdir:~/project background:true command:"claude --model sonnet 'Your task'"
 ```
 
 ---
@@ -220,10 +292,29 @@ git worktree remove /tmp/issue-99
 
 ---
 
+## 🐛 Debugging Hanging Commands
+
+If a command hangs with no output:
+
+1. **Add verbose/debug flags** if available
+2. **Check stderr** - use `2>&1` to combine stderr with stdout
+3. **Add print statements** in the command wrapper to see progress
+4. **Use timeout** parameter to prevent infinite hangs
+
+Example:
+```bash
+# Redirect stderr to see errors
+bash command:"npx @anthropic-ai/claude-code -p --dangerously-skip-permissions 'task' 2>&1"
+
+# With timeout (kills after 60s)
+bash timeout:60 command:"npx @anthropic-ai/claude-code -p --dangerously-skip-permissions 'task'"
+```
+
 ## ⚠️ Rules
 
-1. **Always use pty:true** - coding agents need a terminal!
-2. **Respect tool choice** - if user asks for Codex, use Codex.
+1. **PTY for interactive agents** - use `pty:true` for interactive terminal UIs
+2. **No PTY for print mode** - Claude Code with `-p` doesn't need PTY
+3. **Respect tool choice** - if user asks for Codex, use Codex.
    - Orchestrator mode: do NOT hand-code patches yourself.
    - If an agent fails/hangs, respawn it or ask the user for direction, but don't silently take over.
 3. **Be patient** - don't kill sessions because they're "slow"

@@ -74,6 +74,8 @@ IDENTITY.md
 USER.md
 .tgz
 .idea
+*_COUNSELING_LOGS.md
+start-gateway.ps1
 
 # local tooling
 .serena/
