@@ -67,6 +67,7 @@ apps/ios/*.mobileprovision
 IDENTITY.md
 USER.md
 .tgz
+*_COUNSELING_LOGS.md
 
 # local tooling
 .serena/
