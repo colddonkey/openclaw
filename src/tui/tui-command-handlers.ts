@@ -496,7 +496,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
             try {
               await client.injectMessage({
                 sessionKey: state.currentSessionKey,
-                message: `[Session handoff from previous conversation]\n${handoffNote}`,
+                message: buildHandoffInjection(handoffNote),
                 label: "session-handoff",
               });
             } catch {
@@ -574,40 +574,90 @@ export function createCommandHandlers(context: CommandHandlerContext) {
 // Session handoff summary builder
 // ---------------------------------------------------------------------------
 
-const MAX_HANDOFF_EXCHANGES = 8;
-const MAX_TEXT_LEN = 200;
+const MAX_USER_TOPICS = 6;
+const MAX_TOPIC_LEN = 120;
+const MAX_ASSISTANT_SNIPPET = 150;
 
 /**
- * Build a concise handoff summary from session history messages.
- * Extracts the last few user/assistant exchanges as bullet points.
+ * Build a structured handoff summary from session history messages.
+ *
+ * Strategy:
+ *  1. Extract user messages as "topics" (what the user asked about).
+ *  2. Capture the last assistant reply as "where we left off".
+ *  3. Count total exchanges for context density.
+ *  4. Format as a structured note suitable for both human display and AI injection.
  */
 function buildHandoffSummary(messages: unknown[]): string {
-  const exchanges: { role: string; text: string }[] = [];
+  const userTopics: string[] = [];
+  let lastAssistant = "";
+  let totalExchanges = 0;
 
   for (const entry of messages) {
     if (!entry || typeof entry !== "object") continue;
     const msg = entry as Record<string, unknown>;
     const role = msg.role as string;
-    if (role !== "user" && role !== "assistant") continue;
     const text = extractTextFromMessage(msg);
     if (!text) continue;
-    exchanges.push({ role, text });
+
+    if (role === "user") {
+      totalExchanges++;
+      const oneLine = text.replace(/\n+/g, " ").trim();
+      // Deduplicate near-identical messages (heartbeats, system prompts).
+      if (
+        oneLine.length > 5 &&
+        !oneLine.startsWith("Read HEARTBEAT") &&
+        !oneLine.startsWith("Pre-compaction") &&
+        !oneLine.startsWith("Conversation info")
+      ) {
+        userTopics.push(
+          oneLine.length > MAX_TOPIC_LEN ? `${oneLine.slice(0, MAX_TOPIC_LEN)}...` : oneLine,
+        );
+      }
+    } else if (role === "assistant") {
+      const oneLine = text.replace(/\n+/g, " ").trim();
+      if (oneLine.length > 5 && !oneLine.startsWith("NO_REPLY") && !oneLine.startsWith("HEARTBEAT")) {
+        lastAssistant = oneLine;
+      }
+    }
   }
 
-  if (exchanges.length === 0) return "";
+  if (userTopics.length === 0) return "";
 
-  // Take the tail of the conversation.
-  const tail = exchanges.slice(-MAX_HANDOFF_EXCHANGES);
+  // Take the last N unique user topics.
+  const uniqueTopics = [...new Set(userTopics)].slice(-MAX_USER_TOPICS);
 
-  const lines: string[] = ["Previous session topics:"];
-  for (const ex of tail) {
-    const prefix = ex.role === "user" ? "You" : "AI";
+  const lines: string[] = [];
+  lines.push(`Previous session (${totalExchanges} exchanges):`);
+  lines.push("");
+  lines.push("Topics discussed:");
+  for (const topic of uniqueTopics) {
+    lines.push(`  - ${topic}`);
+  }
+
+  if (lastAssistant) {
     const truncated =
-      ex.text.length > MAX_TEXT_LEN ? `${ex.text.slice(0, MAX_TEXT_LEN)}...` : ex.text;
-    // Collapse newlines for readability.
-    const oneLine = truncated.replace(/\n+/g, " ").trim();
-    lines.push(`  ${prefix}: ${oneLine}`);
+      lastAssistant.length > MAX_ASSISTANT_SNIPPET
+        ? `${lastAssistant.slice(0, MAX_ASSISTANT_SNIPPET)}...`
+        : lastAssistant;
+    lines.push("");
+    lines.push(`Last AI response: ${truncated}`);
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Build the injection payload for the AI to receive as context.
+ * More structured than the display version - gives the AI clear instructions.
+ */
+function buildHandoffInjection(displaySummary: string): string {
+  return [
+    "[Session handoff from previous conversation]",
+    "",
+    displaySummary,
+    "",
+    "The user has started a new session. You may reference the above context",
+    "if the user continues a previous topic, but do not proactively bring up",
+    "old topics unless asked.",
+  ].join("\n");
 }

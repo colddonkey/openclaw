@@ -154,6 +154,75 @@ export const THEME_PRESETS: Record<string, ThemePalette> = {
     error: "#CF6679",
     success: "#03DAC5",
   },
+  sunset: {
+    text: "#F5E6D3",
+    dim: "#9A8A7A",
+    accent: "#FF6B35",
+    accentSoft: "#FF9F1C",
+    border: "#4A3525",
+    userBg: "#2E2018",
+    userText: "#FFF0E0",
+    systemText: "#C0A090",
+    toolPendingBg: "#251A12",
+    toolSuccessBg: "#1E2818",
+    toolErrorBg: "#301818",
+    toolTitle: "#FF6B35",
+    toolOutput: "#E8D0B8",
+    quote: "#FFBE76",
+    quoteBorder: "#5A4030",
+    code: "#F0C070",
+    codeBlock: "#1A1210",
+    codeBorder: "#4A3828",
+    link: "#FF9F1C",
+    error: "#FF6348",
+    success: "#7DD3A5",
+  },
+  midnight: {
+    text: "#C8D0E0",
+    dim: "#505878",
+    accent: "#7B68EE",
+    accentSoft: "#9B8BFF",
+    border: "#2A2E48",
+    userBg: "#181C30",
+    userText: "#E0E4F0",
+    systemText: "#7080A8",
+    toolPendingBg: "#141828",
+    toolSuccessBg: "#142518",
+    toolErrorBg: "#281418",
+    toolTitle: "#7B68EE",
+    toolOutput: "#B8C0D8",
+    quote: "#A0B0FF",
+    quoteBorder: "#303868",
+    code: "#B0A0E8",
+    codeBlock: "#0E1020",
+    codeBorder: "#282E48",
+    link: "#7FDBFF",
+    error: "#FF6B6B",
+    success: "#7FDBFF",
+  },
+  retro: {
+    text: "#33FF33",
+    dim: "#1A8A1A",
+    accent: "#33FF33",
+    accentSoft: "#66FF66",
+    border: "#0A4A0A",
+    userBg: "#0A200A",
+    userText: "#44FF44",
+    systemText: "#22AA22",
+    toolPendingBg: "#081808",
+    toolSuccessBg: "#0A280A",
+    toolErrorBg: "#280A0A",
+    toolTitle: "#33FF33",
+    toolOutput: "#22CC22",
+    quote: "#55DD55",
+    quoteBorder: "#0A3A0A",
+    code: "#44EE44",
+    codeBlock: "#050F05",
+    codeBorder: "#0A3A0A",
+    link: "#77FF77",
+    error: "#FF3333",
+    success: "#33FF33",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -329,4 +398,26 @@ export function setTheme(name: string): boolean {
   editorTheme = buildEditorTheme(activePalette);
   searchableSelectListTheme = buildSearchableSelectListTheme(activePalette);
   return true;
+}
+
+/**
+ * Register a custom theme palette at runtime. Overwrites if name already exists.
+ * After registration the theme can be activated via `setTheme(name)`.
+ */
+export function registerTheme(name: string, palette: ThemePalette): void {
+  THEME_PRESETS[name] = { ...palette };
+}
+
+/**
+ * Validate that a partial palette object has all required hex color keys.
+ * Returns an array of missing key names (empty = valid).
+ */
+export function validatePalette(obj: Record<string, unknown>): string[] {
+  const required: (keyof ThemePalette)[] = [
+    "text", "dim", "accent", "accentSoft", "border", "userBg", "userText",
+    "systemText", "toolPendingBg", "toolSuccessBg", "toolErrorBg", "toolTitle",
+    "toolOutput", "quote", "quoteBorder", "code", "codeBlock", "codeBorder",
+    "link", "error", "success",
+  ];
+  return required.filter((k) => typeof obj[k] !== "string");
 }

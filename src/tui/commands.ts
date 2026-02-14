@@ -166,7 +166,7 @@ export function helpText(options: SlashCommandOptions = {}): string {
     "/elev <on|off|ask|full>",
     "/activation <mention|always>",
     "/banner <text>",
-    "/theme <default|ant|ocean|forest|neon>",
+    "/theme <name> (default, ant, ocean, forest, neon, sunset, midnight, retro)",
     "/new or /reset",
     "/abort",
     "/settings",
