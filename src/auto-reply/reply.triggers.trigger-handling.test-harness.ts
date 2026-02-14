@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { afterEach, vi } from "vitest";
+import { type Mock, afterEach, vi } from "vitest";
 import { withTempHome as withTempHomeBase } from "../../test/helpers/temp-home.js";
 
 const piEmbeddedMocks = vi.hoisted(() => ({
@@ -11,19 +11,19 @@ const piEmbeddedMocks = vi.hoisted(() => ({
   isEmbeddedPiRunStreaming: vi.fn().mockReturnValue(false),
 }));
 
-export function getAbortEmbeddedPiRunMock() {
+export function getAbortEmbeddedPiRunMock(): Mock {
   return piEmbeddedMocks.abortEmbeddedPiRun;
 }
 
-export function getCompactEmbeddedPiSessionMock() {
+export function getCompactEmbeddedPiSessionMock(): Mock {
   return piEmbeddedMocks.compactEmbeddedPiSession;
 }
 
-export function getRunEmbeddedPiAgentMock() {
+export function getRunEmbeddedPiAgentMock(): Mock {
   return piEmbeddedMocks.runEmbeddedPiAgent;
 }
 
-export function getQueueEmbeddedPiMessageMock() {
+export function getQueueEmbeddedPiMessageMock(): Mock {
   return piEmbeddedMocks.queueEmbeddedPiMessage;
 }
 
@@ -49,7 +49,12 @@ const providerUsageMocks = vi.hoisted(() => ({
   resolveUsageProviderId: vi.fn((provider: string) => provider.split("/")[0]),
 }));
 
-export function getProviderUsageMocks() {
+export function getProviderUsageMocks(): {
+  loadProviderUsageSummary: Mock;
+  formatUsageSummaryLine: Mock;
+  formatUsageWindowSummary: Mock;
+  resolveUsageProviderId: Mock;
+} {
   return providerUsageMocks;
 }
 
@@ -77,7 +82,10 @@ const modelCatalogMocks = vi.hoisted(() => ({
   resetModelCatalogCacheForTest: vi.fn(),
 }));
 
-export function getModelCatalogMocks() {
+export function getModelCatalogMocks(): {
+  loadModelCatalog: Mock;
+  resetModelCatalogCacheForTest: Mock;
+} {
   return modelCatalogMocks;
 }
 
@@ -89,7 +97,11 @@ const webSessionMocks = vi.hoisted(() => ({
   readWebSelfId: vi.fn().mockReturnValue({ e164: "+1999" }),
 }));
 
-export function getWebSessionMocks() {
+export function getWebSessionMocks(): {
+  webAuthExists: Mock;
+  getWebAuthAgeMs: Mock;
+  readWebSelfId: Mock;
+} {
   return webSessionMocks;
 }
 

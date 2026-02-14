@@ -1,4 +1,4 @@
-import { beforeEach, vi } from "vitest";
+import { type Mock, beforeEach, vi } from "vitest";
 import type { SessionEntry } from "../../config/sessions.js";
 import type { TypingMode } from "../../config/types.js";
 import type { TemplateContext } from "../templating.js";
@@ -10,7 +10,7 @@ const state = vi.hoisted(() => ({
   runEmbeddedPiAgentMock: vi.fn(),
 }));
 
-export function getRunEmbeddedPiAgentMock() {
+export function getRunEmbeddedPiAgentMock(): Mock {
   return state.runEmbeddedPiAgentMock;
 }
 

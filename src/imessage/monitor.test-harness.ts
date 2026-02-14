@@ -1,4 +1,4 @@
-import { beforeEach, vi } from "vitest";
+import { type Mock, beforeEach, vi } from "vitest";
 
 type NotificationHandler = (msg: { method: string; params?: unknown }) => void;
 
@@ -15,31 +15,31 @@ const state = vi.hoisted(() => ({
   closeResolve: undefined as (() => void) | undefined,
 }));
 
-export function getRequestMock() {
+export function getRequestMock(): Mock {
   return state.requestMock;
 }
 
-export function getStopMock() {
+export function getStopMock(): Mock {
   return state.stopMock;
 }
 
-export function getSendMock() {
+export function getSendMock(): Mock {
   return state.sendMock;
 }
 
-export function getReplyMock() {
+export function getReplyMock(): Mock {
   return state.replyMock;
 }
 
-export function getUpdateLastRouteMock() {
+export function getUpdateLastRouteMock(): Mock {
   return state.updateLastRouteMock;
 }
 
-export function getReadAllowFromStoreMock() {
+export function getReadAllowFromStoreMock(): Mock {
   return state.readAllowFromStoreMock;
 }
 
-export function getUpsertPairingRequestMock() {
+export function getUpsertPairingRequestMock(): Mock {
   return state.upsertPairingRequestMock;
 }
 
