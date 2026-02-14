@@ -2,6 +2,7 @@ import type { SlashCommand } from "@mariozechner/pi-tui";
 import type { OpenClawConfig } from "../config/types.js";
 import { listChatCommands, listChatCommandsForConfig } from "../auto-reply/commands-registry.js";
 import { formatThinkingLevels, listThinkingLevelLabels } from "../auto-reply/thinking.js";
+import { getThemeNames } from "./theme/theme.js";
 
 const VERBOSE_LEVELS = ["on", "off"];
 const REASONING_LEVELS = ["on", "off"];
@@ -114,6 +115,14 @@ export function getSlashCommands(options: SlashCommandOptions = {}): SlashComman
         })),
     },
     { name: "banner", description: "Set custom banner text" },
+    {
+      name: "theme",
+      description: "Switch color theme",
+      getArgumentCompletions: (prefix) =>
+        getThemeNames()
+          .filter((v) => v.startsWith(prefix.toLowerCase()))
+          .map((value) => ({ value, label: value })),
+    },
     { name: "abort", description: "Abort active run" },
     { name: "new", description: "Reset the session" },
     { name: "reset", description: "Reset the session" },
@@ -157,6 +166,7 @@ export function helpText(options: SlashCommandOptions = {}): string {
     "/elev <on|off|ask|full>",
     "/activation <mention|always>",
     "/banner <text>",
+    "/theme <default|ant|ocean|forest|neon>",
     "/new or /reset",
     "/abort",
     "/settings",

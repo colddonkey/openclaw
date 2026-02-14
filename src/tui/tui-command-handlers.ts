@@ -23,6 +23,7 @@ import {
   createSettingsList,
 } from "./components/selectors.js";
 import { SplashComponent } from "./components/splash.js";
+import { getThemeName, getThemeNames, setTheme } from "./theme/theme.js";
 import { formatStatusSummary } from "./tui-status-summary.js";
 
 type CommandHandlerContext = {
@@ -441,6 +442,26 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           chatLog.children.unshift(new SplashComponent(newBanner));
         }
         chatLog.addSystem(`banner set to "${newBanner}"`);
+        break;
+      }
+      case "theme": {
+        const requested = args.trim().toLowerCase();
+        if (!requested) {
+          const names = getThemeNames().join(", ");
+          chatLog.addSystem(`current theme: ${getThemeName()}  |  available: ${names}`);
+          break;
+        }
+        if (setTheme(requested)) {
+          // Re-render splash with new theme colors.
+          const splashIdx = chatLog.children.findIndex((c) => c instanceof SplashComponent);
+          if (splashIdx >= 0) {
+            chatLog.children[splashIdx] = new SplashComponent(context.bannerText);
+          }
+          chatLog.addSystem(`theme switched to "${requested}"`);
+        } else {
+          const names = getThemeNames().join(", ");
+          chatLog.addSystem(`unknown theme "${requested}". available: ${names}`);
+        }
         break;
       }
       case "new":

@@ -1,6 +1,7 @@
 import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import figlet from "figlet";
+import { getActivePalette } from "../theme/theme.js";
 
 // ---------------------------------------------------------------------------
 // Sticker-style 8-bit ant mascot splash screen with figlet banner text.
@@ -19,8 +20,7 @@ const MASCOT_COLORS: Record<string, string> = {
   G: "#333333", // sunglasses frame (dark gray)
 };
 
-const TEXT_PRIMARY = "#DD3333";
-const TEXT_ACCENT = "#DD3333";
+// Text colors pulled from active theme palette at construction time.
 
 // Max words to render in the banner (each word = 6 figlet lines).
 const MAX_BANNER_WORDS = 3;
@@ -124,9 +124,10 @@ export class SplashComponent extends Container {
     super();
     this.addChild(new Spacer(1));
 
-    const dimFn = (t: string) => chalk.hex("#7B7F87")(t);
-    const primaryFn = chalk.hex(TEXT_PRIMARY);
-    const accentFn = chalk.hex(TEXT_ACCENT);
+    const pal = getActivePalette();
+    const dimFn = (t: string) => chalk.hex(pal.dim)(t);
+    const primaryFn = chalk.hex(pal.accent);
+    const accentFn = chalk.hex(pal.accentSoft);
 
     // Color figlet characters: box-drawing chars get accent, rest get primary.
     const colorChar = (ch: string): string => {
