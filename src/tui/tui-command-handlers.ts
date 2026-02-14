@@ -24,6 +24,7 @@ import {
 } from "./components/selectors.js";
 import { SplashComponent } from "./components/splash.js";
 import { getThemeName, getThemeNames, setTheme } from "./theme/theme.js";
+import { extractTextFromMessage } from "./tui-formatters.js";
 import { formatStatusSummary } from "./tui-status-summary.js";
 
 type CommandHandlerContext = {
@@ -465,8 +466,20 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         break;
       }
       case "new":
-      case "reset":
+      case "reset": {
         try {
+          // Build a handoff summary from the current session before resetting.
+          let handoffNote = "";
+          try {
+            const history = (await client.loadHistory({
+              sessionKey: state.currentSessionKey,
+              limit: 200,
+            })) as { messages?: unknown[] };
+            handoffNote = buildHandoffSummary(history.messages ?? []);
+          } catch {
+            // Non-fatal: proceed with reset even if summary fails.
+          }
+
           // Clear token counts immediately to avoid stale display (#1523)
           state.sessionInfo.inputTokens = null;
           state.sessionInfo.outputTokens = null;
@@ -474,12 +487,31 @@ export function createCommandHandlers(context: CommandHandlerContext) {
           tui.requestRender();
 
           await client.resetSession(state.currentSessionKey);
-          chatLog.addSystem(`session ${state.currentSessionKey} reset`);
+
+          // Inject handoff context into the fresh session so the AI has continuity.
+          if (handoffNote) {
+            chatLog.addSystem("--- session handoff ---");
+            chatLog.addSystem(handoffNote);
+            chatLog.addSystem("--- new session ---");
+            try {
+              await client.injectMessage({
+                sessionKey: state.currentSessionKey,
+                message: `[Session handoff from previous conversation]\n${handoffNote}`,
+                label: "session-handoff",
+              });
+            } catch {
+              // Non-fatal: summary display still worked.
+            }
+          } else {
+            chatLog.addSystem(`session ${state.currentSessionKey} reset`);
+          }
+
           await loadHistory();
         } catch (err) {
           chatLog.addSystem(`reset failed: ${String(err)}`);
         }
         break;
+      }
       case "abort":
         await abortActive();
         break;
@@ -536,4 +568,46 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     openSettings,
     setAgent,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Session handoff summary builder
+// ---------------------------------------------------------------------------
+
+const MAX_HANDOFF_EXCHANGES = 8;
+const MAX_TEXT_LEN = 200;
+
+/**
+ * Build a concise handoff summary from session history messages.
+ * Extracts the last few user/assistant exchanges as bullet points.
+ */
+function buildHandoffSummary(messages: unknown[]): string {
+  const exchanges: { role: string; text: string }[] = [];
+
+  for (const entry of messages) {
+    if (!entry || typeof entry !== "object") continue;
+    const msg = entry as Record<string, unknown>;
+    const role = msg.role as string;
+    if (role !== "user" && role !== "assistant") continue;
+    const text = extractTextFromMessage(msg);
+    if (!text) continue;
+    exchanges.push({ role, text });
+  }
+
+  if (exchanges.length === 0) return "";
+
+  // Take the tail of the conversation.
+  const tail = exchanges.slice(-MAX_HANDOFF_EXCHANGES);
+
+  const lines: string[] = ["Previous session topics:"];
+  for (const ex of tail) {
+    const prefix = ex.role === "user" ? "You" : "AI";
+    const truncated =
+      ex.text.length > MAX_TEXT_LEN ? `${ex.text.slice(0, MAX_TEXT_LEN)}...` : ex.text;
+    // Collapse newlines for readability.
+    const oneLine = truncated.replace(/\n+/g, " ").trim();
+    lines.push(`  ${prefix}: ${oneLine}`);
+  }
+
+  return lines.join("\n");
 }

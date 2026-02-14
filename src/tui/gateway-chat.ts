@@ -204,6 +204,14 @@ export class GatewayChatClient {
     return await this.client.request<SessionsPatchResult>("sessions.patch", opts);
   }
 
+  async injectMessage(opts: { sessionKey: string; message: string; label?: string }) {
+    return await this.client.request("chat.inject", {
+      sessionKey: opts.sessionKey,
+      message: opts.message,
+      label: opts.label,
+    });
+  }
+
   async resetSession(key: string) {
     return await this.client.request("sessions.reset", { key });
   }
