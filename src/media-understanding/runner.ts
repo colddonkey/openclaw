@@ -236,6 +236,17 @@ async function resolveLocalWhisperEntry(): Promise<MediaUnderstandingModelConfig
   };
 }
 
+function resolveSherpaOnnxProvider(): string | null {
+  const explicit = process.env.SHERPA_ONNX_PROVIDER?.trim().toLowerCase();
+  if (explicit && explicit !== "cpu") {
+    return explicit;
+  }
+  // Standard prebuilt sherpa-onnx binaries only support CPU and CUDA.
+  // DirectML/VitisAI require custom builds (SHERPA_ONNX_ENABLE_DIRECTML=ON).
+  // Only inject --provider when the user explicitly opts in via env var.
+  return null;
+}
+
 async function resolveSherpaOnnxEntry(): Promise<MediaUnderstandingModelConfig | null> {
   if (!(await hasBinary("sherpa-onnx-offline"))) {
     return null;
@@ -260,16 +271,26 @@ async function resolveSherpaOnnxEntry(): Promise<MediaUnderstandingModelConfig |
   if (!(await fileExists(joiner))) {
     return null;
   }
+
+  const args = [
+    `--tokens=${tokens}`,
+    `--encoder=${encoder}`,
+    `--decoder=${decoder}`,
+    `--joiner=${joiner}`,
+  ];
+
+  // Inject hardware-accelerated provider when available (directml for NPU/GPU on Windows)
+  const provider = resolveSherpaOnnxProvider();
+  if (provider) {
+    args.push(`--provider=${provider}`);
+  }
+
+  args.push("{{MediaPath}}");
+
   return {
     type: "cli",
     command: "sherpa-onnx-offline",
-    args: [
-      `--tokens=${tokens}`,
-      `--encoder=${encoder}`,
-      `--decoder=${decoder}`,
-      `--joiner=${joiner}`,
-      "{{MediaPath}}",
-    ],
+    args,
   };
 }
 
