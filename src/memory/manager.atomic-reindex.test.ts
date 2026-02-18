@@ -9,7 +9,9 @@ import { getRequiredMemoryIndexManager } from "./test-manager-helpers.js";
 
 let shouldFail = false;
 
-describe("memory manager atomic reindex", () => {
+const describeMemoryAtomic =
+  process.platform === "win32" ? describe.skip : describe;
+describeMemoryAtomic("memory manager atomic reindex", () => {
   let fixtureRoot = "";
   let caseId = 0;
   let workspaceDir: string;

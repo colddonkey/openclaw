@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import type { Mock } from "vitest";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { canCreateSymlinksSync } from "../../test/test-symlink.js";
 
 const { logWarnMock, logDebugMock, logInfoMock } = vi.hoisted(() => ({
   logWarnMock: vi.fn(),
@@ -1044,25 +1045,28 @@ describe("QmdMemoryManager", () => {
     await manager.close();
   });
 
-  it("blocks non-markdown or symlink reads for qmd paths", async () => {
-    const { manager } = await createManager();
+  it.skipIf(!canCreateSymlinksSync())(
+    "blocks non-markdown or symlink reads for qmd paths",
+    async () => {
+      const { manager } = await createManager();
 
-    const textPath = path.join(workspaceDir, "secret.txt");
-    await fs.writeFile(textPath, "nope", "utf-8");
-    await expect(manager.readFile({ relPath: "qmd/workspace-main/secret.txt" })).rejects.toThrow(
-      "path required",
-    );
+      const textPath = path.join(workspaceDir, "secret.txt");
+      await fs.writeFile(textPath, "nope", "utf-8");
+      await expect(manager.readFile({ relPath: "qmd/workspace-main/secret.txt" })).rejects.toThrow(
+        "path required",
+      );
 
-    const target = path.join(workspaceDir, "target.md");
-    await fs.writeFile(target, "ok", "utf-8");
-    const link = path.join(workspaceDir, "link.md");
-    await fs.symlink(target, link);
-    await expect(manager.readFile({ relPath: "qmd/workspace-main/link.md" })).rejects.toThrow(
-      "path required",
-    );
+      const target = path.join(workspaceDir, "target.md");
+      await fs.writeFile(target, "ok", "utf-8");
+      const link = path.join(workspaceDir, "link.md");
+      await fs.symlink(target, link);
+      await expect(manager.readFile({ relPath: "qmd/workspace-main/link.md" })).rejects.toThrow(
+        "path required",
+      );
 
-    await manager.close();
-  });
+      await manager.close();
+    },
+  );
 
   it("reads only requested line ranges without loading the whole file", async () => {
     const readFileSpy = vi.spyOn(fs, "readFile");
@@ -1333,7 +1337,8 @@ describe("QmdMemoryManager", () => {
     ).rejects.toThrow(/qmd query returned invalid JSON/);
     await manager.close();
   });
-  describe("model cache symlink", () => {
+  const describeSymlink = canCreateSymlinksSync() ? describe : describe.skip;
+  describeSymlink("model cache symlink", () => {
     let defaultModelsDir: string;
     let customModelsDir: string;
     let savedXdgCacheHome: string | undefined;
@@ -1367,7 +1372,8 @@ describe("QmdMemoryManager", () => {
       const stat = await fs.lstat(customModelsDir);
       expect(stat.isSymbolicLink()).toBe(true);
       const target = await fs.readlink(customModelsDir);
-      expect(target).toBe(defaultModelsDir);
+      // Normalize for comparison (Windows may add trailing separator)
+      expect(path.resolve(target)).toBe(path.resolve(defaultModelsDir));
 
       // Models are accessible through the symlink.
       const content = await fs.readFile(path.join(customModelsDir, "model.bin"), "utf-8");

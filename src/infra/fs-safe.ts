@@ -50,7 +50,8 @@ export async function openFileWithinRoot(params: {
   }
   const rootWithSep = ensureTrailingSep(rootReal);
   const resolved = path.resolve(rootWithSep, params.relativePath);
-  if (!resolved.startsWith(rootWithSep)) {
+  const rel = path.relative(rootWithSep, resolved);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) {
     throw new SafeOpenError("invalid-path", "path escapes root");
   }
 
@@ -77,7 +78,8 @@ export async function openFileWithinRoot(params: {
     }
 
     const realPath = await fs.realpath(resolved);
-    if (!realPath.startsWith(rootWithSep)) {
+    const realRel = path.relative(rootWithSep, realPath);
+    if (realRel.startsWith("..") || path.isAbsolute(realRel)) {
       throw new SafeOpenError("invalid-path", "path escapes root");
     }
 

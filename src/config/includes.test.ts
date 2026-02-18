@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { canCreateSymlinksSync } from "../../test/test-symlink.js";
 import {
   CircularIncludeError,
   ConfigIncludeError,
@@ -541,27 +542,30 @@ describe("security: path traversal protection (CWE-22)", () => {
       expect(resolve(obj, files, rootConfigPath)).toEqual({ root: true });
     });
 
-    it("allows include files when the config root path is a symlink", async () => {
-      const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-includes-symlink-"));
-      try {
-        const realRoot = path.join(tempRoot, "real");
-        const linkRoot = path.join(tempRoot, "link");
-        await fs.mkdir(path.join(realRoot, "includes"), { recursive: true });
-        await fs.writeFile(
-          path.join(realRoot, "includes", "extra.json5"),
-          "{ logging: { redactSensitive: 'tools' } }\n",
-          "utf-8",
-        );
-        await fs.symlink(realRoot, linkRoot);
+    it.skipIf(!canCreateSymlinksSync())(
+      "allows include files when the config root path is a symlink",
+      async () => {
+        const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-includes-symlink-"));
+        try {
+          const realRoot = path.join(tempRoot, "real");
+          const linkRoot = path.join(tempRoot, "link");
+          await fs.mkdir(path.join(realRoot, "includes"), { recursive: true });
+          await fs.writeFile(
+            path.join(realRoot, "includes", "extra.json5"),
+            "{ logging: { redactSensitive: 'tools' } }\n",
+            "utf-8",
+          );
+          await fs.symlink(realRoot, linkRoot);
 
-        const result = resolveConfigIncludes(
-          { $include: "./includes/extra.json5" },
-          path.join(linkRoot, "openclaw.json"),
-        );
-        expect(result).toEqual({ logging: { redactSensitive: "tools" } });
-      } finally {
-        await fs.rm(tempRoot, { recursive: true, force: true });
-      }
-    });
+          const result = resolveConfigIncludes(
+            { $include: "./includes/extra.json5" },
+            path.join(linkRoot, "openclaw.json"),
+          );
+          expect(result).toEqual({ logging: { redactSensitive: "tools" } });
+        } finally {
+          await fs.rm(tempRoot, { recursive: true, force: true });
+        }
+      },
+    );
   });
 });

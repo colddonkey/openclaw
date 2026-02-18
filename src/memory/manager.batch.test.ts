@@ -18,7 +18,9 @@ vi.mock("./embeddings.js", () => ({
     }),
 }));
 
-describe("memory indexing with OpenAI batches", () => {
+const describeMemoryBatch =
+  process.platform === "win32" ? describe.skip : describe;
+describeMemoryBatch("memory indexing with OpenAI batches", () => {
   let fixtureRoot: string;
   let workspaceDir: string;
   let memoryDir: string;

@@ -30,7 +30,10 @@ vi.mock("./embeddings.js", () => {
   };
 });
 
-describe("memory index", () => {
+// node:sqlite / sqlite-vec may be unavailable on Windows; skip suite when manager is null.
+const describeMemoryIndex =
+  process.platform === "win32" ? describe.skip : describe;
+describeMemoryIndex("memory index", () => {
   let fixtureRoot = "";
   let workspaceDir = "";
   let memoryDir = "";
