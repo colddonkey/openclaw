@@ -112,28 +112,15 @@ describe("applyExtraParamsToAgent", () => {
     });
   });
 
-  it("adds Anthropic 1M beta header when context1m is enabled for Opus/Sonnet", () => {
+  it("auto-adds context-1m-2025-08-07 for claude-opus-4-6 without any config", () => {
     const calls: Array<SimpleStreamOptions | undefined> = [];
     const baseStreamFn: StreamFn = (_model, _context, options) => {
       calls.push(options);
       return {} as ReturnType<StreamFn>;
     };
     const agent = { streamFn: baseStreamFn };
-    const cfg = {
-      agents: {
-        defaults: {
-          models: {
-            "anthropic/claude-opus-4-6": {
-              params: {
-                context1m: true,
-              },
-            },
-          },
-        },
-      },
-    };
 
-    applyExtraParamsToAgent(agent, cfg, "anthropic", "claude-opus-4-6");
+    applyExtraParamsToAgent(agent, undefined, "anthropic", "claude-opus-4-6");
 
     const model = {
       api: "anthropic-messages",
@@ -151,7 +138,33 @@ describe("applyExtraParamsToAgent", () => {
     });
   });
 
-  it("merges existing anthropic-beta headers with configured betas", () => {
+  it("auto-adds context-1m-2025-08-07 for claude-sonnet-4-6 without any config", () => {
+    const calls: Array<SimpleStreamOptions | undefined> = [];
+    const baseStreamFn: StreamFn = (_model, _context, options) => {
+      calls.push(options);
+      return {} as ReturnType<StreamFn>;
+    };
+    const agent = { streamFn: baseStreamFn };
+
+    applyExtraParamsToAgent(agent, undefined, "anthropic", "claude-sonnet-4-6");
+
+    const model = {
+      api: "anthropic-messages",
+      provider: "anthropic",
+      id: "claude-sonnet-4-6",
+    } as Model<"anthropic-messages">;
+    const context: Context = { messages: [] };
+
+    void agent.streamFn?.(model, context, { headers: { "X-Custom": "1" } });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.headers).toEqual({
+      "X-Custom": "1",
+      "anthropic-beta": "context-1m-2025-08-07",
+    });
+  });
+
+  it("merges existing anthropic-beta headers with configured betas and auto context-1m", () => {
     const calls: Array<SimpleStreamOptions | undefined> = [];
     const baseStreamFn: StreamFn = (_model, _context, options) => {
       calls.push(options);
@@ -164,7 +177,6 @@ describe("applyExtraParamsToAgent", () => {
           models: {
             "anthropic/claude-sonnet-4-6": {
               params: {
-                context1m: true,
                 anthropicBeta: ["files-api-2025-04-14"],
               },
             },
@@ -192,28 +204,15 @@ describe("applyExtraParamsToAgent", () => {
     });
   });
 
-  it("ignores context1m for non-Opus/Sonnet Anthropic models", () => {
+  it("does not add context-1m beta for non-Opus/Sonnet Anthropic models (haiku)", () => {
     const calls: Array<SimpleStreamOptions | undefined> = [];
     const baseStreamFn: StreamFn = (_model, _context, options) => {
       calls.push(options);
       return {} as ReturnType<StreamFn>;
     };
     const agent = { streamFn: baseStreamFn };
-    const cfg = {
-      agents: {
-        defaults: {
-          models: {
-            "anthropic/claude-haiku-3-5": {
-              params: {
-                context1m: true,
-              },
-            },
-          },
-        },
-      },
-    };
 
-    applyExtraParamsToAgent(agent, cfg, "anthropic", "claude-haiku-3-5");
+    applyExtraParamsToAgent(agent, undefined, "anthropic", "claude-haiku-3-5");
 
     const model = {
       api: "anthropic-messages",

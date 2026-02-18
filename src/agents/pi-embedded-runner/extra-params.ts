@@ -194,12 +194,9 @@ function resolveAnthropicBetas(
     }
   }
 
-  if (extraParams?.context1m === true) {
-    if (isAnthropic1MModel(modelId)) {
-      betas.add(ANTHROPIC_CONTEXT_1M_BETA);
-    } else {
-      log.warn(`ignoring context1m for non-opus/sonnet model: ${provider}/${modelId}`);
-    }
+  // Auto-enable 1M context window for all claude-opus-4 and claude-sonnet-4 models.
+  if (isAnthropic1MModel(modelId)) {
+    betas.add(ANTHROPIC_CONTEXT_1M_BETA);
   }
 
   return betas.size > 0 ? [...betas] : undefined;

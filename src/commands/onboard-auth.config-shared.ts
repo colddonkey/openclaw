@@ -60,6 +60,22 @@ export function applyAgentDefaultModelPrimary(
   };
 }
 
+export function applyAgentDefaultThinkingLevel(
+  cfg: OpenClawConfig,
+  level: "off" | "minimal" | "low" | "medium" | "high" | "xhigh",
+): OpenClawConfig {
+  return {
+    ...cfg,
+    agents: {
+      ...cfg.agents,
+      defaults: {
+        ...cfg.agents?.defaults,
+        thinkingDefault: level,
+      },
+    },
+  };
+}
+
 export function applyProviderConfigWithDefaultModels(
   cfg: OpenClawConfig,
   params: {
