@@ -13,6 +13,11 @@ vi.mock("./node-llama.js", () => ({
   importNodeLlamaCpp: (...args: unknown[]) => importNodeLlamaCppMock(...args),
 }));
 
+vi.mock("./embeddings-onnx.js", () => ({
+  createOnnxEmbeddingProvider: vi.fn().mockRejectedValue(new Error("ONNX not available in test")),
+  isOnnxAvailable: vi.fn().mockResolvedValue(false),
+}));
+
 const createFetchMock = () =>
   vi.fn(async (_input?: unknown, _init?: unknown) => ({
     ok: true,
@@ -292,7 +297,9 @@ describe("embedding provider local fallback", () => {
 
   it("throws a helpful error when local is requested and fallback is none", async () => {
     mockMissingLocalEmbeddingDependency();
-    await expect(createLocalProvider()).rejects.toThrow(/optional dependency node-llama-cpp/i);
+    await expect(createLocalProvider()).rejects.toThrow(
+      /optional dependencies for local embeddings/i,
+    );
   });
 
   it("mentions every remote provider in local setup guidance", async () => {

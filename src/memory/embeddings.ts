@@ -4,6 +4,7 @@ import type { OpenClawConfig } from "../config/config.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { resolveUserPath } from "../utils.js";
 import { createGeminiEmbeddingProvider, type GeminiEmbeddingClient } from "./embeddings-gemini.js";
+import { createOnnxEmbeddingProvider, isOnnxAvailable } from "./embeddings-onnx.js";
 import { createOpenAiEmbeddingProvider, type OpenAiEmbeddingClient } from "./embeddings-openai.js";
 import { createVoyageEmbeddingProvider, type VoyageEmbeddingClient } from "./embeddings-voyage.js";
 import { importNodeLlamaCpp } from "./node-llama.js";
@@ -87,13 +88,39 @@ function isMissingApiKeyError(err: unknown): boolean {
   return message.includes("No API key found for provider");
 }
 
+/**
+ * Whether the user explicitly requested a GGUF model (node-llama-cpp path).
+ * Custom .gguf paths or hf:...GGUF URIs should always use node-llama-cpp.
+ */
+function isGgufModelRequested(options: EmbeddingProviderOptions): boolean {
+  const explicit = options.local?.modelPath?.trim();
+  if (!explicit) return false;
+  return /\.gguf$/i.test(explicit) || /gguf/i.test(explicit);
+}
+
 async function createLocalEmbeddingProvider(
+  options: EmbeddingProviderOptions,
+): Promise<EmbeddingProvider> {
+  // When no explicit GGUF model is requested, prefer the ONNX path (faster + no C++ build).
+  if (!isGgufModelRequested(options) && (await isOnnxAvailable())) {
+    try {
+      return await createOnnxEmbeddingProvider({
+        modelCacheDir: options.local?.modelCacheDir?.trim(),
+      });
+    } catch {
+      // ONNX failed (model download, runtime issue, etc.) — fall through to node-llama-cpp.
+    }
+  }
+
+  return createNodeLlamaCppProvider(options);
+}
+
+async function createNodeLlamaCppProvider(
   options: EmbeddingProviderOptions,
 ): Promise<EmbeddingProvider> {
   const modelPath = options.local?.modelPath?.trim() || DEFAULT_LOCAL_MODEL;
   const modelCacheDir = options.local?.modelCacheDir?.trim();
 
-  // Lazy-load node-llama-cpp to keep startup light unless local is enabled.
   const { getLlama, resolveModelFile, LlamaLogLevel } = await importNodeLlamaCpp();
 
   let llama: Llama | null = null;
@@ -243,24 +270,26 @@ export async function createEmbeddingProvider(
   }
 }
 
-function isNodeLlamaCppMissing(err: unknown): boolean {
+function isLocalDepMissing(err: unknown): boolean {
   if (!(err instanceof Error)) {
     return false;
   }
   const code = (err as Error & { code?: unknown }).code;
   if (code === "ERR_MODULE_NOT_FOUND") {
-    return err.message.includes("node-llama-cpp");
+    return (
+      err.message.includes("node-llama-cpp") || err.message.includes("@huggingface/transformers")
+    );
   }
   return false;
 }
 
 function formatLocalSetupError(err: unknown): string {
   const detail = formatErrorMessage(err);
-  const missing = isNodeLlamaCppMissing(err);
+  const missing = isLocalDepMissing(err);
   return [
     "Local embeddings unavailable.",
     missing
-      ? "Reason: optional dependency node-llama-cpp is missing (or failed to install)."
+      ? "Reason: optional dependencies for local embeddings are missing (node-llama-cpp or @huggingface/transformers)."
       : detail
         ? `Reason: ${detail}`
         : undefined,

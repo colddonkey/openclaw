@@ -181,6 +181,7 @@
   },
   "devDependencies": {
     "@grammyjs/types": "^3.24.0",
+    "@huggingface/transformers": "^3.8.1",
     "@lit-labs/signals": "^0.2.0",
     "@lit/context": "^1.1.6",
     "@types/express": "^5.0.6",
@@ -193,6 +194,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "lit": "^3.3.2",
     "ollama": "^0.6.3",
+    "onnxruntime-node": "^1.24.1",
     "oxfmt": "0.33.0",
     "oxlint": "^1.48.0",
     "oxlint-tsgolint": "^0.14.0",
@@ -203,8 +205,24 @@
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "@napi-rs/canvas": "^0.1.89",
-    "node-llama-cpp": "3.15.1"
+    "node-llama-cpp": "3.15.1",
+    "onnxruntime-node": "^1.24.1"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    },
+    "@napi-rs/canvas": {
+      "optional": true
+    },
+    "node-llama-cpp": {
+      "optional": true
+    },
+    "onnxruntime-node": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.12.0"
