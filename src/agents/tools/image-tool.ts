@@ -5,6 +5,7 @@ import type { OpenClawConfig } from "../../config/config.js";
 import { resolveUserPath } from "../../utils.js";
 import { getDefaultLocalRoots, loadWebMedia } from "../../web/media.js";
 import { ensureAuthProfileStore, listProfilesForProvider } from "../auth-profiles.js";
+import { OPUS_PREV_REF, OPUS_REF } from "../model-identity.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
 import { minimaxUnderstandImage } from "../minimax-vlm.js";
 import { getApiKeyForModel, requireApiKey, resolveEnvApiKey } from "../model-auth.js";
@@ -24,8 +25,8 @@ import {
 } from "./image-tool.helpers.js";
 
 const DEFAULT_PROMPT = "Describe the image.";
-const ANTHROPIC_IMAGE_PRIMARY = "anthropic/claude-opus-4-6";
-const ANTHROPIC_IMAGE_FALLBACK = "anthropic/claude-opus-4-5";
+const ANTHROPIC_IMAGE_PRIMARY = OPUS_REF;
+const ANTHROPIC_IMAGE_FALLBACK = OPUS_PREV_REF;
 const DEFAULT_MAX_IMAGES = 20;
 
 export const __testing = {

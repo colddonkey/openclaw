@@ -1,4 +1,5 @@
 import { DEFAULT_PROVIDER } from "../agents/defaults.js";
+import { SONNET_MODEL_ID } from "../agents/model-identity.js";
 import { buildModelAliasIndex, modelKey } from "../agents/model-selection.js";
 import type { OpenClawConfig } from "../config/config.js";
 import type { ModelProviderConfig } from "../config/types.models.js";
@@ -369,7 +370,7 @@ async function promptCustomApiModelId(prompter: WizardPrompter): Promise<string>
   return (
     await prompter.text({
       message: "Model ID",
-      placeholder: "e.g. llama3, claude-3-7-sonnet",
+      placeholder: `e.g. llama3, ${SONNET_MODEL_ID}`,
       validate: (val) => (val.trim() ? undefined : "Model ID is required"),
     })
   ).trim();

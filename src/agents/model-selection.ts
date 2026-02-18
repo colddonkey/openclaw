@@ -1,6 +1,12 @@
 import type { OpenClawConfig } from "../config/config.js";
 import { resolveAgentConfig, resolveAgentModelPrimary } from "./agent-scope.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "./defaults.js";
+import {
+  OPUS_MODEL_ID,
+  OPUS_PREV_MODEL_ID,
+  SONNET_MODEL_ID,
+  SONNET_PREV_MODEL_ID,
+} from "./model-identity.js";
 import type { ModelCatalogEntry } from "./model-catalog.js";
 import { normalizeGoogleModelId } from "./models-config.providers.js";
 
@@ -17,10 +23,10 @@ export type ModelAliasIndex = {
 };
 
 const ANTHROPIC_MODEL_ALIASES: Record<string, string> = {
-  "opus-4.6": "claude-opus-4-6",
-  "opus-4.5": "claude-opus-4-5",
-  "sonnet-4.6": "claude-sonnet-4-6",
-  "sonnet-4.5": "claude-sonnet-4-5",
+  "opus-4.6": OPUS_MODEL_ID,
+  "opus-4.5": OPUS_PREV_MODEL_ID,
+  "sonnet-4.6": SONNET_MODEL_ID,
+  "sonnet-4.5": SONNET_PREV_MODEL_ID,
 };
 const OPENAI_CODEX_OAUTH_MODEL_PREFIXES = ["gpt-5.3-codex"] as const;
 

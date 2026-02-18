@@ -4,6 +4,12 @@ import {
   CLI_FRESH_WATCHDOG_DEFAULTS,
   CLI_RESUME_WATCHDOG_DEFAULTS,
 } from "./cli-watchdog-defaults.js";
+import {
+  OPUS_MODEL_ID,
+  OPUS_PREV_MODEL_ID,
+  SONNET_MODEL_ID,
+  SONNET_PREV_MODEL_ID,
+} from "./model-identity.js";
 import { normalizeProviderId } from "./model-selection.js";
 
 export type ResolvedCliBackend = {
@@ -16,16 +22,16 @@ const CLAUDE_MODEL_ALIASES: Record<string, string> = {
   "opus-4.6": "opus",
   "opus-4.5": "opus",
   "opus-4": "opus",
-  "claude-opus-4-6": "opus",
-  "claude-opus-4-5": "opus",
+  [OPUS_MODEL_ID]: "opus",
+  [OPUS_PREV_MODEL_ID]: "opus",
   "claude-opus-4": "opus",
   sonnet: "sonnet",
   "sonnet-4.6": "sonnet",
   "sonnet-4.5": "sonnet",
   "sonnet-4.1": "sonnet",
   "sonnet-4.0": "sonnet",
-  "claude-sonnet-4-6": "sonnet",
-  "claude-sonnet-4-5": "sonnet",
+  [SONNET_MODEL_ID]: "sonnet",
+  [SONNET_PREV_MODEL_ID]: "sonnet",
   "claude-sonnet-4-1": "sonnet",
   "claude-sonnet-4-0": "sonnet",
   haiku: "haiku",

@@ -1,14 +1,22 @@
+import {
+  HAIKU_MODEL_ID,
+  OPUS_MODEL_ID,
+  OPUS_PREV_MODEL_ID,
+  SONNET_MODEL_ID,
+  SONNET_PREV_MODEL_ID,
+} from "./model-identity.js";
+
 export type ModelRef = {
   provider?: string | null;
   id?: string | null;
 };
 
 const ANTHROPIC_PREFIXES = [
-  "claude-opus-4-6",
-  "claude-sonnet-4-6",
-  "claude-opus-4-5",
-  "claude-sonnet-4-5",
-  "claude-haiku-4-5",
+  OPUS_MODEL_ID,
+  SONNET_MODEL_ID,
+  OPUS_PREV_MODEL_ID,
+  SONNET_PREV_MODEL_ID,
+  HAIKU_MODEL_ID,
 ];
 const OPENAI_MODELS = ["gpt-5.2", "gpt-5.0"];
 const CODEX_MODELS = [

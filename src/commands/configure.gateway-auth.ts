@@ -1,4 +1,5 @@
 import { ensureAuthProfileStore } from "../agents/auth-profiles.js";
+import { ANTHROPIC_OAUTH_MODEL_REFS, SONNET_REF } from "../agents/model-identity.js";
 import type { OpenClawConfig, GatewayAuthConfig } from "../config/config.js";
 import type { RuntimeEnv } from "../runtime.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
@@ -27,14 +28,6 @@ function sanitizeTokenValue(value: string | undefined): string | undefined {
   }
   return trimmed;
 }
-
-const ANTHROPIC_OAUTH_MODEL_KEYS = [
-  "anthropic/claude-sonnet-4-6",
-  "anthropic/claude-opus-4-6",
-  "anthropic/claude-opus-4-5",
-  "anthropic/claude-sonnet-4-5",
-  "anthropic/claude-haiku-4-5",
-];
 
 export function buildGatewayAuthConfig(params: {
   existing?: GatewayAuthConfig;
@@ -120,8 +113,8 @@ export async function promptAuthConfig(
     const allowlistSelection = await promptModelAllowlist({
       config: next,
       prompter,
-      allowedKeys: anthropicOAuth ? ANTHROPIC_OAUTH_MODEL_KEYS : undefined,
-      initialSelections: anthropicOAuth ? ["anthropic/claude-sonnet-4-6"] : undefined,
+      allowedKeys: anthropicOAuth ? [...ANTHROPIC_OAUTH_MODEL_REFS] : undefined,
+      initialSelections: anthropicOAuth ? [SONNET_REF] : undefined,
       message: anthropicOAuth ? "Anthropic OAuth models" : undefined,
     });
     if (allowlistSelection.models) {

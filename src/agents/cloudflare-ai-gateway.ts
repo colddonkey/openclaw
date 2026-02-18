@@ -1,7 +1,8 @@
 import type { ModelDefinitionConfig } from "../config/types.js";
+import { SONNET_DISPLAY_NAME, SONNET_MODEL_ID } from "./model-identity.js";
 
 export const CLOUDFLARE_AI_GATEWAY_PROVIDER_ID = "cloudflare-ai-gateway";
-export const CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_ID = "claude-sonnet-4-5";
+export const CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_ID = SONNET_MODEL_ID;
 export const CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_REF = `${CLOUDFLARE_AI_GATEWAY_PROVIDER_ID}/${CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_ID}`;
 
 export const CLOUDFLARE_AI_GATEWAY_DEFAULT_CONTEXT_WINDOW = 200_000;
@@ -22,7 +23,7 @@ export function buildCloudflareAiGatewayModelDefinition(params?: {
   const id = params?.id?.trim() || CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_ID;
   return {
     id,
-    name: params?.name ?? "Claude Sonnet 4.5",
+    name: params?.name ?? SONNET_DISPLAY_NAME,
     reasoning: params?.reasoning ?? true,
     input: params?.input ?? ["text", "image"],
     cost: CLOUDFLARE_AI_GATEWAY_DEFAULT_COST,

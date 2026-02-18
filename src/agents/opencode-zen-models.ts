@@ -12,9 +12,10 @@
  */
 
 import type { ModelApi, ModelDefinitionConfig } from "../config/types.js";
+import { OPUS_MODEL_ID } from "./model-identity.js";
 
 export const OPENCODE_ZEN_API_BASE_URL = "https://opencode.ai/zen/v1";
-export const OPENCODE_ZEN_DEFAULT_MODEL = "claude-opus-4-6";
+export const OPENCODE_ZEN_DEFAULT_MODEL = OPUS_MODEL_ID;
 export const OPENCODE_ZEN_DEFAULT_MODEL_REF = `opencode/${OPENCODE_ZEN_DEFAULT_MODEL}`;
 
 // Cache for fetched models (1 hour TTL)
