@@ -380,16 +380,16 @@ describe("runCronIsolatedAgentTurn — skill filter", () => {
       const model = callCfg?.agents?.defaults?.model as
         | { primary?: string; fallbacks?: string[] }
         | undefined;
-      expect(model?.primary).toBe("anthropic/claude-sonnet-4-5");
+      expect(model?.primary).toBe("anthropic/claude-sonnet-4-6");
       expect(model?.fallbacks).toEqual(defaultFallbacks);
     }
 
     it("preserves defaults when agent overrides primary as string", async () => {
-      await expectPrimaryOverridePreservesDefaults("anthropic/claude-sonnet-4-5");
+      await expectPrimaryOverridePreservesDefaults("anthropic/claude-sonnet-4-6");
     });
 
     it("preserves defaults when agent overrides primary in object form", async () => {
-      await expectPrimaryOverridePreservesDefaults({ primary: "anthropic/claude-sonnet-4-5" });
+      await expectPrimaryOverridePreservesDefaults({ primary: "anthropic/claude-sonnet-4-6" });
     });
   });
 });

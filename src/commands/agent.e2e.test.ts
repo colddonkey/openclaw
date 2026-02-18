@@ -49,8 +49,8 @@ function mockConfig(
   configSpy.mockReturnValue({
     agents: {
       defaults: {
-        model: { primary: "anthropic/claude-opus-4-5" },
-        models: { "anthropic/claude-opus-4-5": {} },
+        model: { primary: "anthropic/claude-opus-4-6" },
+        models: { "anthropic/claude-opus-4-6": {} },
         workspace: path.join(home, "openclaw"),
         ...agentOverrides,
       },
@@ -185,7 +185,7 @@ describe("agentCommand", () => {
       mockConfig(home, store, {
         model: { primary: "openai/gpt-4.1-mini" },
         models: {
-          "anthropic/claude-opus-4-5": {},
+          "anthropic/claude-opus-4-6": {},
           "openai/gpt-4.1-mini": {},
         },
       });
@@ -206,7 +206,7 @@ describe("agentCommand", () => {
           sessionId: "session-subagent",
           updatedAt: Date.now(),
           providerOverride: "anthropic",
-          modelOverride: "claude-opus-4-5",
+          modelOverride: "claude-opus-4-6",
         },
       });
 
@@ -216,14 +216,14 @@ describe("agentCommand", () => {
           fallbacks: ["openai/gpt-5.2"],
         },
         models: {
-          "anthropic/claude-opus-4-5": {},
+          "anthropic/claude-opus-4-6": {},
           "openai/gpt-4.1-mini": {},
           "openai/gpt-5.2": {},
         },
       });
 
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
-        { id: "claude-opus-4-5", name: "Opus", provider: "anthropic" },
+        { id: "claude-opus-4-6", name: "Opus", provider: "anthropic" },
         { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "openai" },
         { id: "gpt-5.2", name: "GPT-5.2", provider: "openai" },
       ]);
@@ -249,7 +249,7 @@ describe("agentCommand", () => {
         .mocked(runEmbeddedPiAgent)
         .mock.calls.map((call) => ({ provider: call[0]?.provider, model: call[0]?.model }));
       expect(attempts).toEqual([
-        { provider: "anthropic", model: "claude-opus-4-5" },
+        { provider: "anthropic", model: "claude-opus-4-6" },
         { provider: "openai", model: "gpt-5.2" },
       ]);
     });
@@ -316,8 +316,8 @@ describe("agentCommand", () => {
       mockConfig(home, store);
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
           reasoning: true,
         },

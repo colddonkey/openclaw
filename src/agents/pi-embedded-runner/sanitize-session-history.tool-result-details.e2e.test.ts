@@ -36,7 +36,7 @@ describe("sanitizeSessionHistory toolResult details stripping", () => {
       messages,
       modelApi: "anthropic-messages",
       provider: "anthropic",
-      modelId: "claude-opus-4-5",
+      modelId: "claude-opus-4-6",
       sessionManager: sm,
       sessionId: "test",
     });

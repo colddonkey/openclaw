@@ -151,7 +151,7 @@ describe("image tool implicit imageModel config", () => {
     };
     expect(resolveImageModelConfigForTool({ cfg, agentDir })).toEqual({
       primary: "minimax/MiniMax-VL-01",
-      fallbacks: ["openai/gpt-5-mini", "anthropic/claude-opus-4-5"],
+      fallbacks: ["openai/gpt-5-mini", "anthropic/claude-opus-4-6"],
     });
     expect(createImageTool({ config: cfg, agentDir })).not.toBeNull();
   });
@@ -166,7 +166,7 @@ describe("image tool implicit imageModel config", () => {
     };
     expect(resolveImageModelConfigForTool({ cfg, agentDir })).toEqual({
       primary: "zai/glm-4.6v",
-      fallbacks: ["openai/gpt-5-mini", "anthropic/claude-opus-4-5"],
+      fallbacks: ["openai/gpt-5-mini", "anthropic/claude-opus-4-6"],
     });
     expect(createImageTool({ config: cfg, agentDir })).not.toBeNull();
   });
@@ -671,12 +671,12 @@ describe("image tool response validation", () => {
   it("returns trimmed text from image-model responses", () => {
     const text = __testing.coerceImageAssistantText({
       provider: "anthropic",
-      model: "claude-opus-4-5",
+      model: "claude-opus-4-6",
       message: {
         ...createAssistantMessage({
           api: "anthropic-messages",
           provider: "anthropic",
-          model: "claude-opus-4-5",
+          model: "claude-opus-4-6",
         }),
         content: [{ type: "text", text: "  hello  " }],
       } as never,

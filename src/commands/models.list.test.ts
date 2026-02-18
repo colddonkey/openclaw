@@ -196,7 +196,7 @@ describe("models list/status", () => {
     const runtime = makeRuntime();
 
     modelRegistryState.models = [
-      makeGoogleAntigravityTemplate("claude-opus-4-5-thinking", "Claude Opus 4.5 Thinking"),
+      makeGoogleAntigravityTemplate("claude-opus-4-6-thinking", "Claude Opus 4.6 Thinking"),
     ];
     modelRegistryState.available = [];
     params.setup?.();
@@ -334,8 +334,8 @@ describe("models list/status", () => {
   it("models list resolves antigravity opus 4.6 thinking from 4.5 template", async () => {
     const payload = await runGoogleAntigravityListCase({
       configuredModelId: "claude-opus-4-6-thinking",
-      templateId: "claude-opus-4-5-thinking",
-      templateName: "Claude Opus 4.5 Thinking",
+      templateId: "claude-opus-4-6-thinking",
+      templateName: "Claude Opus 4.6 Thinking",
     });
     expectAntigravityModel(payload, {
       key: "google-antigravity/claude-opus-4-6-thinking",
@@ -347,8 +347,8 @@ describe("models list/status", () => {
   it("models list resolves antigravity opus 4.6 (non-thinking) from 4.5 template", async () => {
     const payload = await runGoogleAntigravityListCase({
       configuredModelId: "claude-opus-4-6",
-      templateId: "claude-opus-4-5",
-      templateName: "Claude Opus 4.5",
+      templateId: "claude-opus-4-6",
+      templateName: "Claude Opus 4.6",
     });
     expectAntigravityModel(payload, {
       key: "google-antigravity/claude-opus-4-6",
@@ -360,8 +360,8 @@ describe("models list/status", () => {
   it("models list marks synthesized antigravity opus 4.6 thinking as available when template is available", async () => {
     const payload = await runGoogleAntigravityListCase({
       configuredModelId: "claude-opus-4-6-thinking",
-      templateId: "claude-opus-4-5-thinking",
-      templateName: "Claude Opus 4.5 Thinking",
+      templateId: "claude-opus-4-6-thinking",
+      templateName: "Claude Opus 4.6 Thinking",
       available: true,
     });
     expectAntigravityModel(payload, {
@@ -373,8 +373,8 @@ describe("models list/status", () => {
   it("models list marks synthesized antigravity opus 4.6 (non-thinking) as available when template is available", async () => {
     const payload = await runGoogleAntigravityListCase({
       configuredModelId: "claude-opus-4-6",
-      templateId: "claude-opus-4-5",
-      templateName: "Claude Opus 4.5",
+      templateId: "claude-opus-4-6",
+      templateName: "Claude Opus 4.6",
       available: true,
     });
     expectAntigravityModel(payload, {
@@ -386,8 +386,8 @@ describe("models list/status", () => {
   it("models list prefers registry availability over provider auth heuristics", async () => {
     const payload = await runGoogleAntigravityListCase({
       configuredModelId: "claude-opus-4-6-thinking",
-      templateId: "claude-opus-4-5-thinking",
-      templateName: "Claude Opus 4.5 Thinking",
+      templateId: "claude-opus-4-6-thinking",
+      templateName: "Claude Opus 4.6 Thinking",
       withAuthProfile: true,
     });
     expectAntigravityModel(payload, {
@@ -469,7 +469,7 @@ describe("models list/status", () => {
       code: "MODEL_DISCOVERY_UNAVAILABLE",
     });
     modelRegistryState.available = [
-      makeGoogleAntigravityTemplate("claude-opus-4-5-thinking", "Claude Opus 4.5 Thinking"),
+      makeGoogleAntigravityTemplate("claude-opus-4-6-thinking", "Claude Opus 4.6 Thinking"),
     ];
 
     const { loadModelRegistry } = await import("./models/list.registry.js");

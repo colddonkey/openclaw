@@ -26,9 +26,9 @@ async function runModelDirective(
     makeWhatsAppDirectiveConfig(
       home,
       {
-        model: { primary: "anthropic/claude-opus-4-5" },
+        model: { primary: "anthropic/claude-opus-4-6" },
         models: {
-          "anthropic/claude-opus-4-5": {},
+          "anthropic/claude-opus-4-6": {},
           "openai/gpt-4.1-mini": {},
         },
         ...options.defaults,
@@ -57,7 +57,7 @@ describe("directive behavior", () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([]);
       const text = await runModelDirective(home, "/model");
-      expect(text).toContain("Current: anthropic/claude-opus-4-5");
+      expect(text).toContain("Current: anthropic/claude-opus-4-6");
       expect(text).toContain("Switch: /model <provider/model>");
       expect(text).toContain("Browse: /models (providers) or /models <provider> (models)");
       expect(text).toContain("More: /model status");
@@ -67,14 +67,14 @@ describe("directive behavior", () => {
   it("includes catalog providers when no allowlist is set", async () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValue([
-        { id: "claude-opus-4-5", name: "Opus 4.5", provider: "anthropic" },
+        { id: "claude-opus-4-6", name: "Opus 4.6", provider: "anthropic" },
         { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "openai" },
         { id: "grok-4", name: "Grok 4", provider: "xai" },
       ]);
       const text = await runModelDirective(home, "/model list", {
         defaults: {
           model: {
-            primary: "anthropic/claude-opus-4-5",
+            primary: "anthropic/claude-opus-4-6",
             fallbacks: ["openai/gpt-4.1-mini"],
           },
           imageModel: { primary: "minimax/MiniMax-M2.1" },
@@ -96,15 +96,15 @@ describe("directive behavior", () => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
           provider: "anthropic",
-          id: "claude-opus-4-5",
-          name: "Claude Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Claude Opus 4.6",
         },
         { provider: "openai", id: "gpt-4.1-mini", name: "GPT-4.1 mini" },
       ]);
       const text = await runModelDirective(home, "/models minimax", {
         defaults: {
           models: {
-            "anthropic/claude-opus-4-5": {},
+            "anthropic/claude-opus-4-6": {},
             "openai/gpt-4.1-mini": {},
             "minimax/MiniMax-M2.1": { alias: "minimax" },
           },
@@ -132,7 +132,7 @@ describe("directive behavior", () => {
       const text = await runModelDirective(home, "/model list", {
         defaults: {
           models: {
-            "anthropic/claude-opus-4-5": {},
+            "anthropic/claude-opus-4-6": {},
           },
         },
       });
@@ -151,9 +151,9 @@ describe("directive behavior", () => {
         makeWhatsAppDirectiveConfig(
           home,
           {
-            model: { primary: "anthropic/claude-opus-4-5" },
+            model: { primary: "anthropic/claude-opus-4-6" },
             models: {
-              "anthropic/claude-opus-4-5": {},
+              "anthropic/claude-opus-4-6": {},
               "openai/gpt-4.1-mini": {},
             },
           },
@@ -181,7 +181,7 @@ describe("directive behavior", () => {
             model: { primary: "openai/gpt-4.1-mini" },
             models: {
               "openai/gpt-4.1-mini": {},
-              "anthropic/claude-opus-4-5": { alias: "Opus" },
+              "anthropic/claude-opus-4-6": { alias: "Opus" },
             },
           },
           { session: { store: storePath } },
@@ -189,7 +189,7 @@ describe("directive behavior", () => {
       );
 
       assertModelSelection(storePath, {
-        model: "claude-opus-4-5",
+        model: "claude-opus-4-6",
         provider: "anthropic",
       });
       expect(runEmbeddedPiAgent).not.toHaveBeenCalled();

@@ -82,7 +82,7 @@ function createReplyConfig(home: string, streamMode?: "block"): OpenClawConfig {
   return {
     agents: {
       defaults: {
-        model: { primary: "anthropic/claude-opus-4-5" },
+        model: { primary: "anthropic/claude-opus-4-6" },
         workspace: path.join(home, "openclaw"),
       },
     },
@@ -162,7 +162,7 @@ describe("block streaming", () => {
     piEmbeddedMock.isEmbeddedPiRunStreaming.mockReset().mockReturnValue(false);
     piEmbeddedMock.runEmbeddedPiAgent.mockReset();
     vi.mocked(loadModelCatalog).mockResolvedValue([
-      { id: "claude-opus-4-5", name: "Opus 4.5", provider: "anthropic" },
+      { id: "claude-opus-4-6", name: "Opus 4.6", provider: "anthropic" },
       { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "openai" },
     ]);
   });

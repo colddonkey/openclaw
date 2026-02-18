@@ -13,7 +13,7 @@ function makeWorkElevatedAllowlistConfig(home: string) {
   const base = makeWhatsAppDirectiveConfig(
     home,
     {
-      model: "anthropic/claude-opus-4-5",
+      model: "anthropic/claude-opus-4-6",
     },
     {
       tools: {
@@ -50,7 +50,7 @@ function makeElevatedDirectiveConfig(
   return makeWhatsAppDirectiveConfig(
     home,
     {
-      model: "anthropic/claude-opus-4-5",
+      model: "anthropic/claude-opus-4-6",
       ...defaults,
     },
     {

@@ -13,9 +13,9 @@ import { getReplyFromConfig } from "./reply.js";
 
 function makeDefaultModelConfig(home: string) {
   return makeWhatsAppDirectiveConfig(home, {
-    model: { primary: "anthropic/claude-opus-4-5" },
+    model: { primary: "anthropic/claude-opus-4-6" },
     models: {
-      "anthropic/claude-opus-4-5": {},
+      "anthropic/claude-opus-4-6": {},
       "openai/gpt-4.1-mini": {},
     },
   });
@@ -43,7 +43,7 @@ describe("directive behavior", () => {
       expect(runEmbeddedPiAgent).toHaveBeenCalledOnce();
       const call = vi.mocked(runEmbeddedPiAgent).mock.calls[0]?.[0];
       expect(call?.provider).toBe("anthropic");
-      expect(call?.model).toBe("claude-opus-4-5");
+      expect(call?.model).toBe("claude-opus-4-6");
     });
   });
   it("defaults thinking to low for reasoning-capable models", async () => {
@@ -51,8 +51,8 @@ describe("directive behavior", () => {
       mockEmbeddedTextResult("done");
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
           reasoning: true,
         },
@@ -65,7 +65,7 @@ describe("directive behavior", () => {
           To: "+2000",
         },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-5" } }),
+        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-6" } }),
       );
 
       expect(runEmbeddedPiAgent).toHaveBeenCalledOnce();
@@ -88,7 +88,7 @@ describe("directive behavior", () => {
         {},
         makeWhatsAppDirectiveConfig(
           home,
-          { model: { primary: "anthropic/claude-opus-4-5" } },
+          { model: { primary: "anthropic/claude-opus-4-6" } },
           {
             tools: {
               elevated: {

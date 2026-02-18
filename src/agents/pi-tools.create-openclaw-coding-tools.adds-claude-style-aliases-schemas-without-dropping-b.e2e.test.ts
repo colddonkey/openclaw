@@ -74,7 +74,7 @@ describe("createOpenClawCodingTools", () => {
     const anthropicTools = createOpenClawCodingTools({
       config,
       modelProvider: "anthropic",
-      modelId: "claude-opus-4-5",
+      modelId: "claude-opus-4-6",
     });
     expect(anthropicTools.some((tool) => tool.name === "apply_patch")).toBe(false);
   });

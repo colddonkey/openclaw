@@ -62,7 +62,7 @@ describe("applyAuthChoice (moonshot)", () => {
       config: {
         agents: {
           defaults: {
-            model: { primary: "anthropic/claude-opus-4-5" },
+            model: { primary: "anthropic/claude-opus-4-6" },
           },
         },
       },
@@ -72,7 +72,7 @@ describe("applyAuthChoice (moonshot)", () => {
     expect(text).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Enter Moonshot API key (.cn)" }),
     );
-    expect(result.config.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-5");
+    expect(result.config.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-6");
     expect(result.config.models?.providers?.moonshot?.baseUrl).toBe("https://api.moonshot.cn/v1");
     expect(result.agentModelOverride).toBe("moonshot/kimi-k2.5");
 

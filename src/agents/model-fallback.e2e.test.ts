@@ -279,14 +279,14 @@ describe("runWithModelFallback", () => {
       runWithModelFallback({
         cfg,
         provider: "anthropic",
-        model: "claude-opus-4-5",
+        model: "claude-opus-4-6",
         fallbacksOverride: ["anthropic/claude-haiku-3-5"],
         run,
       }),
     ).rejects.toThrow("All models failed");
 
     expect(run.mock.calls).toEqual([
-      ["anthropic", "claude-opus-4-5"],
+      ["anthropic", "claude-opus-4-6"],
       ["anthropic", "claude-haiku-3-5"],
     ]);
   });
@@ -299,7 +299,7 @@ describe("runWithModelFallback", () => {
     const res = await runWithModelFallback({
       cfg,
       provider: "anthropic",
-      model: "claude-opus-4-5",
+      model: "claude-opus-4-6",
       fallbacksOverride: ["openai/gpt-4.1"],
       run: async (provider, model) => {
         calls.push({ provider, model });
@@ -315,7 +315,7 @@ describe("runWithModelFallback", () => {
 
     expect(res.result).toBe("ok");
     expect(calls).toEqual([
-      { provider: "anthropic", model: "claude-opus-4-5" },
+      { provider: "anthropic", model: "claude-opus-4-6" },
       { provider: "openai", model: "gpt-4.1" },
     ]);
   });
@@ -329,7 +329,7 @@ describe("runWithModelFallback", () => {
       runWithModelFallback({
         cfg,
         provider: "anthropic",
-        model: "claude-opus-4-5",
+        model: "claude-opus-4-6",
         fallbacksOverride: [],
         run: async (provider, model) => {
           calls.push({ provider, model });
@@ -338,7 +338,7 @@ describe("runWithModelFallback", () => {
       }),
     ).rejects.toThrow("primary failed");
 
-    expect(calls).toEqual([{ provider: "anthropic", model: "claude-opus-4-5" }]);
+    expect(calls).toEqual([{ provider: "anthropic", model: "claude-opus-4-6" }]);
   });
 
   it("defaults provider/model when missing (regression #946)", async () => {

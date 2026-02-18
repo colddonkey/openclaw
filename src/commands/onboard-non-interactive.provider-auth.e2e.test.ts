@@ -347,7 +347,7 @@ describe("onboard (non-interactive): provider auth", () => {
         );
         expect(cfg.auth?.profiles?.["cloudflare-ai-gateway:default"]?.mode).toBe("api_key");
         expect(cfg.agents?.defaults?.model?.primary).toBe(
-          "cloudflare-ai-gateway/claude-sonnet-4-5",
+          "cloudflare-ai-gateway/claude-sonnet-4-6",
         );
         await expectApiKeyProfile({
           profileId: "cloudflare-ai-gateway:default",

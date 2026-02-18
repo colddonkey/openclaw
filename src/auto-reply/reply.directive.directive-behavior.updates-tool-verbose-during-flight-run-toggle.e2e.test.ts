@@ -16,7 +16,7 @@ import { getReplyFromConfig } from "./reply.js";
 function makeRunConfig(home: string, storePath: string) {
   return makeWhatsAppDirectiveConfig(
     home,
-    { model: "anthropic/claude-opus-4-5" },
+    { model: "anthropic/claude-opus-4-6" },
     { session: { store: storePath } },
   );
 }
@@ -77,9 +77,9 @@ async function runModelDirectiveAndGetText(
     { Body: body, From: "+1222", To: "+1222", CommandAuthorized: true },
     {},
     makeWhatsAppDirectiveConfig(home, {
-      model: { primary: "anthropic/claude-opus-4-5" },
+      model: { primary: "anthropic/claude-opus-4-6" },
       models: {
-        "anthropic/claude-opus-4-5": {},
+        "anthropic/claude-opus-4-6": {},
         "openai/gpt-4.1-mini": {},
       },
     }),
@@ -120,7 +120,7 @@ describe("directive behavior", () => {
   it("shows summary on /model", async () => {
     await withTempHome(async (home) => {
       const text = await runModelDirectiveAndGetText(home, "/model");
-      expect(text).toContain("Current: anthropic/claude-opus-4-5");
+      expect(text).toContain("Current: anthropic/claude-opus-4-6");
       expect(text).toContain("Switch: /model <provider/model>");
       expect(text).toContain("Browse: /models (providers) or /models <provider> (models)");
       expect(text).toContain("More: /model status");
@@ -131,7 +131,7 @@ describe("directive behavior", () => {
   it("lists allowlisted models on /model status", async () => {
     await withTempHome(async (home) => {
       const text = await runModelDirectiveAndGetText(home, "/model status");
-      expect(text).toContain("anthropic/claude-opus-4-5");
+      expect(text).toContain("anthropic/claude-opus-4-6");
       expect(text).toContain("openai/gpt-4.1-mini");
       expect(text).not.toContain("claude-sonnet-4-1");
       expect(text).toContain("auth:");

@@ -67,7 +67,7 @@ function createLegacyProviderConfig(params: {
   } as OpenClawConfig;
 }
 
-const EXPECTED_FALLBACKS = ["anthropic/claude-opus-4-5"] as const;
+const EXPECTED_FALLBACKS = ["anthropic/claude-opus-4-6"] as const;
 
 function createConfigWithFallbacks() {
   return {
@@ -84,7 +84,7 @@ function expectFallbacksPreserved(cfg: ReturnType<typeof applyMinimaxApiConfig>)
 }
 
 function expectPrimaryModelPreserved(cfg: ReturnType<typeof applyMinimaxApiProviderConfig>) {
-  expect(cfg.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-5");
+  expect(cfg.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-6");
 }
 
 function expectAllowlistContains(
@@ -273,8 +273,8 @@ describe("applyMinimaxApiConfig", () => {
             api: "anthropic-messages",
             models: [
               {
-                id: "claude-opus-4-5",
-                name: "Claude Opus 4.5",
+                id: "claude-opus-4-6",
+                name: "Claude Opus 4.6",
                 reasoning: false,
                 input: ["text"],
                 cost: { input: 15, output: 75, cacheRead: 0, cacheWrite: 0 },
@@ -301,7 +301,7 @@ describe("applyMinimaxApiConfig", () => {
 describe("applyMinimaxApiProviderConfig", () => {
   it("does not overwrite existing primary model", () => {
     const cfg = applyMinimaxApiProviderConfig({
-      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
+      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-6" } } },
     });
     expectPrimaryModelPreserved(cfg);
   });
@@ -343,7 +343,7 @@ describe("applyZaiConfig", () => {
 describe("applyZaiProviderConfig", () => {
   it("does not overwrite existing primary model", () => {
     const cfg = applyZaiProviderConfig({
-      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
+      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-6" } } },
     });
     expectPrimaryModelPreserved(cfg);
   });

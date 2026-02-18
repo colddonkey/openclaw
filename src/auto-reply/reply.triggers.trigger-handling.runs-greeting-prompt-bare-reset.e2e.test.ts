@@ -32,7 +32,7 @@ async function expectResetBlockedForNonOwner(params: {
     {
       agents: {
         defaults: {
-          model: { primary: "anthropic/claude-opus-4-5" },
+          model: { primary: "anthropic/claude-opus-4-6" },
           workspace: join(home, "openclaw"),
         },
       },

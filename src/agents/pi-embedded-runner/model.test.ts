@@ -194,10 +194,10 @@ describe("resolveModel", () => {
   it("builds an anthropic forward-compat fallback for claude-opus-4-6", () => {
     mockDiscoveredModel({
       provider: "anthropic",
-      modelId: "claude-opus-4-5",
+      modelId: "claude-opus-4-6",
       templateModel: buildForwardCompatTemplate({
-        id: "claude-opus-4-5",
-        name: "Claude Opus 4.5",
+        id: "claude-opus-4-6",
+        name: "Claude Opus 4.6",
         provider: "anthropic",
         api: "anthropic-messages",
         baseUrl: "https://api.anthropic.com",
@@ -220,10 +220,10 @@ describe("resolveModel", () => {
   it("builds an anthropic forward-compat fallback for claude-sonnet-4-6", () => {
     mockDiscoveredModel({
       provider: "anthropic",
-      modelId: "claude-sonnet-4-5",
+      modelId: "claude-sonnet-4-6",
       templateModel: buildForwardCompatTemplate({
-        id: "claude-sonnet-4-5",
-        name: "Claude Sonnet 4.5",
+        id: "claude-sonnet-4-6",
+        name: "Claude Sonnet 4.6",
         provider: "anthropic",
         api: "anthropic-messages",
         baseUrl: "https://api.anthropic.com",
@@ -246,10 +246,10 @@ describe("resolveModel", () => {
   it("builds an antigravity forward-compat fallback for claude-opus-4-6-thinking", () => {
     mockDiscoveredModel({
       provider: "google-antigravity",
-      modelId: "claude-opus-4-5-thinking",
+      modelId: "claude-opus-4-6-thinking",
       templateModel: buildForwardCompatTemplate({
-        id: "claude-opus-4-5-thinking",
-        name: "Claude Opus 4.5 Thinking",
+        id: "claude-opus-4-6-thinking",
+        name: "Claude Opus 4.6 Thinking",
         provider: "google-antigravity",
         api: "google-gemini-cli",
         baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",
@@ -274,10 +274,10 @@ describe("resolveModel", () => {
   it("builds an antigravity forward-compat fallback for claude-opus-4-6", () => {
     mockDiscoveredModel({
       provider: "google-antigravity",
-      modelId: "claude-opus-4-5",
+      modelId: "claude-opus-4-6",
       templateModel: buildForwardCompatTemplate({
-        id: "claude-opus-4-5",
-        name: "Claude Opus 4.5",
+        id: "claude-opus-4-6",
+        name: "Claude Opus 4.6",
         provider: "google-antigravity",
         api: "google-gemini-cli",
         baseUrl: "https://daily-cloudcode-pa.sandbox.googleapis.com",

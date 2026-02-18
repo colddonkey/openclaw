@@ -4,7 +4,7 @@ import { createModelSelectionState } from "./model-selection.js";
 
 vi.mock("../../agents/model-catalog.js", () => ({
   loadModelCatalog: vi.fn(async () => [
-    { provider: "anthropic", id: "claude-opus-4-5", name: "Claude Opus 4.5" },
+    { provider: "anthropic", id: "claude-opus-4-6", name: "Claude Opus 4.6" },
     { provider: "inferencer", id: "deepseek-v3-4bit-mlx", name: "DeepSeek V3" },
     { provider: "kimi-coding", id: "k2p5", name: "Kimi K2.5" },
     { provider: "openai", id: "gpt-4o-mini", name: "GPT-4o mini" },
@@ -62,7 +62,7 @@ describe("createModelSelectionState parent inheritance", () => {
       defaultProvider,
       defaultModel,
       provider: "anthropic",
-      model: "claude-opus-4-5",
+      model: "claude-opus-4-6",
       hasModelDirective: false,
       hasResolvedHeartbeatModelOverride,
     });
@@ -129,7 +129,7 @@ describe("createModelSelectionState parent inheritance", () => {
     });
     const sessionEntry = makeEntry({
       providerOverride: "anthropic",
-      modelOverride: "claude-opus-4-5",
+      modelOverride: "claude-opus-4-6",
     });
     const sessionStore = {
       [parentKey]: parentEntry,
@@ -144,7 +144,7 @@ describe("createModelSelectionState parent inheritance", () => {
     });
 
     expect(state.provider).toBe("anthropic");
-    expect(state.model).toBe("claude-opus-4-5");
+    expect(state.model).toBe("claude-opus-4-6");
   });
 
   it("ignores parent override when disallowed", async () => {
@@ -161,7 +161,7 @@ describe("createModelSelectionState parent inheritance", () => {
     const sessionKey = "agent:main:slack:channel:c1:thread:123";
     const parentEntry = makeEntry({
       providerOverride: "anthropic",
-      modelOverride: "claude-opus-4-5",
+      modelOverride: "claude-opus-4-6",
     });
     const sessionEntry = makeEntry();
     const sessionStore = {
@@ -191,7 +191,7 @@ describe("createModelSelectionState parent inheritance", () => {
     const state = await resolveHeartbeatStoredOverrideState(true);
 
     expect(state.provider).toBe("anthropic");
-    expect(state.model).toBe("claude-opus-4-5");
+    expect(state.model).toBe("claude-opus-4-6");
   });
 });
 
@@ -245,12 +245,12 @@ describe("createModelSelectionState respects session model override", () => {
         modelProvider: "kimi-coding",
         contextTokens: 262_000,
         providerOverride: "anthropic",
-        modelOverride: "claude-opus-4-5",
+        modelOverride: "claude-opus-4-6",
       }),
     );
 
     expect(state.provider).toBe("anthropic");
-    expect(state.model).toBe("claude-opus-4-5");
+    expect(state.model).toBe("claude-opus-4-6");
   });
 
   it("uses default provider when providerOverride is not set but modelOverride is", async () => {

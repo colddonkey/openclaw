@@ -66,7 +66,7 @@ describe("resolveCronSession", () => {
       entry: {
         sessionId: "old-session-id",
         updatedAt: 1000,
-        model: "claude-opus-4-5",
+        model: "claude-opus-4-6",
       },
     });
 

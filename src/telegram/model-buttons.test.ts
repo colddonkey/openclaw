@@ -31,11 +31,11 @@ describe("parseModelCallbackData", () => {
   });
 
   it("parses mdl_sel callback with provider/model", () => {
-    const result = parseModelCallbackData("mdl_sel_anthropic/claude-sonnet-4-5");
+    const result = parseModelCallbackData("mdl_sel_anthropic/claude-sonnet-4-6");
     expect(result).toEqual({
       type: "select",
       provider: "anthropic",
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
     });
   });
 

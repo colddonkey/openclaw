@@ -382,7 +382,7 @@ describe("applyAuthChoice", () => {
       config: {
         agents: {
           defaults: {
-            model: { primary: "anthropic/claude-opus-4-5" },
+            model: { primary: "anthropic/claude-opus-4-6" },
           },
         },
       },
@@ -394,7 +394,7 @@ describe("applyAuthChoice", () => {
     expect(text).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Enter OpenCode Zen API key" }),
     );
-    expect(result.config.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-5");
+    expect(result.config.agents?.defaults?.model?.primary).toBe("anthropic/claude-opus-4-6");
     expect(result.config.models?.providers?.["opencode-zen"]).toBeUndefined();
     expect(result.agentModelOverride).toBe("opencode/claude-opus-4-6");
   });
@@ -609,7 +609,7 @@ describe("applyAuthChoice", () => {
       mode: "api_key",
     });
     expect(result.config.agents?.defaults?.model?.primary).toBe(
-      "cloudflare-ai-gateway/claude-sonnet-4-5",
+      "cloudflare-ai-gateway/claude-sonnet-4-6",
     );
 
     expect((await readAuthProfile("cloudflare-ai-gateway:default"))?.key).toBe(

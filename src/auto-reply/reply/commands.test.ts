@@ -64,8 +64,8 @@ vi.mock("../../channels/plugins/pairing.js", async () => {
 
 vi.mock("../../agents/model-catalog.js", () => ({
   loadModelCatalog: vi.fn(async () => [
-    { provider: "anthropic", id: "claude-opus-4-5", name: "Claude Opus" },
-    { provider: "anthropic", id: "claude-sonnet-4-5", name: "Claude Sonnet" },
+    { provider: "anthropic", id: "claude-opus-4-6", name: "Claude Opus" },
+    { provider: "anthropic", id: "claude-sonnet-4-6", name: "Claude Sonnet" },
     { provider: "openai", id: "gpt-4.1", name: "GPT-4.1" },
     { provider: "openai", id: "gpt-4.1-mini", name: "GPT-4.1 Mini" },
     { provider: "google", id: "gemini-2.0-flash", name: "Gemini Flash" },
@@ -691,7 +691,7 @@ describe("handleCommands /allowlist", () => {
 describe("/models command", () => {
   const cfg = {
     commands: { text: true },
-    agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
+    agents: { defaults: { model: { primary: "anthropic/claude-opus-4-6" } } },
   } as unknown as OpenClawConfig;
 
   it.each(["discord", "whatsapp"])("lists providers on %s (text)", async (surface) => {
@@ -721,7 +721,7 @@ describe("/models command", () => {
     expect(result.shouldContinue).toBe(false);
     expect(result.reply?.text).toContain("Models (anthropic)");
     expect(result.reply?.text).toContain("page 1/");
-    expect(result.reply?.text).toContain("anthropic/claude-opus-4-5");
+    expect(result.reply?.text).toContain("anthropic/claude-opus-4-6");
     expect(result.reply?.text).toContain("Switch: /model <provider/model>");
     expect(result.reply?.text).toContain("All: /models anthropic all");
   });
@@ -733,7 +733,7 @@ describe("/models command", () => {
     expect(result.shouldContinue).toBe(false);
     expect(result.reply?.text).toContain("Models (anthropic)");
     expect(result.reply?.text).toContain("page 1/1");
-    expect(result.reply?.text).toContain("anthropic/claude-opus-4-5");
+    expect(result.reply?.text).toContain("anthropic/claude-opus-4-6");
     expect(result.reply?.text).not.toContain("Page out of range");
   });
 
@@ -761,7 +761,7 @@ describe("/models command", () => {
         defaults: {
           model: {
             primary: "localai/ultra-chat",
-            fallbacks: ["anthropic/claude-opus-4-5"],
+            fallbacks: ["anthropic/claude-opus-4-6"],
           },
           imageModel: "visionpro/studio-v1",
         },

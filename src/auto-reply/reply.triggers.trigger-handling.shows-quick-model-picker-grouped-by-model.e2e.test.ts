@@ -58,7 +58,7 @@ describe("trigger handling", () => {
     await withTempHome(async (home) => {
       const { normalized } = await runModelCommand(home, "/model");
 
-      expect(normalized).toContain("Current: anthropic/claude-opus-4-5");
+      expect(normalized).toContain("Current: anthropic/claude-opus-4-6");
       expect(normalized).toContain("/model <provider/model> to switch");
       expect(normalized).toContain("Tap below to browse models");
       expect(normalized).toContain("/model status for details");
@@ -81,14 +81,14 @@ describe("trigger handling", () => {
     await withTempHome(async (home) => {
       const { cfg, sessionKey, normalized } = await runModelCommand(
         home,
-        "/model openrouter/anthropic/claude-opus-4-5",
+        "/model openrouter/anthropic/claude-opus-4-6",
       );
 
-      expect(normalized).toContain("Model set to openrouter/anthropic/claude-opus-4-5");
+      expect(normalized).toContain("Model set to openrouter/anthropic/claude-opus-4-6");
 
       const store = loadSessionStore(requireSessionStorePath(cfg));
       expect(store[sessionKey]?.providerOverride).toBe("openrouter");
-      expect(store[sessionKey]?.modelOverride).toBe("anthropic/claude-opus-4-5");
+      expect(store[sessionKey]?.modelOverride).toBe("anthropic/claude-opus-4-6");
     });
   });
 
@@ -110,10 +110,10 @@ describe("trigger handling", () => {
     await withTempHome(async (home) => {
       const { cfg, sessionKey, normalized } = await runModelCommand(
         home,
-        "/model anthropic/claude-opus-4-5",
+        "/model anthropic/claude-opus-4-6",
       );
 
-      expect(normalized).toContain("Model reset to default (anthropic/claude-opus-4-5)");
+      expect(normalized).toContain("Model reset to default (anthropic/claude-opus-4-6)");
 
       const store = loadSessionStore(requireSessionStorePath(cfg));
       expect(store[sessionKey]?.providerOverride).toBeUndefined();

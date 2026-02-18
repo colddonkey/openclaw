@@ -766,11 +766,11 @@ describe("resolveResponsePrefixTemplate", () => {
       {
         identityName: "OpenClaw",
         provider: "anthropic",
-        model: "claude-opus-4-5",
+        model: "claude-opus-4-6",
         thinkingLevel: "high",
       },
     );
-    expect(result).toBe("[OpenClaw] anthropic/claude-opus-4-5 (think:high)");
+    expect(result).toBe("[OpenClaw] anthropic/claude-opus-4-6 (think:high)");
   });
 });
 
@@ -780,7 +780,7 @@ describe("extractShortModelName", () => {
   });
 
   it("strips date suffix", () => {
-    expect(extractShortModelName("claude-opus-4-5-20251101")).toBe("claude-opus-4-5");
+    expect(extractShortModelName("claude-opus-4-6-20251101")).toBe("claude-opus-4-6");
   });
 
   it("strips -latest suffix", () => {

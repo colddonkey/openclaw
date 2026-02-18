@@ -30,7 +30,7 @@ vi.mock("../config/config.js", async (importOriginal) => {
       session: { mainKey: "main", scope: "per-sender" },
       agents: {
         defaults: {
-          model: { primary: "anthropic/claude-opus-4-5" },
+          model: { primary: "anthropic/claude-opus-4-6" },
           models: {},
         },
       },
@@ -42,13 +42,13 @@ vi.mock("../agents/model-catalog.js", () => ({
   loadModelCatalog: async () => [
     {
       provider: "anthropic",
-      id: "claude-opus-4-5",
+      id: "claude-opus-4-6",
       name: "Opus",
       contextWindow: 200000,
     },
     {
       provider: "anthropic",
-      id: "claude-sonnet-4-5",
+      id: "claude-sonnet-4-6",
       name: "Sonnet",
       contextWindow: 200000,
     },
@@ -219,7 +219,7 @@ describe("session_status tool", () => {
         sessionId: "s1",
         updatedAt: 10,
         providerOverride: "anthropic",
-        modelOverride: "claude-sonnet-4-5",
+        modelOverride: "claude-sonnet-4-6",
         authProfileOverride: "p1",
       },
     });

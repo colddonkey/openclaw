@@ -74,9 +74,9 @@ describe("directive behavior", () => {
         makeWhatsAppDirectiveConfig(
           home,
           {
-            model: "anthropic/claude-opus-4-5",
+            model: "anthropic/claude-opus-4-6",
             models: {
-              "anthropic/claude-opus-4-5": { alias: " help " },
+              "anthropic/claude-opus-4-6": { alias: " help " },
             },
           },
           { session: { store: sessionStorePath(home) } },
@@ -108,10 +108,10 @@ describe("directive behavior", () => {
         makeWhatsAppDirectiveConfig(
           home,
           {
-            model: "anthropic/claude-opus-4-5",
+            model: "anthropic/claude-opus-4-6",
             workspace,
             models: {
-              "anthropic/claude-opus-4-5": { alias: "demo_skill" },
+              "anthropic/claude-opus-4-6": { alias: "demo_skill" },
             },
           },
           { session: { store: sessionStorePath(home) } },
@@ -135,7 +135,7 @@ describe("directive behavior", () => {
         {},
         makeWhatsAppDirectiveConfig(
           home,
-          { model: "anthropic/claude-opus-4-5" },
+          { model: "anthropic/claude-opus-4-6" },
           {
             session: { store: sessionStorePath(home) },
           },
@@ -162,7 +162,7 @@ describe("directive behavior", () => {
         {},
         makeWhatsAppDirectiveConfig(
           home,
-          { model: "anthropic/claude-opus-4-5" },
+          { model: "anthropic/claude-opus-4-6" },
           {
             messages: {
               queue: {
@@ -194,7 +194,7 @@ describe("directive behavior", () => {
         {},
         makeWhatsAppDirectiveConfig(
           home,
-          { model: "anthropic/claude-opus-4-5", thinkingDefault: "high" },
+          { model: "anthropic/claude-opus-4-6", thinkingDefault: "high" },
           { session: { store: sessionStorePath(home) } },
         ),
       );

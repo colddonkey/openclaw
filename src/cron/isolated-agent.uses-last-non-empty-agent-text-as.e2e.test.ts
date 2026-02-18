@@ -293,12 +293,12 @@ describe("runCronIsolatedAgentTurn", () => {
       const { res } = await runTurnWithStoredModelOverride(home, {
         kind: "agentTurn",
         message: DEFAULT_MESSAGE,
-        model: "anthropic/claude-opus-4-5",
+        model: "anthropic/claude-opus-4-6",
         deliver: false,
       });
 
       expect(res.status).toBe("ok");
-      expectEmbeddedProviderModel({ provider: "anthropic", model: "claude-opus-4-5" });
+      expectEmbeddedProviderModel({ provider: "anthropic", model: "claude-opus-4-6" });
     });
   });
 
@@ -321,7 +321,7 @@ describe("runCronIsolatedAgentTurn", () => {
           sessionId: "existing-gmail-session",
           updatedAt: Date.now(),
           providerOverride: "anthropic",
-          modelOverride: "claude-opus-4-5",
+          modelOverride: "claude-opus-4-6",
         },
       });
 
@@ -374,8 +374,8 @@ describe("runCronIsolatedAgentTurn", () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
         },
       ]);
@@ -384,9 +384,9 @@ describe("runCronIsolatedAgentTurn", () => {
         cfgOverrides: {
           agents: {
             defaults: {
-              model: { primary: "anthropic/claude-opus-4-5" },
+              model: { primary: "anthropic/claude-opus-4-6" },
               models: {
-                "anthropic/claude-opus-4-5": { alias: "Opus" },
+                "anthropic/claude-opus-4-6": { alias: "Opus" },
               },
             },
           },
@@ -406,7 +406,7 @@ describe("runCronIsolatedAgentTurn", () => {
         model?: string;
       };
       expect(call?.provider).toBe("anthropic");
-      expect(call?.model).toBe("claude-opus-4-5");
+      expect(call?.model).toBe("claude-opus-4-6");
     });
   });
 
@@ -431,8 +431,8 @@ describe("runCronIsolatedAgentTurn", () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
           reasoning: true,
         },

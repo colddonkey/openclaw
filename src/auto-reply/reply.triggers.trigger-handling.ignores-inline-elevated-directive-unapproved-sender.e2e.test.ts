@@ -53,7 +53,7 @@ describe("trigger handling", () => {
       const cfg = {
         agents: {
           defaults: {
-            model: "anthropic/claude-opus-4-5",
+            model: "anthropic/claude-opus-4-6",
             workspace: join(home, "openclaw"),
           },
         },
@@ -88,7 +88,7 @@ describe("trigger handling", () => {
       const cfg = {
         agents: {
           defaults: {
-            model: "anthropic/claude-opus-4-5",
+            model: "anthropic/claude-opus-4-6",
             workspace: join(home, "openclaw"),
           },
         },

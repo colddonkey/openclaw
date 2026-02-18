@@ -155,7 +155,7 @@ describe("gateway sessions patch", () => {
         sessionId: "sess",
         updatedAt: 1,
         providerOverride: "anthropic",
-        modelOverride: "claude-opus-4-5",
+        modelOverride: "claude-opus-4-6",
         authProfileOverride: "anthropic:default",
         authProfileOverrideSource: "user",
         authProfileOverrideCompactionCount: 3,

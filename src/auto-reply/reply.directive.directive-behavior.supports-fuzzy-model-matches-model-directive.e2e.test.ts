@@ -26,10 +26,10 @@ function makeMoonshotConfig(home: string, storePath: string) {
   return {
     agents: {
       defaults: {
-        model: { primary: "anthropic/claude-opus-4-5" },
+        model: { primary: "anthropic/claude-opus-4-6" },
         workspace: path.join(home, "openclaw"),
         models: {
-          "anthropic/claude-opus-4-5": {},
+          "anthropic/claude-opus-4-6": {},
           "moonshot/kimi-k2-0905-preview": {},
         },
       },

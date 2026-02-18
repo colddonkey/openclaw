@@ -95,7 +95,7 @@ describe("createFollowupRunner compaction", () => {
       sessionStore,
       sessionKey: "main",
       storePath,
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     const queued = {
@@ -165,7 +165,7 @@ describe("createFollowupRunner compaction", () => {
               usage: { input: 190_000, output: 8_000, total: 198_000 },
               // Last call usage reflects post-compaction context.
               lastCallUsage: { input: 11_000, output: 2_000, total: 13_000 },
-              model: "claude-opus-4-5",
+              model: "claude-opus-4-6",
               provider: "anthropic",
             },
           },
@@ -181,7 +181,7 @@ describe("createFollowupRunner compaction", () => {
       sessionStore,
       sessionKey,
       storePath,
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
       agentCfgContextTokens: 200_000,
     });
 
@@ -209,7 +209,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       opts: { onBlockReply },
       typing: createMockTypingController(),
       typingMode: "instant",
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun());
@@ -229,7 +229,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       opts: { onBlockReply },
       typing: createMockTypingController(),
       typingMode: "instant",
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun());
@@ -250,7 +250,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       opts: { onBlockReply },
       typing: createMockTypingController(),
       typingMode: "instant",
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun("slack"));
@@ -270,7 +270,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       opts: { onBlockReply },
       typing: createMockTypingController(),
       typingMode: "instant",
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun());
@@ -291,7 +291,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       opts: { onBlockReply },
       typing: createMockTypingController(),
       typingMode: "instant",
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun());
@@ -318,7 +318,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
         agentMeta: {
           usage: { input: 1_000, output: 50 },
           lastCallUsage: { input: 400, output: 20 },
-          model: "claude-opus-4-5",
+          model: "claude-opus-4-6",
           provider: "anthropic",
         },
       },
@@ -332,7 +332,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
       sessionStore,
       sessionKey,
       storePath,
-      defaultModel: "anthropic/claude-opus-4-5",
+      defaultModel: "anthropic/claude-opus-4-6",
     });
 
     await runner(baseQueuedRun("slack"));
@@ -341,7 +341,7 @@ describe("createFollowupRunner messaging tool dedupe", () => {
     const store = loadSessionStore(storePath, { skipCache: true });
     // totalTokens should reflect the last call usage snapshot, not the accumulated input.
     expect(store[sessionKey]?.totalTokens).toBe(400);
-    expect(store[sessionKey]?.model).toBe("claude-opus-4-5");
+    expect(store[sessionKey]?.model).toBe("claude-opus-4-6");
     // Accumulated usage is still stored for usage/cost tracking.
     expect(store[sessionKey]?.inputTokens).toBe(1_000);
     expect(store[sessionKey]?.outputTokens).toBe(50);

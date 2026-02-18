@@ -118,7 +118,7 @@ describe("applyGoogleGeminiModelDefault", () => {
 
   it("overrides existing model", () => {
     const cfg: OpenClawConfig = {
-      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
+      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-6" } } },
     };
     const applied = applyGoogleGeminiModelDefault(cfg);
     expectPrimaryModelChanged(applied, GOOGLE_GEMINI_DEFAULT_MODEL);
@@ -192,7 +192,7 @@ describe("applyOpenAICodexModelDefault", () => {
 
   it("does not override non-openai models", () => {
     const cfg: OpenClawConfig = {
-      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
+      agents: { defaults: { model: { primary: "anthropic/claude-opus-4-6" } } },
     };
     const applied = applyOpenAICodexModelDefault(cfg);
     expectConfigUnchanged(applied, cfg);
@@ -208,7 +208,7 @@ describe("applyOpencodeZenModelDefault", () => {
 
   it("overrides existing model", () => {
     const cfg = {
-      agents: { defaults: { model: "anthropic/claude-opus-4-5" } },
+      agents: { defaults: { model: "anthropic/claude-opus-4-6" } },
     } as OpenClawConfig;
     const applied = applyOpencodeZenModelDefault(cfg);
     expectPrimaryModelChanged(applied, OPENCODE_ZEN_DEFAULT_MODEL);
@@ -224,7 +224,7 @@ describe("applyOpencodeZenModelDefault", () => {
 
   it("no-ops when already legacy opencode-zen default", () => {
     const cfg = {
-      agents: { defaults: { model: "opencode-zen/claude-opus-4-5" } },
+      agents: { defaults: { model: "opencode-zen/claude-opus-4-6" } },
     } as OpenClawConfig;
     const applied = applyOpencodeZenModelDefault(cfg);
     expectConfigUnchanged(applied, cfg);
@@ -235,7 +235,7 @@ describe("applyOpencodeZenModelDefault", () => {
       agents: {
         defaults: {
           model: {
-            primary: "anthropic/claude-opus-4-5",
+            primary: "anthropic/claude-opus-4-6",
             fallbacks: ["google/gemini-3-pro"],
           },
         },

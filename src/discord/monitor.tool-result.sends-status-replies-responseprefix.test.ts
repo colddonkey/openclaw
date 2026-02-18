@@ -28,7 +28,7 @@ beforeEach(() => {
 const BASE_CFG: Config = {
   agents: {
     defaults: {
-      model: { primary: "anthropic/claude-opus-4-5" },
+      model: { primary: "anthropic/claude-opus-4-6" },
       workspace: "/tmp/openclaw",
     },
   },

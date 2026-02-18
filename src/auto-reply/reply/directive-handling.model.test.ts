@@ -50,9 +50,9 @@ describe("/model chat UX", () => {
       agentDir: "/tmp/agent",
       activeAgentId: "main",
       provider: "anthropic",
-      model: "claude-opus-4-5",
+      model: "claude-opus-4-6",
       defaultProvider: "anthropic",
-      defaultModel: "claude-opus-4-5",
+      defaultModel: "claude-opus-4-6",
       aliasIndex: baseAliasIndex(),
       allowedModelCatalog: [],
       resetModelOverride: false,
@@ -72,16 +72,16 @@ describe("/model chat UX", () => {
       cfg,
       agentDir: "/tmp/agent",
       defaultProvider: "anthropic",
-      defaultModel: "claude-opus-4-5",
+      defaultModel: "claude-opus-4-6",
       aliasIndex: baseAliasIndex(),
-      allowedModelKeys: new Set(["anthropic/claude-opus-4-5"]),
-      allowedModelCatalog: [{ provider: "anthropic", id: "claude-opus-4-5" }],
+      allowedModelKeys: new Set(["anthropic/claude-opus-4-6"]),
+      allowedModelCatalog: [{ provider: "anthropic", id: "claude-opus-4-6" }],
       provider: "anthropic",
     });
 
     expect(resolved.modelSelection).toEqual({
       provider: "anthropic",
-      model: "claude-opus-4-5",
+      model: "claude-opus-4-6",
       isDefault: true,
     });
     expect(resolved.errorText).toBeUndefined();
@@ -89,9 +89,9 @@ describe("/model chat UX", () => {
 });
 
 describe("handleDirectiveOnly model persist behavior (fixes #1435)", () => {
-  const allowedModelKeys = new Set(["anthropic/claude-opus-4-5", "openai/gpt-4o"]);
+  const allowedModelKeys = new Set(["anthropic/claude-opus-4-6", "openai/gpt-4o"]);
   const allowedModelCatalog = [
-    { provider: "anthropic", id: "claude-opus-4-5", name: "Claude Opus 4.5" },
+    { provider: "anthropic", id: "claude-opus-4-6", name: "Claude Opus 4.6" },
     { provider: "openai", id: "gpt-4o", name: "GPT-4o" },
   ];
   const sessionKey = "agent:main:dm:1";
@@ -122,14 +122,14 @@ describe("handleDirectiveOnly model persist behavior (fixes #1435)", () => {
       elevatedEnabled: false,
       elevatedAllowed: false,
       defaultProvider: "anthropic",
-      defaultModel: "claude-opus-4-5",
+      defaultModel: "claude-opus-4-6",
       aliasIndex: baseAliasIndex(),
       allowedModelKeys,
       allowedModelCatalog,
       resetModelOverride: false,
       provider: "anthropic",
-      model: "claude-opus-4-5",
-      initialModelLabel: "anthropic/claude-opus-4-5",
+      model: "claude-opus-4-6",
+      initialModelLabel: "anthropic/claude-opus-4-6",
       formatModelSwitchEvent: (label) => `Switched to ${label}`,
       ...rest,
       sessionEntry: entry,

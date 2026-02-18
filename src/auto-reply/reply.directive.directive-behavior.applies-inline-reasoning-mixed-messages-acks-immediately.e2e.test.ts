@@ -20,7 +20,7 @@ async function runThinkDirectiveAndGetText(
     { Body: "/think", From: "+1222", To: "+1222", CommandAuthorized: true },
     {},
     makeWhatsAppDirectiveConfig(home, {
-      model: "anthropic/claude-opus-4-5",
+      model: "anthropic/claude-opus-4-6",
       ...(options.thinkingDefault ? { thinkingDefault: options.thinkingDefault } : {}),
     }),
   );
@@ -59,7 +59,7 @@ async function runInlineReasoningMessage(params: {
     },
     makeWhatsAppDirectiveConfig(
       params.home,
-      { model: "anthropic/claude-opus-4-5" },
+      { model: "anthropic/claude-opus-4-6" },
       {
         session: { store: params.storePath },
       },
@@ -120,7 +120,7 @@ describe("directive behavior", () => {
       const res = await getReplyFromConfig(
         { Body: "/verbose on", From: "+1222", To: "+1222", CommandAuthorized: true },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-5" }),
+        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-6" }),
       );
 
       const text = replyText(res);
@@ -137,7 +137,7 @@ describe("directive behavior", () => {
         {},
         makeWhatsAppDirectiveConfig(
           home,
-          { model: "anthropic/claude-opus-4-5" },
+          { model: "anthropic/claude-opus-4-6" },
           {
             session: { store: storePath },
           },

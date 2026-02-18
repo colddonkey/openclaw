@@ -162,7 +162,7 @@ describe("applyExtraParamsToAgent", () => {
       agents: {
         defaults: {
           models: {
-            "anthropic/claude-sonnet-4-5": {
+            "anthropic/claude-sonnet-4-6": {
               params: {
                 context1m: true,
                 anthropicBeta: ["files-api-2025-04-14"],
@@ -173,12 +173,12 @@ describe("applyExtraParamsToAgent", () => {
       },
     };
 
-    applyExtraParamsToAgent(agent, cfg, "anthropic", "claude-sonnet-4-5");
+    applyExtraParamsToAgent(agent, cfg, "anthropic", "claude-sonnet-4-6");
 
     const model = {
       api: "anthropic-messages",
       provider: "anthropic",
-      id: "claude-sonnet-4-5",
+      id: "claude-sonnet-4-6",
     } as Model<"anthropic-messages">;
     const context: Context = { messages: [] };
 

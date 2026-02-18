@@ -5,7 +5,7 @@ describe("resolveTranscriptPolicy", () => {
   it("enables sanitizeToolCallIds for Anthropic provider", () => {
     const policy = resolveTranscriptPolicy({
       provider: "anthropic",
-      modelId: "claude-opus-4-5",
+      modelId: "claude-opus-4-6",
       modelApi: "anthropic-messages",
     });
     expect(policy.sanitizeToolCallIds).toBe(true);

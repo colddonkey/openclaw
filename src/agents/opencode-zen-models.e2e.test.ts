@@ -61,7 +61,7 @@ describe("getOpencodeZenStaticFallbackModels", () => {
     const ids = models.map((m) => m.id);
 
     expect(ids).toContain("claude-opus-4-6");
-    expect(ids).toContain("claude-opus-4-5");
+    expect(ids).toContain("claude-opus-4-6");
     expect(ids).toContain("gpt-5.2");
     expect(ids).toContain("gpt-5.1-codex");
     expect(ids).toContain("gemini-3-pro");
@@ -89,7 +89,7 @@ describe("OPENCODE_ZEN_MODEL_ALIASES", () => {
     expect(OPENCODE_ZEN_MODEL_ALIASES.gpt5).toBe("gpt-5.2");
     expect(OPENCODE_ZEN_MODEL_ALIASES.gemini).toBe("gemini-3-pro");
     expect(OPENCODE_ZEN_MODEL_ALIASES.glm).toBe("glm-4.7");
-    expect(OPENCODE_ZEN_MODEL_ALIASES["opus-4.5"]).toBe("claude-opus-4-5");
+    expect(OPENCODE_ZEN_MODEL_ALIASES["opus-4.5"]).toBe("claude-opus-4-6");
 
     // Legacy aliases (kept for backward compatibility).
     expect(OPENCODE_ZEN_MODEL_ALIASES.sonnet).toBe("claude-opus-4-6");

@@ -24,7 +24,7 @@ async function runReplyToCurrentCase(home: string, text: string) {
       MessageSid: "msg-123",
     },
     {},
-    makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-5" }),
+    makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-6" }),
   );
 
   return Array.isArray(res) ? res[0] : res;
@@ -37,8 +37,8 @@ describe("directive behavior", () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
           reasoning: true,
         },
@@ -47,7 +47,7 @@ describe("directive behavior", () => {
       const res = await getReplyFromConfig(
         { Body: "/think", From: "+1222", To: "+1222", CommandAuthorized: true },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-5" }),
+        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-6" }),
       );
 
       const text = replyText(res);
@@ -60,8 +60,8 @@ describe("directive behavior", () => {
     await withTempHome(async (home) => {
       vi.mocked(loadModelCatalog).mockResolvedValueOnce([
         {
-          id: "claude-opus-4-5",
-          name: "Opus 4.5",
+          id: "claude-opus-4-6",
+          name: "Opus 4.6",
           provider: "anthropic",
           reasoning: false,
         },
@@ -70,7 +70,7 @@ describe("directive behavior", () => {
       const res = await getReplyFromConfig(
         { Body: "/think", From: "+1222", To: "+1222", CommandAuthorized: true },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-5" }),
+        makeWhatsAppDirectiveConfig(home, { model: "anthropic/claude-opus-4-6" }),
       );
 
       const text = replyText(res);
@@ -102,7 +102,7 @@ describe("directive behavior", () => {
           MessageSid: "msg-123",
         },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-5" } }),
+        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-6" } }),
       );
 
       const payload = Array.isArray(res) ? res[0] : res;
@@ -121,7 +121,7 @@ describe("directive behavior", () => {
           To: "+2000",
         },
         {},
-        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-5" } }),
+        makeWhatsAppDirectiveConfig(home, { model: { primary: "anthropic/claude-opus-4-6" } }),
       );
 
       const texts = replyTexts(res);

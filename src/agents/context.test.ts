@@ -8,12 +8,12 @@ describe("applyDiscoveredContextWindows", () => {
     applyDiscoveredContextWindows({
       cache,
       models: [
-        { id: "claude-sonnet-4-5", contextWindow: 1_000_000 },
-        { id: "claude-sonnet-4-5", contextWindow: 200_000 },
+        { id: "claude-sonnet-4-6", contextWindow: 1_000_000 },
+        { id: "claude-sonnet-4-6", contextWindow: 200_000 },
       ],
     });
 
-    expect(cache.get("claude-sonnet-4-5")).toBe(200_000);
+    expect(cache.get("claude-sonnet-4-6")).toBe(200_000);
   });
 });
 
