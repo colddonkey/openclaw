@@ -11,7 +11,7 @@ Assess and harden the host running OpenClaw, then align it to a user-defined ris
 
 ## Core rules
 
-- Recommend running this skill with a state-of-the-art model (e.g., Opus 4.5, GPT 5.2+). The agent should self-check the current model and suggest switching if below that level; do not block execution.
+- Recommend running this skill with a state-of-the-art model (e.g., Opus 4.6, GPT 5.2+). The agent should self-check the current model and suggest switching if below that level; do not block execution.
 - Require explicit approval before any state-changing action.
 - Do not modify remote access settings without confirming how the user connects.
 - Prefer reversible, staged changes with a rollback plan.
@@ -24,7 +24,7 @@ Assess and harden the host running OpenClaw, then align it to a user-defined ris
 
 ### 0) Model self-check (non-blocking)
 
-Before starting, check the current model. If it is below state-of-the-art (e.g., Opus 4.5, GPT 5.2+), recommend switching. Do not block execution.
+Before starting, check the current model. If it is below state-of-the-art (e.g., Opus 4.6, GPT 5.2+), recommend switching. Do not block execution.
 
 ### 1) Establish context (read-only)
 

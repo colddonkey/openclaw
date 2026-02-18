@@ -35,7 +35,7 @@ Save to `~/.openclaw/openclaw.json` and you can DM the bot from that number.
   },
   agent: {
     workspace: "~/.openclaw/workspace",
-    model: { primary: "anthropic/claude-sonnet-4-5" },
+    model: { primary: "anthropic/claude-sonnet-4-6" },
   },
   channels: {
     whatsapp: {
@@ -235,15 +235,15 @@ Save to `~/.openclaw/openclaw.json` and you can DM the bot from that number.
       workspace: "~/.openclaw/workspace",
       userTimezone: "America/Chicago",
       model: {
-        primary: "anthropic/claude-sonnet-4-5",
+        primary: "anthropic/claude-sonnet-4-6",
         fallbacks: ["anthropic/claude-opus-4-6", "openai/gpt-5.2"],
       },
       imageModel: {
-        primary: "openrouter/anthropic/claude-sonnet-4-5",
+        primary: "openrouter/anthropic/claude-sonnet-4-6",
       },
       models: {
         "anthropic/claude-opus-4-6": { alias: "opus" },
-        "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
+        "anthropic/claude-sonnet-4-6": { alias: "sonnet" },
         "openai/gpt-5.2": { alias: "gpt" },
       },
       thinkingDefault: "low",
@@ -268,7 +268,7 @@ Save to `~/.openclaw/openclaw.json` and you can DM the bot from that number.
       maxConcurrent: 3,
       heartbeat: {
         every: "30m",
-        model: "anthropic/claude-sonnet-4-5",
+        model: "anthropic/claude-sonnet-4-6",
         target: "last",
         to: "+15555550123",
         prompt: "HEARTBEAT",
@@ -509,7 +509,7 @@ If more than one person can DM your bot (multiple entries in `allowFrom`, pairin
   agent: {
     workspace: "~/.openclaw/workspace",
     model: {
-      primary: "anthropic/claude-sonnet-4-5",
+      primary: "anthropic/claude-sonnet-4-6",
       fallbacks: ["anthropic/claude-opus-4-6"],
     },
   },

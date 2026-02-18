@@ -87,14 +87,14 @@ openclaw chat --model venice/llama-3.3-70b "Hello, are you working?"
 After setup, OpenClaw shows all available Venice models. Pick based on your needs:
 
 - **Default (our pick)**: `venice/llama-3.3-70b` for private, balanced performance.
-- **Best overall quality**: `venice/claude-opus-45` for hard jobs (Opus remains the strongest).
+- **Best overall quality**: `venice/claude-opus-46` for hard jobs (Opus remains the strongest).
 - **Privacy**: Choose "private" models for fully private inference.
 - **Capability**: Choose "anonymized" models to access Claude, GPT, Gemini via Venice's proxy.
 
 Change your default model anytime:
 
 ```bash
-openclaw models set venice/claude-opus-45
+openclaw models set venice/claude-opus-46
 openclaw models set venice/llama-3.3-70b
 ```
 
@@ -115,8 +115,8 @@ openclaw models list | grep venice
 | Use Case                     | Recommended Model                | Why                                       |
 | ---------------------------- | -------------------------------- | ----------------------------------------- |
 | **General chat**             | `llama-3.3-70b`                  | Good all-around, fully private            |
-| **Best overall quality**     | `claude-opus-45`                 | Opus remains the strongest for hard tasks |
-| **Privacy + Claude quality** | `claude-opus-45`                 | Best reasoning via anonymized proxy       |
+| **Best overall quality**     | `claude-opus-46`                 | Opus remains the strongest for hard tasks |
+| **Privacy + Claude quality** | `claude-opus-46`                 | Best reasoning via anonymized proxy       |
 | **Coding**                   | `qwen3-coder-480b-a35b-instruct` | Code-optimized, 262k context              |
 | **Vision tasks**             | `qwen3-vl-235b-a22b`             | Best private vision model                 |
 | **Uncensored**               | `venice-uncensored`              | No content restrictions                   |
@@ -149,8 +149,8 @@ openclaw models list | grep venice
 
 | Model ID                 | Original          | Context (tokens) | Features          |
 | ------------------------ | ----------------- | ---------------- | ----------------- |
-| `claude-opus-45`         | Claude Opus 4.5   | 202k             | Reasoning, vision |
-| `claude-sonnet-45`       | Claude Sonnet 4.5 | 202k             | Reasoning, vision |
+| `claude-opus-46`         | Claude Opus 4.6   | 202k             | Reasoning, vision |
+| `claude-sonnet-46`       | Claude Sonnet 4.6 | 202k             | Reasoning, vision |
 | `openai-gpt-52`          | GPT-5.2           | 262k             | Reasoning         |
 | `openai-gpt-52-codex`    | GPT-5.2 Codex     | 262k             | Reasoning, vision |
 | `gemini-3-pro-preview`   | Gemini 3 Pro      | 202k             | Reasoning, vision |
@@ -198,7 +198,7 @@ Venice uses a credit-based system. Check [venice.ai/pricing](https://venice.ai/p
 openclaw chat --model venice/llama-3.3-70b
 
 # Use Claude via Venice (anonymized)
-openclaw chat --model venice/claude-opus-45
+openclaw chat --model venice/claude-opus-46
 
 # Use uncensored model
 openclaw chat --model venice/venice-uncensored

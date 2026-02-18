@@ -372,7 +372,7 @@ Split by channel: route WhatsApp to a fast everyday agent and Telegram to an Opu
         id: "chat",
         name: "Everyday",
         workspace: "~/.openclaw/workspace-chat",
-        model: "anthropic/claude-sonnet-4-5",
+        model: "anthropic/claude-sonnet-4-6",
       },
       {
         id: "opus",
@@ -406,7 +406,7 @@ Keep WhatsApp on the fast agent, but route one DM to Opus:
         id: "chat",
         name: "Everyday",
         workspace: "~/.openclaw/workspace-chat",
-        model: "anthropic/claude-sonnet-4-5",
+        model: "anthropic/claude-sonnet-4-6",
       },
       {
         id: "opus",

@@ -112,11 +112,11 @@ When validation fails:
       agents: {
         defaults: {
           model: {
-            primary: "anthropic/claude-sonnet-4-5",
+            primary: "anthropic/claude-sonnet-4-6",
             fallbacks: ["openai/gpt-5.2"],
           },
           models: {
-            "anthropic/claude-sonnet-4-5": { alias: "Sonnet" },
+            "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
             "openai/gpt-5.2": { alias: "GPT" },
           },
         },

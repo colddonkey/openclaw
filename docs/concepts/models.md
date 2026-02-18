@@ -80,9 +80,9 @@ Example allowlist config:
 ```json5
 {
   agent: {
-    model: { primary: "anthropic/claude-sonnet-4-5" },
+    model: { primary: "anthropic/claude-sonnet-4-6" },
     models: {
-      "anthropic/claude-sonnet-4-5": { alias: "Sonnet" },
+      "anthropic/claude-sonnet-4-6": { alias: "Sonnet" },
       "anthropic/claude-opus-4-6": { alias: "Opus" },
     },
   },

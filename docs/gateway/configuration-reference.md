@@ -671,7 +671,7 @@ Time format in system prompt. Default: `auto` (OS preference).
 | Alias          | Model                           |
 | -------------- | ------------------------------- |
 | `opus`         | `anthropic/claude-opus-4-6`     |
-| `sonnet`       | `anthropic/claude-sonnet-4-5`   |
+| `sonnet`       | `anthropic/claude-sonnet-4-6`   |
 | `gpt`          | `openai/gpt-5.2`                |
 | `gpt-mini`     | `openai/gpt-5-mini`             |
 | `gemini`       | `google/gemini-3-pro-preview`   |
