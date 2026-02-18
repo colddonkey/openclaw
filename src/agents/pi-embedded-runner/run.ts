@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import type { ThinkLevel } from "../../auto-reply/thinking.js";
+import { broadcastTelegramSystemAlert } from "../../infra/telegram-notify.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { enqueueCommandInLane } from "../../process/command-queue.js";
 import { isMarkdownCapableMessageChannel } from "../../utils/message-channel.js";
@@ -805,6 +806,16 @@ export async function runEmbeddedPiAgent(
                 cfg: params.config,
                 agentDir: params.agentDir,
               });
+              if (promptFailoverReason === "auth" && params.config) {
+                const profile = authStore.profiles[lastProfileId];
+                if (profile?.type === "token" && profile.provider === "anthropic") {
+                  void broadcastTelegramSystemAlert(
+                    params.config,
+                    `[openclaw] Anthropic auth token expired.\n` +
+                      `Run: claude setup-token  then update via: openclaw configure`,
+                  );
+                }
+              }
             }
             if (
               isFailoverErrorMessage(errorText) &&

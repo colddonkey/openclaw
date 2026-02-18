@@ -8,6 +8,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { hasBinary } from "../agents/skills.js";
 import type { OpenClawConfig } from "../config/config.js";
+import { broadcastTelegramSystemAlert } from "../infra/telegram-notify.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { runCommandWithTimeout } from "../process/exec.js";
 import { ensureTailscaleEndpoint } from "./gmail-setup-utils.js";
@@ -31,25 +32,6 @@ export function isGmailAuthExpiredError(line: string): boolean {
   return GMAIL_AUTH_EXPIRED_RE.test(line);
 }
 
-/**
- * Send a plain-text Telegram DM via the Bot API.
- * Fire-and-forget: errors are logged but not thrown.
- */
-async function sendTelegramDm(botToken: string, chatId: string, text: string): Promise<void> {
-  try {
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    });
-    if (!res.ok) {
-      log.warn(`telegram DM failed (${res.status}): ${await res.text()}`);
-    }
-  } catch (err) {
-    log.warn(`telegram DM error: ${String(err)}`);
-  }
-}
 
 let watcherProcess: ChildProcess | null = null;
 let renewInterval: ReturnType<typeof setInterval> | null = null;
@@ -211,17 +193,14 @@ export async function startGmailWatcher(cfg: OpenClawConfig): Promise<GmailWatch
     log.warn("gmail watch start failed, but continuing with serve");
 
     if (watchResult.authExpired) {
-      const botToken = cfg.channels?.telegram?.botToken?.trim();
-      const allowFrom = cfg.channels?.telegram?.allowFrom ?? [];
-      if (botToken && allowFrom.length > 0) {
-        const alertText =
-          `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
-          `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
-        for (const chatId of allowFrom) {
-          void sendTelegramDm(botToken, String(chatId), alertText);
+      const alertText =
+        `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
+        `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
+      void broadcastTelegramSystemAlert(cfg, alertText).then((count) => {
+        if (count > 0) {
+          log.warn(`gmail auth expired - sent Telegram alert to ${count} user(s)`);
         }
-        log.warn(`gmail auth expired - sent Telegram alert to ${allowFrom.length} user(s)`);
-      }
+      });
     }
   }
 
@@ -237,16 +216,10 @@ export async function startGmailWatcher(cfg: OpenClawConfig): Promise<GmailWatch
     }
     void startGmailWatch(runtimeConfig).then((result) => {
       if (!result.success && result.authExpired) {
-        const botToken = cfg.channels?.telegram?.botToken?.trim();
-        const allowFrom = cfg.channels?.telegram?.allowFrom ?? [];
-        if (botToken && allowFrom.length > 0) {
-          const alertText =
-            `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
-            `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
-          for (const chatId of allowFrom) {
-            void sendTelegramDm(botToken, String(chatId), alertText);
-          }
-        }
+        const alertText =
+          `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
+          `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
+        void broadcastTelegramSystemAlert(cfg, alertText);
       }
     });
   }, renewMs);
