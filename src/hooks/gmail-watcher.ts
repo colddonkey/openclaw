@@ -21,9 +21,34 @@ import {
 const log = createSubsystemLogger("gmail-watcher");
 
 const ADDRESS_IN_USE_RE = /address already in use|EADDRINUSE/i;
+const GMAIL_AUTH_EXPIRED_RE = /invalid_grant|token has been expired or revoked/i;
 
 export function isAddressInUseError(line: string): boolean {
   return ADDRESS_IN_USE_RE.test(line);
+}
+
+export function isGmailAuthExpiredError(line: string): boolean {
+  return GMAIL_AUTH_EXPIRED_RE.test(line);
+}
+
+/**
+ * Send a plain-text Telegram DM via the Bot API.
+ * Fire-and-forget: errors are logged but not thrown.
+ */
+async function sendTelegramDm(botToken: string, chatId: string, text: string): Promise<void> {
+  try {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    });
+    if (!res.ok) {
+      log.warn(`telegram DM failed (${res.status}): ${await res.text()}`);
+    }
+  } catch (err) {
+    log.warn(`telegram DM error: ${String(err)}`);
+  }
 }
 
 let watcherProcess: ChildProcess | null = null;
@@ -41,22 +66,27 @@ function isGogAvailable(): boolean {
 /**
  * Start the Gmail watch (registers with Gmail API)
  */
+type GmailWatchResult = {
+  success: boolean;
+  authExpired: boolean;
+};
+
 async function startGmailWatch(
   cfg: Pick<GmailHookRuntimeConfig, "account" | "label" | "topic">,
-): Promise<boolean> {
+): Promise<GmailWatchResult> {
   const args = ["gog", ...buildGogWatchStartArgs(cfg)];
   try {
     const result = await runCommandWithTimeout(args, { timeoutMs: 120_000 });
     if (result.code !== 0) {
       const message = result.stderr || result.stdout || "gog watch start failed";
       log.error(`watch start failed: ${message}`);
-      return false;
+      return { success: false, authExpired: isGmailAuthExpiredError(message) };
     }
     log.info(`watch started for ${cfg.account}`);
-    return true;
+    return { success: true, authExpired: false };
   } catch (err) {
     log.error(`watch start error: ${String(err)}`);
-    return false;
+    return { success: false, authExpired: false };
   }
 }
 
@@ -176,9 +206,23 @@ export async function startGmailWatcher(cfg: OpenClawConfig): Promise<GmailWatch
   }
 
   // Start the Gmail watch (register with Gmail API)
-  const watchStarted = await startGmailWatch(runtimeConfig);
-  if (!watchStarted) {
+  const watchResult = await startGmailWatch(runtimeConfig);
+  if (!watchResult.success) {
     log.warn("gmail watch start failed, but continuing with serve");
+
+    if (watchResult.authExpired) {
+      const botToken = cfg.channels?.telegram?.botToken?.trim();
+      const allowFrom = cfg.channels?.telegram?.allowFrom ?? [];
+      if (botToken && allowFrom.length > 0) {
+        const alertText =
+          `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
+          `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
+        for (const chatId of allowFrom) {
+          void sendTelegramDm(botToken, String(chatId), alertText);
+        }
+        log.warn(`gmail auth expired - sent Telegram alert to ${allowFrom.length} user(s)`);
+      }
+    }
   }
 
   // Spawn the gog serve process
@@ -191,7 +235,20 @@ export async function startGmailWatcher(cfg: OpenClawConfig): Promise<GmailWatch
     if (shuttingDown) {
       return;
     }
-    void startGmailWatch(runtimeConfig);
+    void startGmailWatch(runtimeConfig).then((result) => {
+      if (!result.success && result.authExpired) {
+        const botToken = cfg.channels?.telegram?.botToken?.trim();
+        const allowFrom = cfg.channels?.telegram?.allowFrom ?? [];
+        if (botToken && allowFrom.length > 0) {
+          const alertText =
+            `[openclaw] Gmail auth expired for ${runtimeConfig.account}.\n` +
+            `Email hooks are paused. Run: gog auth add ${runtimeConfig.account}`;
+          for (const chatId of allowFrom) {
+            void sendTelegramDm(botToken, String(chatId), alertText);
+          }
+        }
+      }
+    });
   }, renewMs);
 
   log.info(
