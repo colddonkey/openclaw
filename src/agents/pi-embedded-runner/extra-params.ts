@@ -2,6 +2,7 @@ import type { StreamFn } from "@mariozechner/pi-agent-core";
 import type { SimpleStreamOptions } from "@mariozechner/pi-ai";
 import { streamSimple } from "@mariozechner/pi-ai";
 import type { OpenClawConfig } from "../../config/config.js";
+import type { ModelAuthMode } from "../model-auth.js";
 import { log } from "./logger.js";
 
 const OPENROUTER_APP_HEADERS: Record<string, string> = {
@@ -177,6 +178,7 @@ function resolveAnthropicBetas(
   extraParams: Record<string, unknown> | undefined,
   provider: string,
   modelId: string,
+  authMode?: ModelAuthMode,
 ): string[] | undefined {
   if (provider !== "anthropic") {
     return undefined;
@@ -194,8 +196,10 @@ function resolveAnthropicBetas(
     }
   }
 
-  // Auto-enable 1M context window for all claude-opus-4 and claude-sonnet-4 models.
-  if (isAnthropic1MModel(modelId)) {
+  // Auto-enable 1M context window for claude-opus-4 and claude-sonnet-4 models.
+  // Skip for OAuth/token auth (sk-ant-oat01- from `claude setup-token`) — Anthropic
+  // beta headers require API key authentication and return 401 with OAuth tokens.
+  if (isAnthropic1MModel(modelId) && authMode !== "token") {
     betas.add(ANTHROPIC_CONTEXT_1M_BETA);
   }
 
@@ -288,6 +292,7 @@ export function applyExtraParamsToAgent(
   provider: string,
   modelId: string,
   extraParamsOverride?: Record<string, unknown>,
+  authMode?: ModelAuthMode,
 ): void {
   const extraParams = resolveExtraParams({
     cfg,
@@ -308,7 +313,7 @@ export function applyExtraParamsToAgent(
     agent.streamFn = wrappedStreamFn;
   }
 
-  const anthropicBetas = resolveAnthropicBetas(merged, provider, modelId);
+  const anthropicBetas = resolveAnthropicBetas(merged, provider, modelId, authMode);
   if (anthropicBetas?.length) {
     log.debug(
       `applying Anthropic beta header for ${provider}/${modelId}: ${anthropicBetas.join(",")}`,

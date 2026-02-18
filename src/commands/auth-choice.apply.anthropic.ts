@@ -1,3 +1,4 @@
+import { SONNET_REF } from "../agents/model-identity.js";
 import { upsertAuthProfile } from "../agents/auth-profiles.js";
 import {
   formatApiKeyPreview,
@@ -12,7 +13,7 @@ import {
 } from "./onboard-auth.config-shared.js";
 import { applyAuthProfileConfig, setAnthropicApiKey } from "./onboard-auth.js";
 
-const DEFAULT_ANTHROPIC_MODEL = "anthropic/claude-sonnet-4-6";
+const DEFAULT_ANTHROPIC_MODEL = SONNET_REF;
 
 export async function applyAuthChoiceAnthropic(
   params: ApplyAuthChoiceParams,

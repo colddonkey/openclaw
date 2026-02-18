@@ -227,6 +227,64 @@ describe("applyExtraParamsToAgent", () => {
     expect(calls[0]?.headers).toEqual({ "X-Custom": "1" });
   });
 
+  it("skips context-1m beta for sonnet-4 when authMode is token (OAuth setup-token)", () => {
+    const calls: Array<SimpleStreamOptions | undefined> = [];
+    const baseStreamFn: StreamFn = (_model, _context, options) => {
+      calls.push(options);
+      return {} as ReturnType<StreamFn>;
+    };
+    const agent = { streamFn: baseStreamFn };
+
+    applyExtraParamsToAgent(agent, undefined, "anthropic", "claude-sonnet-4-6", undefined, "token");
+
+    const model = {
+      api: "anthropic-messages",
+      provider: "anthropic",
+      id: "claude-sonnet-4-6",
+    } as Model<"anthropic-messages">;
+    const context: Context = { messages: [] };
+
+    void agent.streamFn?.(model, context, { headers: { "X-Custom": "1" } });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.headers).toEqual({ "X-Custom": "1" });
+  });
+
+  it("still adds explicit anthropicBeta config headers even when authMode is token", () => {
+    const calls: Array<SimpleStreamOptions | undefined> = [];
+    const baseStreamFn: StreamFn = (_model, _context, options) => {
+      calls.push(options);
+      return {} as ReturnType<StreamFn>;
+    };
+    const agent = { streamFn: baseStreamFn };
+    const cfg = {
+      agents: {
+        defaults: {
+          models: {
+            "anthropic/claude-sonnet-4-6": {
+              params: { anthropicBeta: "files-api-2025-04-14" },
+            },
+          },
+        },
+      },
+    };
+
+    applyExtraParamsToAgent(agent, cfg, "anthropic", "claude-sonnet-4-6", undefined, "token");
+
+    const model = {
+      api: "anthropic-messages",
+      provider: "anthropic",
+      id: "claude-sonnet-4-6",
+    } as Model<"anthropic-messages">;
+    const context: Context = { messages: [] };
+
+    void agent.streamFn?.(model, context, {});
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.headers?.["anthropic-beta"]).toBe("files-api-2025-04-14");
+    expect(calls[0]?.headers?.["anthropic-beta"]).not.toContain("context-1m");
+  });
+
   it("forces store=true for direct OpenAI Responses payloads", () => {
     const payload = runStoreMutationCase({
       applyProvider: "openai",
