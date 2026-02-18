@@ -8,6 +8,7 @@ export function formatModelName(modelString?: string | null): string {
   const modelMappings: Record<string, string> = {
     "claude-opus-4-6": "Claude Opus 4.6",
     "claude-opus-4-5": "Claude Opus 4.5",
+    "claude-sonnet-4-6": "Claude Sonnet 4.6",
     "claude-sonnet-4-5": "Claude Sonnet 4.5",
     "claude-sonnet-3-5": "Claude Sonnet 3.5",
     "gpt-4o": "GPT-4o",

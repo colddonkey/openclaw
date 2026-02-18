@@ -202,11 +202,11 @@ Match model capability to task complexity:
 
 | Model          | Best For                                     | Examples                                                     |
 | -------------- | -------------------------------------------- | ------------------------------------------------------------ |
-| **Sonnet 4.5** | Orchestration, control flow, coordination    | VM execution, captain's chair, workflow routing              |
-| **Opus 4.5**   | Hard/difficult work requiring deep reasoning | Complex analysis, strategic decisions, novel problem-solving |
+| **Sonnet 4.6** | Orchestration, control flow, coordination    | VM execution, captain's chair, workflow routing              |
+| **Opus 4.6**   | Hard/difficult work requiring deep reasoning | Complex analysis, strategic decisions, novel problem-solving |
 | **Haiku**      | Simple, self-evident tasks (use sparingly)   | Classification, summarization, formatting                    |
 
-**Key insight:** Sonnet 4.5 excels at _orchestrating_ agents and managing control flow—it's the ideal model for the OpenProse VM itself and for "captain" agents that coordinate work. Opus 4.5 should be reserved for agents doing genuinely difficult intellectual work. Haiku can handle simple tasks but should generally be avoided where quality matters.
+**Key insight:** Sonnet 4.6 excels at _orchestrating_ agents and managing control flow—it's the ideal model for the OpenProse VM itself and for "captain" agents that coordinate work. Opus 4.6 should be reserved for agents doing genuinely difficult intellectual work. Haiku can handle simple tasks but should generally be avoided where quality matters.
 
 **Detailed task-to-model mapping:**
 
