@@ -40,6 +40,24 @@ export type MultiAgentOsConfig = {
     telegramForward?: boolean;
   };
 
+  /** Configuration for the automatic task scheduler. */
+  scheduler?: {
+    /** Enable the auto-scheduler. Default: true (when multiAgentOs is enabled). */
+    enabled?: boolean;
+    /** Interval between scheduling runs in milliseconds. Default: 30000. */
+    intervalMs?: number;
+    /** Max concurrent in-progress tasks per agent. Default: 3. */
+    maxConcurrentPerAgent?: number;
+    /** Minimum score threshold for assignment (0.0-1.0). Default: 0.1. */
+    minScoreThreshold?: number;
+    /** Weight for skill match scoring (0.0-1.0). Default: 0.5. */
+    skillWeight?: number;
+    /** Weight for load balancing scoring (0.0-1.0). Default: 0.3. */
+    loadWeight?: number;
+    /** Weight for recency scoring (0.0-1.0). Default: 0.2. */
+    recencyWeight?: number;
+  };
+
   /** SQLite database path override. Default: ~/.openclaw/tasks/tasks.sqlite */
   dbPath?: string;
 };

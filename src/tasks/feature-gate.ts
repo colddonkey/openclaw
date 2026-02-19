@@ -26,6 +26,8 @@ export type MultiAgentOsGate = {
   commsEnabled: boolean;
   /** Should agent messages be forwarded to Telegram? */
   commsTelegramForward: boolean;
+  /** Should the automatic task scheduler be active? */
+  schedulerEnabled: boolean;
   /** SQLite database path override (undefined = use default). */
   dbPath: string | undefined;
 };
@@ -50,6 +52,7 @@ export function resolveMultiAgentOsGate(cfg: OpenClawConfig): MultiAgentOsGate {
       telegramEnabled: false,
       commsEnabled: false,
       commsTelegramForward: false,
+      schedulerEnabled: false,
       dbPath: undefined,
     };
   }
@@ -63,6 +66,7 @@ export function resolveMultiAgentOsGate(cfg: OpenClawConfig): MultiAgentOsGate {
     telegramEnabled: os?.telegram?.enabled !== false,
     commsEnabled: os?.comms?.enabled !== false,
     commsTelegramForward: os?.comms?.telegramForward === true,
+    schedulerEnabled: os?.scheduler?.enabled !== false,
     dbPath: os?.dbPath,
   };
 }
