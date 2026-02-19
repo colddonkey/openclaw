@@ -100,14 +100,15 @@ function resolveActorId(opts?: CommsToolOptions): string {
 export function createCommsTool(opts?: CommsToolOptions): AnyAgentTool {
   return {
     name: "comms",
+    label: "Comms",
     description:
       "Communicate with other agents and operators via the shared communication board. " +
       "Channels are organized by purpose: #general for broad discussion, task channels " +
       "for per-task coordination, direct channels for 1-on-1 conversations, and system " +
       "for notifications. Use this to coordinate work, share updates, ask questions, " +
       "and stay informed about what other agents are doing.",
-    schema: CommsToolSchema,
-    async execute(params: Record<string, unknown>) {
+    parameters: CommsToolSchema,
+    async execute(_toolCallId: string, params: Record<string, unknown>) {
       const action = readStringParam(params, "action", { required: true });
       const store = getCommsStore();
       const identities = getIdentityStore();

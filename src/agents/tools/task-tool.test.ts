@@ -6,13 +6,13 @@ describe("createTaskTool", () => {
     const tool = createTaskTool();
     expect(tool.name).toBe("tasks");
     expect(tool.description).toContain("kanban");
-    expect(tool.schema).toBeDefined();
+    expect(tool.parameters).toBeDefined();
     expect(typeof tool.execute).toBe("function");
   });
 
   it("schema includes expected actions", () => {
     const tool = createTaskTool();
-    const schema = tool.schema as Record<string, unknown>;
+    const schema = tool.parameters as Record<string, unknown>;
     const properties = schema.properties as Record<string, unknown>;
     const actionSchema = properties.action as Record<string, unknown>;
     const actions = actionSchema.enum as string[];

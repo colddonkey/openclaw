@@ -110,14 +110,15 @@ function resolveActorName(actorId: string): string {
 export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
   return {
     name: "tasks",
+    label: "Tasks",
     description:
       "Manage tasks on the shared kanban board. Create, update, assign, comment on tasks. " +
       "Tasks have statuses (backlog, ready, in_progress, blocked, review, done, archived), " +
       "priorities, dependencies, and are automatically tracked. " +
       "Use 'board' to see the kanban overview. Use 'my_tasks' to see your assignments. " +
       "Use 'identity' to see your emergent skills and traits.",
-    schema: TaskToolSchema,
-    async execute(params: Record<string, unknown>) {
+    parameters: TaskToolSchema,
+    async execute(_toolCallId: string, params: Record<string, unknown>) {
       const action = readStringParam(params, "action", { required: true });
       const store = getTaskStore();
       const identities = getIdentityStore();

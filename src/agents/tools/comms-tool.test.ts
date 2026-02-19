@@ -6,13 +6,13 @@ describe("createCommsTool", () => {
     const tool = createCommsTool();
     expect(tool.name).toBe("comms");
     expect(tool.description).toContain("communication");
-    expect(tool.schema).toBeDefined();
+    expect(tool.parameters).toBeDefined();
     expect(typeof tool.execute).toBe("function");
   });
 
   it("schema includes expected actions", () => {
     const tool = createCommsTool();
-    const schema = tool.schema as Record<string, unknown>;
+    const schema = tool.parameters as Record<string, unknown>;
     const properties = schema.properties as Record<string, unknown>;
     const actionSchema = properties.action as Record<string, unknown>;
     const actions = actionSchema.enum as string[];
@@ -27,7 +27,7 @@ describe("createCommsTool", () => {
 
   it("schema has channelId and text params", () => {
     const tool = createCommsTool();
-    const schema = tool.schema as Record<string, unknown>;
+    const schema = tool.parameters as Record<string, unknown>;
     const properties = schema.properties as Record<string, unknown>;
     expect(properties.channelId).toBeDefined();
     expect(properties.text).toBeDefined();
