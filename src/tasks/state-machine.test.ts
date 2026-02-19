@@ -4,6 +4,7 @@ import {
   isActiveStatus,
   isResolvedStatus,
   isValidTransition,
+  needsTriagePlanning,
   resolveAutoTransition,
 } from "./state-machine.js";
 
@@ -52,6 +53,21 @@ describe("isValidTransition", () => {
     expect(isValidTransition("backlog", "review")).toBe(false);
     expect(isValidTransition("backlog", "blocked")).toBe(false);
   });
+
+  it("allows triage transitions", () => {
+    expect(isValidTransition("triage", "backlog")).toBe(true);
+    expect(isValidTransition("triage", "ready")).toBe(true);
+    expect(isValidTransition("triage", "in_progress")).toBe(true);
+    expect(isValidTransition("triage", "archived")).toBe(true);
+    expect(isValidTransition("backlog", "triage")).toBe(true);
+    expect(isValidTransition("archived", "triage")).toBe(true);
+  });
+
+  it("rejects invalid triage transitions", () => {
+    expect(isValidTransition("triage", "done")).toBe(false);
+    expect(isValidTransition("triage", "review")).toBe(false);
+    expect(isValidTransition("ready", "triage")).toBe(false);
+  });
 });
 
 describe("getValidTransitions", () => {
@@ -95,6 +111,7 @@ describe("status helpers", () => {
   });
 
   it("isActiveStatus", () => {
+    expect(isActiveStatus("triage")).toBe(true);
     expect(isActiveStatus("ready")).toBe(true);
     expect(isActiveStatus("in_progress")).toBe(true);
     expect(isActiveStatus("blocked")).toBe(true);
@@ -102,5 +119,17 @@ describe("status helpers", () => {
     expect(isActiveStatus("backlog")).toBe(false);
     expect(isActiveStatus("done")).toBe(false);
     expect(isActiveStatus("archived")).toBe(false);
+  });
+});
+
+describe("needsTriagePlanning", () => {
+  it("returns true for stories and epics", () => {
+    expect(needsTriagePlanning("story")).toBe(true);
+    expect(needsTriagePlanning("epic")).toBe(true);
+  });
+
+  it("returns false for tasks and quick_fixes", () => {
+    expect(needsTriagePlanning("task")).toBe(false);
+    expect(needsTriagePlanning("quick_fix")).toBe(false);
   });
 });

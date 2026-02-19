@@ -7,6 +7,7 @@
  */
 
 export type TaskStatus =
+  | "triage"
   | "backlog"
   | "ready"
   | "in_progress"
@@ -16,6 +17,15 @@ export type TaskStatus =
   | "archived";
 
 export type TaskPriority = "critical" | "high" | "medium" | "low" | "none";
+
+/**
+ * Task complexity type. Determines the planning gate:
+ *   - quick_fix: skip triage, go straight to ready
+ *   - task: standard single-agent work unit
+ *   - story: multi-step effort, may spawn subtasks during triage
+ *   - epic: large cross-cutting effort, always requires triage planning
+ */
+export type TaskType = "quick_fix" | "task" | "story" | "epic";
 
 export type TaskDependencyType = "blocked_by" | "blocks" | "parent" | "child" | "related";
 
@@ -51,6 +61,8 @@ export type Task = {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
+  /** Complexity type governing the planning gate. Default: "task". */
+  type: TaskType;
   assigneeId: string | null;
   assigneeName: string | null;
   creatorId: string;
@@ -72,6 +84,10 @@ export type Task = {
   completedAt: number | null;
   /** Estimated effort in minutes (optional, set by creator or agent). */
   estimateMinutes: number | null;
+  /** Plan produced during triage (populated by the planning agent). */
+  triagePlan: string | null;
+  /** When triage was completed (agent moved task out of triage). */
+  triagedAt: number | null;
 };
 
 export type TaskCreateInput = {
@@ -79,6 +95,7 @@ export type TaskCreateInput = {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
+  type?: TaskType;
   assigneeId?: string;
   assigneeName?: string;
   creatorId: string;
@@ -98,16 +115,19 @@ export type TaskUpdateInput = {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
+  type?: TaskType;
   assigneeId?: string | null;
   assigneeName?: string | null;
   labels?: string[];
   sessionKey?: string | null;
   metadata?: Record<string, unknown>;
   estimateMinutes?: number | null;
+  triagePlan?: string | null;
 };
 
 export type TaskFilter = {
   status?: TaskStatus | TaskStatus[];
+  type?: TaskType | TaskType[];
   assigneeId?: string;
   creatorId?: string;
   labels?: string[];

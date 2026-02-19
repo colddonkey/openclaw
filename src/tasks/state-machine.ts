@@ -8,13 +8,14 @@
 import type { TaskStatus } from "./types.js";
 
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  backlog: ["ready", "in_progress", "archived"],
+  triage: ["backlog", "ready", "in_progress", "archived"],
+  backlog: ["triage", "ready", "in_progress", "archived"],
   ready: ["in_progress", "backlog", "blocked", "archived"],
   in_progress: ["review", "done", "blocked", "ready", "archived"],
   blocked: ["ready", "in_progress", "backlog", "archived"],
   review: ["done", "in_progress", "blocked", "archived"],
   done: ["archived", "ready", "in_progress"],
-  archived: ["backlog", "ready"],
+  archived: ["backlog", "triage", "ready"],
 };
 
 export function isValidTransition(from: TaskStatus, to: TaskStatus): boolean {
@@ -45,9 +46,10 @@ export const STATUS_WEIGHT: Record<TaskStatus, number> = {
   blocked: 1,
   review: 2,
   ready: 3,
-  backlog: 4,
-  done: 5,
-  archived: 6,
+  triage: 4,
+  backlog: 5,
+  done: 6,
+  archived: 7,
 };
 
 /**
@@ -85,9 +87,18 @@ export function isResolvedStatus(status: TaskStatus): boolean {
  */
 export function isActiveStatus(status: TaskStatus): boolean {
   return (
+    status === "triage" ||
     status === "ready" ||
     status === "in_progress" ||
     status === "blocked" ||
     status === "review"
   );
+}
+
+/**
+ * Whether a task in this status needs triage planning before it can be worked on.
+ * quick_fix tasks skip triage entirely.
+ */
+export function needsTriagePlanning(taskType: string): boolean {
+  return taskType === "story" || taskType === "epic";
 }

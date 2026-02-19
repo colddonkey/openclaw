@@ -21,6 +21,7 @@ import type {
   TaskEvent,
   TaskFilter,
   TaskStatus,
+  TaskType,
   TaskUpdateInput,
 } from "./types.js";
 
@@ -46,6 +47,7 @@ function ensureSchema(db: DatabaseSync): void {
       description TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL DEFAULT 'backlog',
       priority TEXT NOT NULL DEFAULT 'medium',
+      type TEXT NOT NULL DEFAULT 'task',
       assignee_id TEXT,
       assignee_name TEXT,
       creator_id TEXT NOT NULL,
@@ -59,7 +61,9 @@ function ensureSchema(db: DatabaseSync): void {
       updated_at INTEGER NOT NULL,
       started_at INTEGER,
       completed_at INTEGER,
-      estimate_minutes INTEGER
+      estimate_minutes INTEGER,
+      triage_plan TEXT,
+      triaged_at INTEGER
     );
   `);
 
@@ -102,10 +106,24 @@ function ensureSchema(db: DatabaseSync): void {
     );
   `);
 
+  // Migrations: add columns that may not exist in older databases.
+  const colCheck = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='tasks'").get() as { sql: string } | undefined;
+  const tableSql = colCheck?.sql ?? "";
+  if (!tableSql.includes("type TEXT")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN type TEXT NOT NULL DEFAULT 'task'");
+  }
+  if (!tableSql.includes("triage_plan")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN triage_plan TEXT");
+  }
+  if (!tableSql.includes("triaged_at")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN triaged_at INTEGER");
+  }
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_type ON tasks(type);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_deps_task ON task_dependencies(task_id);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_deps_dep ON task_dependencies(depends_on_id);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id);`);
@@ -119,6 +137,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     description: row.description as string,
     status: row.status as TaskStatus,
     priority: row.priority as Task["priority"],
+    type: (row.type as TaskType) || "task",
     assigneeId: (row.assignee_id as string) || null,
     assigneeName: (row.assignee_name as string) || null,
     creatorId: row.creator_id as string,
@@ -133,6 +152,8 @@ function rowToTask(row: Record<string, unknown>): Task {
     startedAt: (row.started_at as number) || null,
     completedAt: (row.completed_at as number) || null,
     estimateMinutes: (row.estimate_minutes as number) || null,
+    triagePlan: (row.triage_plan as string) || null,
+    triagedAt: (row.triaged_at as number) || null,
   };
 }
 
@@ -159,19 +180,26 @@ export class TaskStore {
   create(input: TaskCreateInput): Task {
     const now = Date.now();
     const id = generateId();
-    const status = input.status ?? "backlog";
+    const taskType = input.type ?? "task";
+    // Stories and epics default to triage; quick_fix defaults to ready; task defaults to backlog.
+    const defaultStatus = taskType === "quick_fix" ? "ready"
+      : (taskType === "story" || taskType === "epic") ? "triage"
+      : "backlog";
+    const status = input.status ?? defaultStatus;
 
     this.db.prepare(`
       INSERT INTO tasks (
-        id, title, description, status, priority,
+        id, title, description, status, priority, type,
         assignee_id, assignee_name, creator_id, creator_name,
         labels, session_key, parent_id, source, metadata,
-        created_at, updated_at, started_at, completed_at, estimate_minutes
+        created_at, updated_at, started_at, completed_at, estimate_minutes,
+        triage_plan, triaged_at
       ) VALUES (
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?,
+        ?, ?
       )
     `).run(
       id,
@@ -179,6 +207,7 @@ export class TaskStore {
       input.description ?? "",
       status,
       input.priority ?? "medium",
+      taskType,
       input.assigneeId ?? null,
       input.assigneeName ?? null,
       input.creatorId,
@@ -193,6 +222,8 @@ export class TaskStore {
       status === "in_progress" ? now : null,
       null,
       input.estimateMinutes ?? null,
+      null,
+      null,
     );
 
     this.recordEvent({
@@ -271,6 +302,14 @@ export class TaskStore {
       sets.push("estimate_minutes = ?");
       values.push(input.estimateMinutes);
     }
+    if (input.type !== undefined) {
+      sets.push("type = ?");
+      values.push(input.type);
+    }
+    if (input.triagePlan !== undefined) {
+      sets.push("triage_plan = ?");
+      values.push(input.triagePlan);
+    }
 
     if (input.status !== undefined && input.status !== existing.status) {
       if (!isValidTransition(existing.status, input.status)) {
@@ -287,6 +326,10 @@ export class TaskStore {
       }
       if (isResolvedStatus(input.status) && !existing.completedAt) {
         sets.push("completed_at = ?");
+        values.push(now);
+      }
+      if (existing.status === "triage" && input.status !== "triage" && !existing.triagedAt) {
+        sets.push("triaged_at = ?");
         values.push(now);
       }
 
@@ -319,6 +362,11 @@ export class TaskStore {
       const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
       conditions.push(`status IN (${statuses.map(() => "?").join(", ")})`);
       params.push(...statuses);
+    }
+    if (filter?.type) {
+      const types = Array.isArray(filter.type) ? filter.type : [filter.type];
+      conditions.push(`type IN (${types.map(() => "?").join(", ")})`);
+      params.push(...types);
     }
     if (filter?.assigneeId) {
       conditions.push("assignee_id = ?");
@@ -494,7 +542,7 @@ export class TaskStore {
     `).all() as Array<{ status: string; count: number }>;
 
     const counts: Record<string, number> = {
-      backlog: 0, ready: 0, in_progress: 0, blocked: 0,
+      triage: 0, backlog: 0, ready: 0, in_progress: 0, blocked: 0,
       review: 0, done: 0, archived: 0,
     };
     for (const row of rows) {

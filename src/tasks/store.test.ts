@@ -281,6 +281,104 @@ describe("TaskStore dependencies and auto-transitions", () => {
   });
 });
 
+describe("TaskStore triage and types", () => {
+  it("creates a story task in triage status by default", () => {
+    const task = store.create({
+      title: "User authentication flow",
+      type: "story",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.status).toBe("triage");
+    expect(task.type).toBe("story");
+    expect(task.triagePlan).toBeNull();
+    expect(task.triagedAt).toBeNull();
+  });
+
+  it("creates a quick_fix in ready status by default", () => {
+    const task = store.create({
+      title: "Fix typo in header",
+      type: "quick_fix",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.status).toBe("ready");
+    expect(task.type).toBe("quick_fix");
+  });
+
+  it("creates an epic in triage status by default", () => {
+    const task = store.create({
+      title: "Multi-agent OS",
+      type: "epic",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.status).toBe("triage");
+  });
+
+  it("creates a regular task in backlog status by default", () => {
+    const task = store.create({
+      title: "Implement logging",
+      type: "task",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.status).toBe("backlog");
+  });
+
+  it("allows overriding the default status for a story", () => {
+    const task = store.create({
+      title: "Pre-triaged story",
+      type: "story",
+      status: "ready",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.status).toBe("ready");
+  });
+
+  it("records triaged_at when transitioning out of triage", () => {
+    const task = store.create({
+      title: "Needs triage",
+      type: "story",
+      creatorId: "user",
+      creatorName: "User",
+    });
+    expect(task.triagedAt).toBeNull();
+
+    const updated = store.update(
+      task.id,
+      { status: "ready", triagePlan: "Step 1: do X, Step 2: do Y" },
+      ACTOR.actorId,
+      ACTOR.actorName,
+    );
+    expect(updated!.status).toBe("ready");
+    expect(updated!.triagePlan).toBe("Step 1: do X, Step 2: do Y");
+    expect(updated!.triagedAt).toBeGreaterThan(0);
+  });
+
+  it("filters tasks by type", () => {
+    store.create({ title: "Quick", type: "quick_fix", creatorId: "u", creatorName: "U" });
+    store.create({ title: "Story", type: "story", creatorId: "u", creatorName: "U" });
+    store.create({ title: "Epic", type: "epic", creatorId: "u", creatorName: "U" });
+    store.create({ title: "Task", type: "task", creatorId: "u", creatorName: "U" });
+
+    const stories = store.list({ type: "story" });
+    expect(stories).toHaveLength(1);
+    expect(stories[0]!.type).toBe("story");
+
+    const complex = store.list({ type: ["story", "epic"] });
+    expect(complex).toHaveLength(2);
+  });
+
+  it("includes triage in status counts", () => {
+    store.create({ title: "A", type: "story", creatorId: "u", creatorName: "U" });
+    store.create({ title: "B", type: "epic", creatorId: "u", creatorName: "U" });
+    const counts = store.getStatusCounts();
+    expect(counts.triage).toBe(2);
+  });
+});
+
 describe("TaskStore comments", () => {
   it("adds and retrieves comments", () => {
     const task = store.create({ title: "Commentable", creatorId: "u", creatorName: "U" });
