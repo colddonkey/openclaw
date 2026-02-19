@@ -10,6 +10,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     description: "",
     status: "ready" as TaskStatus,
     priority: "medium" as TaskPriority,
+    type: "task",
     assigneeId: null,
     assigneeName: null,
     creatorId: "system",
@@ -24,6 +25,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     startedAt: null,
     completedAt: null,
     estimateMinutes: null,
+    triagePlan: null,
+    triagedAt: null,
     ...overrides,
   };
 }

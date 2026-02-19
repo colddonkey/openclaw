@@ -120,10 +120,19 @@ export class SchedulerService {
     const minScore = this.config.minScoreThreshold ?? DEFAULT_MIN_SCORE;
     const maxConcurrent = this.config.maxConcurrentPerAgent ?? DEFAULT_MAX_CONCURRENT;
 
-    const unassigned = this.taskStore.list({
+    // Phase 1: assign triage tasks (planning work)
+    const unassignedTriage = this.taskStore.list({
+      status: "triage" as TaskStatus,
+      limit: 20,
+    }).filter((t) => !t.assigneeId);
+
+    // Phase 2: assign ready tasks (execution work)
+    const unassignedReady = this.taskStore.list({
       status: "ready" as TaskStatus,
       limit: 50,
     }).filter((t) => !t.assigneeId);
+
+    const unassigned = [...unassignedTriage, ...unassignedReady];
 
     if (unassigned.length === 0) {
       return {
@@ -178,9 +187,10 @@ export class SchedulerService {
 
       loadMap.set(best.agentId, (loadMap.get(best.agentId) ?? 0) + 1);
 
+      const phase = task.status === "triage" ? "triage" : "execution";
       const reason = best.matchingSkills.length > 0
-        ? `Skill match: ${best.matchingSkills.join(", ")} (score: ${(best.totalScore * 100).toFixed(0)}%)`
-        : `Best available agent (score: ${(best.totalScore * 100).toFixed(0)}%)`;
+        ? `[${phase}] Skill match: ${best.matchingSkills.join(", ")} (score: ${(best.totalScore * 100).toFixed(0)}%)`
+        : `[${phase}] Best available agent (score: ${(best.totalScore * 100).toFixed(0)}%)`;
 
       assignments.push({
         taskId: task.id,
@@ -193,7 +203,7 @@ export class SchedulerService {
       this.notifyAssignment(task, best.agentId, actorName, reason);
 
       log.info(
-        `assigned: ${task.title.slice(0, 40)} -> ${best.agentId} (score: ${(best.totalScore * 100).toFixed(0)}%, skills: ${best.matchingSkills.join(",") || "none"})`,
+        `assigned [${phase}]: ${task.title.slice(0, 40)} -> ${best.agentId} (score: ${(best.totalScore * 100).toFixed(0)}%, skills: ${best.matchingSkills.join(",") || "none"})`,
       );
     }
 
