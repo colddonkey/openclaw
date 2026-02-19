@@ -9,7 +9,7 @@ import path from "node:path";
 import { resolveStateDir } from "../../config/paths.js";
 import { AgentIdentityStore } from "../../tasks/agent-identity.js";
 import { TaskStore } from "../../tasks/store.js";
-import type { TaskPriority, TaskStatus } from "../../tasks/types.js";
+import type { TaskPriority, TaskStatus, TaskType } from "../../tasks/types.js";
 import { resolveSessionAgentId } from "../agent-scope.js";
 import { optionalStringEnum, stringEnum } from "../schema/typebox.js";
 import { type AnyAgentTool, ToolInputError, jsonResult, readStringParam } from "./common.js";
@@ -29,6 +29,7 @@ const TASK_ACTIONS = [
 ] as const;
 
 const TASK_STATUSES = [
+  "triage",
   "backlog",
   "ready",
   "in_progress",
@@ -39,6 +40,8 @@ const TASK_STATUSES = [
 ] as const;
 
 const TASK_PRIORITIES = ["critical", "high", "medium", "low", "none"] as const;
+
+const TASK_TYPES = ["quick_fix", "task", "story", "epic"] as const;
 
 const TaskToolSchema = Type.Object({
   action: stringEnum(TASK_ACTIONS, {
@@ -52,8 +55,9 @@ const TaskToolSchema = Type.Object({
   id: Type.Optional(Type.String({ description: "Task ID (for get/update/assign/comment/dependency actions)." })),
   title: Type.Optional(Type.String({ description: "Task title (create/update)." })),
   description: Type.Optional(Type.String({ description: "Task description (create/update)." })),
-  status: optionalStringEnum(TASK_STATUSES, { description: "Task status (create/update)." }),
+  status: optionalStringEnum(TASK_STATUSES, { description: "Task status (create/update). Stories/epics default to triage." }),
   priority: optionalStringEnum(TASK_PRIORITIES, { description: "Task priority (create/update)." }),
+  type: optionalStringEnum(TASK_TYPES, { description: "Task type: quick_fix (no triage), task (default), story (needs planning), epic (large effort)." }),
   assigneeId: Type.Optional(Type.String({ description: "Agent ID to assign (assign action)." })),
   assigneeName: Type.Optional(Type.String({ description: "Display name of assignee." })),
   text: Type.Optional(Type.String({ description: "Comment text (comment action)." })),
@@ -113,9 +117,10 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
     label: "Tasks",
     description:
       "Manage tasks on the shared kanban board. Create, update, assign, comment on tasks. " +
-      "Tasks have statuses (backlog, ready, in_progress, blocked, review, done, archived), " +
-      "priorities, dependencies, and are automatically tracked. " +
-      "Use 'board' to see the kanban overview. Use 'my_tasks' to see your assignments. " +
+      "Tasks have statuses (triage, backlog, ready, in_progress, blocked, review, done, archived), " +
+      "types (quick_fix, task, story, epic), priorities, and dependencies. " +
+      "Stories/epics start in triage and need planning before becoming ready. " +
+      "Use 'board' for the kanban overview. Use 'my_tasks' for your assignments. " +
       "Use 'identity' to see your emergent skills and traits.",
     parameters: TaskToolSchema,
     async execute(_toolCallId: string, params: Record<string, unknown>) {
@@ -131,8 +136,9 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
           const task = store.create({
             title,
             description: readStringParam(params, "description") ?? "",
-            status: (params.status as TaskStatus) ?? "ready",
+            status: params.status as TaskStatus | undefined,
             priority: (params.priority as TaskPriority) ?? "medium",
+            type: (params.type as TaskType) ?? "task",
             assigneeId: readStringParam(params, "assigneeId"),
             assigneeName: readStringParam(params, "assigneeName"),
             creatorId: actorId,
@@ -152,6 +158,7 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
               id: task.id,
               title: task.title,
               status: task.status,
+              type: task.type,
               priority: task.priority,
               assigneeId: task.assigneeId,
             },
@@ -170,6 +177,7 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
               description: readStringParam(params, "description"),
               status: params.status as TaskStatus | undefined,
               priority: params.priority as TaskPriority | undefined,
+              type: params.type as TaskType | undefined,
               labels: Array.isArray(params.labels) ? (params.labels as string[]) : undefined,
               estimateMinutes: typeof params.estimateMinutes === "number" ? params.estimateMinutes : undefined,
             },
@@ -328,23 +336,21 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
           const blocked = store.list({ status: "blocked", limit: 10 });
           const ready = store.list({ status: "ready", limit: 10 });
           const review = store.list({ status: "review", limit: 10 });
+          const triage = store.list({ status: "triage", limit: 10 });
+
+          const brief = (t: { id: string; title: string; assigneeName: string | null; priority: string; type: string }) => ({
+            id: t.id, title: t.title, assignee: t.assigneeName, priority: t.priority, type: t.type,
+          });
 
           return jsonResult({
             board: {
               counts,
               columns: {
-                in_progress: inProgress.map((t) => ({
-                  id: t.id, title: t.title, assignee: t.assigneeName, priority: t.priority,
-                })),
-                blocked: blocked.map((t) => ({
-                  id: t.id, title: t.title, assignee: t.assigneeName, priority: t.priority,
-                })),
-                ready: ready.map((t) => ({
-                  id: t.id, title: t.title, priority: t.priority,
-                })),
-                review: review.map((t) => ({
-                  id: t.id, title: t.title, assignee: t.assigneeName, priority: t.priority,
-                })),
+                triage: triage.map(brief),
+                in_progress: inProgress.map(brief),
+                blocked: blocked.map(brief),
+                ready: ready.map(brief),
+                review: review.map(brief),
               },
             },
           });
@@ -353,7 +359,7 @@ export function createTaskTool(opts?: TaskToolOptions): AnyAgentTool {
         case "my_tasks": {
           const tasks = store.list({
             assigneeId: actorId,
-            status: ["ready", "in_progress", "blocked", "review"],
+            status: ["triage", "ready", "in_progress", "blocked", "review"],
             limit: 20,
           });
 

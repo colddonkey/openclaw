@@ -28,6 +28,7 @@ function getBoardStore(): TaskStore {
 }
 
 const STATUS_EMOJI: Record<TaskStatus, string> = {
+  triage: "🔍",
   backlog: "📋",
   ready: "🟢",
   in_progress: "🔄",
@@ -46,11 +47,19 @@ const PRIORITY_MARKER: Record<string, string> = {
 };
 
 const COLUMN_HEADERS: Record<string, string> = {
+  triage: "TRIAGE",
   in_progress: "IN PROGRESS",
   blocked: "BLOCKED",
   review: "REVIEW",
   ready: "READY",
   backlog: "BACKLOG",
+};
+
+const TYPE_BADGE: Record<string, string> = {
+  quick_fix: "QF",
+  task: "",
+  story: "S",
+  epic: "E",
 };
 
 function escapeHtml(text: string): string {
@@ -71,7 +80,9 @@ function formatTaskLine(task: Task): string {
   const title = escapeHtml(truncate(task.title, 40));
   const id = task.id.slice(-6);
   const prefix = priority ? `${priority} ` : "";
-  return `${prefix}${title}${assignee} <code>${id}</code>`;
+  const badge = TYPE_BADGE[task.type];
+  const typeSuffix = badge ? ` [${badge}]` : "";
+  return `${prefix}${title}${typeSuffix}${assignee} <code>${id}</code>`;
 }
 
 /**
@@ -86,17 +97,18 @@ export function renderBoardMessage(opts?: { maxPerColumn?: number }): {
   const maxPerCol = opts?.maxPerColumn ?? 5;
 
   const columns: Array<{ status: string; tasks: Task[] }> = [];
-  for (const status of ["in_progress", "blocked", "review", "ready"] as const) {
+  for (const status of ["in_progress", "blocked", "review", "ready", "triage"] as const) {
     const tasks = store.list({ status, limit: maxPerCol });
     columns.push({ status, tasks });
   }
 
   const lines: string[] = [];
   const totalActive =
-    counts.in_progress + counts.blocked + counts.review + counts.ready;
+    counts.in_progress + counts.blocked + counts.review + counts.ready + counts.triage;
 
   lines.push("<b>📋 Task Board</b>");
-  lines.push(`<i>${totalActive} active · ${counts.done} done · ${counts.backlog} backlog</i>`);
+  const triagePart = counts.triage > 0 ? ` · ${counts.triage} triage` : "";
+  lines.push(`<i>${totalActive} active${triagePart} · ${counts.done} done · ${counts.backlog} backlog</i>`);
 
   for (const col of columns) {
     const count = counts[col.status as TaskStatus] ?? 0;
@@ -121,6 +133,7 @@ export function renderBoardMessage(opts?: { maxPerColumn?: number }): {
       { text: "My Tasks", callback_data: "tsk_my" },
     ],
     [
+      { text: "Triage", callback_data: "tsk_ls_triage" },
       { text: "Backlog", callback_data: "tsk_ls_backlog" },
       { text: "Done", callback_data: "tsk_ls_done" },
     ],
@@ -149,9 +162,16 @@ export function renderTaskDetail(taskId: string): {
   lines.push("");
   lines.push(`Status: ${STATUS_EMOJI[task.status]} <b>${task.status}</b>`);
   lines.push(`Priority: ${PRIORITY_MARKER[task.priority] || "—"} ${task.priority}`);
+  if (task.type !== "task") lines.push(`Type: ${task.type}`);
   if (task.assigneeName) lines.push(`Assigned: ${escapeHtml(task.assigneeName)}`);
   if (task.estimateMinutes) lines.push(`Estimate: ${task.estimateMinutes}m`);
   if (task.labels.length > 0) lines.push(`Labels: ${task.labels.join(", ")}`);
+
+  if (task.triagePlan) {
+    lines.push("");
+    lines.push("<b>Triage Plan:</b>");
+    lines.push(escapeHtml(truncate(task.triagePlan, 300)));
+  }
 
   if (task.description) {
     lines.push("");
@@ -181,6 +201,10 @@ export function renderTaskDetail(taskId: string): {
   const shortId = taskId.slice(-8);
   const statusButtons: TelegramInlineButton[] = [];
 
+  if (task.status === "triage") {
+    statusButtons.push({ text: "Ready", callback_data: `tsk_mv_${shortId}_rdy`, style: "primary" });
+    statusButtons.push({ text: "Backlog", callback_data: `tsk_mv_${shortId}_bkl` });
+  }
   if (task.status === "ready" || task.status === "backlog") {
     statusButtons.push({ text: "Start", callback_data: `tsk_mv_${shortId}_inp`, style: "primary" });
   }
@@ -216,7 +240,7 @@ export function renderMyTasks(agentId: string): {
   const store = getBoardStore();
   const tasks = store.list({
     assigneeId: agentId,
-    status: ["ready", "in_progress", "blocked", "review"],
+    status: ["triage", "ready", "in_progress", "blocked", "review"],
     limit: 15,
   });
 
@@ -287,6 +311,7 @@ export function renderTaskList(status: TaskStatus): {
  * Status code mapping for compact callback_data (64 byte limit).
  */
 export const STATUS_CODES: Record<string, TaskStatus> = {
+  tri: "triage",
   bkl: "backlog",
   rdy: "ready",
   inp: "in_progress",
