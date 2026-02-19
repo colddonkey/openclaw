@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import os from "node:os";
 import { resolveLsofCommandSync } from "../infra/ports-lsof.js";
 import { sleep } from "../utils.js";
 
@@ -30,7 +31,51 @@ export function parseLsofOutput(output: string): PortProcess[] {
   return results;
 }
 
+/**
+ * Parse `netstat -ano` output and return PIDs listening on the given port.
+ * Windows-only fallback when lsof is unavailable.
+ */
+function listPortListenersWindows(port: number): PortProcess[] {
+  try {
+    const out = execFileSync("netstat", ["-ano", "-p", "TCP"], {
+      encoding: "utf-8",
+      windowsHide: true,
+    });
+    const portSuffix = `:${port}`;
+    const seen = new Set<number>();
+    const results: PortProcess[] = [];
+    for (const line of out.split(/\r?\n/)) {
+      if (!line.includes("LISTENING")) continue;
+      const trimmed = line.trim();
+      const parts = trimmed.split(/\s+/);
+      if (parts.length < 5) continue;
+      const local = parts[1];
+      if (!local?.endsWith(portSuffix)) continue;
+      const pid = Number.parseInt(parts[parts.length - 1]!, 10);
+      if (!Number.isFinite(pid) || pid <= 0 || seen.has(pid)) continue;
+      seen.add(pid);
+      let command: string | undefined;
+      try {
+        const taskOut = execFileSync(
+          "tasklist",
+          ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"],
+          { encoding: "utf-8", windowsHide: true },
+        );
+        const match = taskOut.match(/"([^"]+)"/);
+        if (match?.[1]) command = match[1];
+      } catch {}
+      results.push({ pid, command });
+    }
+    return results;
+  } catch {
+    return [];
+  }
+}
+
 export function listPortListeners(port: number): PortProcess[] {
+  if (os.platform() === "win32") {
+    return listPortListenersWindows(port);
+  }
   try {
     const lsof = resolveLsofCommandSync();
     const out = execFileSync(lsof, ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-FpFc"], {
@@ -45,7 +90,7 @@ export function listPortListeners(port: number): PortProcess[] {
     }
     if (status === 1) {
       return [];
-    } // no listeners
+    }
     throw err instanceof Error ? err : new Error(String(err));
   }
 }
