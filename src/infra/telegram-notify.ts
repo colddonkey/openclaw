@@ -46,6 +46,8 @@ export async function broadcastTelegramSystemAlert(
   if (!botToken || allowFrom.length === 0) {
     return 0;
   }
-  await Promise.all(allowFrom.map((chatId) => sendTelegramSystemDm(botToken, String(chatId), text)));
+  await Promise.all(
+    allowFrom.map((chatId) => sendTelegramSystemDm(botToken, String(chatId), text)),
+  );
   return allowFrom.length;
 }

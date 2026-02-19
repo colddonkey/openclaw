@@ -4,8 +4,8 @@ import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { canCreateSymlinksSync } from "../../test/test-symlink.js";
 import { WebSocket } from "ws";
+import { canCreateSymlinksSync } from "../../test/test-symlink.js";
 import { rawDataToString } from "../infra/ws.js";
 import { defaultRuntime } from "../runtime.js";
 import { A2UI_PATH, CANVAS_HOST_PATH, CANVAS_WS_PATH, injectCanvasLiveReload } from "./a2ui.js";
@@ -298,9 +298,7 @@ describeCanvasHost("canvas host", () => {
         );
         expect(traversalRes.status).toBe(404);
         expect(await traversalRes.text()).toBe("not found");
-        const symlinkRes = await fetch(
-          `http://127.0.0.1:${server.port}${A2UI_PATH}/${linkName}`,
-        );
+        const symlinkRes = await fetch(`http://127.0.0.1:${server.port}${A2UI_PATH}/${linkName}`);
         expect(symlinkRes.status).toBe(404);
         expect(await symlinkRes.text()).toBe("not found");
       } finally {

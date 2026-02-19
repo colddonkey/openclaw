@@ -1,5 +1,5 @@
-import type { OpenClawConfig } from "../config/config.js";
 import { OPUS_MODEL_ID, OPUS_PREV_MODEL_ID } from "../agents/model-identity.js";
+import type { OpenClawConfig } from "../config/config.js";
 import { applyAgentDefaultPrimaryModel } from "./model-default.js";
 
 export const OPENCODE_ZEN_DEFAULT_MODEL = `opencode/${OPUS_MODEL_ID}`;

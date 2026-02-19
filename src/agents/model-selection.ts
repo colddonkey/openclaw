@@ -1,13 +1,13 @@
 import type { OpenClawConfig } from "../config/config.js";
 import { resolveAgentConfig, resolveAgentModelPrimary } from "./agent-scope.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "./defaults.js";
+import type { ModelCatalogEntry } from "./model-catalog.js";
 import {
   OPUS_MODEL_ID,
   OPUS_PREV_MODEL_ID,
   SONNET_MODEL_ID,
   SONNET_PREV_MODEL_ID,
 } from "./model-identity.js";
-import type { ModelCatalogEntry } from "./model-catalog.js";
 import { normalizeGoogleModelId } from "./models-config.providers.js";
 
 export type ModelRef = {

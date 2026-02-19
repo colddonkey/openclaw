@@ -26,8 +26,7 @@ const fx = installEmbeddingManagerFixture({
 });
 const { embedBatch } = fx;
 
-const describeMemoryEmbeddingBatches =
-  process.platform === "win32" ? describe.skip : describe;
+const describeMemoryEmbeddingBatches = process.platform === "win32" ? describe.skip : describe;
 describeMemoryEmbeddingBatches("memory embedding batches", () => {
   it("splits large files across multiple embedding batches", async () => {
     const memoryDir = fx.getMemoryDir();

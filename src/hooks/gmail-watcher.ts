@@ -32,7 +32,6 @@ export function isGmailAuthExpiredError(line: string): boolean {
   return GMAIL_AUTH_EXPIRED_RE.test(line);
 }
 
-
 let watcherProcess: ChildProcess | null = null;
 let renewInterval: ReturnType<typeof setInterval> | null = null;
 let shuttingDown = false;

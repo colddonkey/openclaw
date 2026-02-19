@@ -17,8 +17,7 @@ vi.mock("./embeddings.js", () => ({
     }),
 }));
 
-const describeMemoryAsync =
-  process.platform === "win32" ? describe.skip : describe;
+const describeMemoryAsync = process.platform === "win32" ? describe.skip : describe;
 describeMemoryAsync("memory search async sync", () => {
   let workspaceDir: string;
   let indexPath: string;

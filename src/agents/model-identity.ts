@@ -27,9 +27,4 @@ export const OPUS_PREV_REF = `${PROVIDER_ANTHROPIC}/${OPUS_PREV_MODEL_ID}`;
 export const SONNET_PREV_REF = `${PROVIDER_ANTHROPIC}/${SONNET_PREV_MODEL_ID}`;
 
 // Standard set of Anthropic models available via OAuth (used by gateway auth, allowlists).
-export const ANTHROPIC_OAUTH_MODEL_REFS = [
-  OPUS_REF,
-  OPUS_PREV_REF,
-  SONNET_REF,
-  HAIKU_REF,
-] as const;
+export const ANTHROPIC_OAUTH_MODEL_REFS = [OPUS_REF, OPUS_PREV_REF, SONNET_REF, HAIKU_REF] as const;

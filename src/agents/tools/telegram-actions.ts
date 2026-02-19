@@ -237,7 +237,7 @@ export async function handleTelegramAction(
   }
 
   if (action === "editMessage") {
-    if (!isActionEnabled("editMessage")) {
+    if (!isActionEnabled("editMessage", false)) {
       throw new Error("Telegram editMessage is disabled.");
     }
     const chatId = readStringOrNumberParam(params, "chatId", {

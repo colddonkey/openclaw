@@ -62,7 +62,7 @@ export const telegramMessageActions: ChannelMessageActionAdapter = {
     if (gate("deleteMessage")) {
       actions.add("delete");
     }
-    if (gate("editMessage")) {
+    if (gate("editMessage", false)) {
       actions.add("edit");
     }
     if (gate("sticker", false)) {

@@ -1,5 +1,5 @@
-import { SONNET_REF } from "../agents/model-identity.js";
 import { upsertAuthProfile } from "../agents/auth-profiles.js";
+import { SONNET_REF } from "../agents/model-identity.js";
 import {
   formatApiKeyPreview,
   normalizeApiKeyInput,

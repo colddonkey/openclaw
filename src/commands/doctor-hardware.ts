@@ -51,10 +51,14 @@ function estimateNpuTops(cpuName: string): number | null {
 async function execPowershell(script: string): Promise<string> {
   try {
     const encoded = Buffer.from(script, "utf16le").toString("base64");
-    const { stdout } = await execFileAsync("powershell", ["-NoProfile", "-EncodedCommand", encoded], {
-      encoding: "utf8",
-      timeout: TIMEOUT_MS,
-    });
+    const { stdout } = await execFileAsync(
+      "powershell",
+      ["-NoProfile", "-EncodedCommand", encoded],
+      {
+        encoding: "utf8",
+        timeout: TIMEOUT_MS,
+      },
+    );
     return stdout.trim();
   } catch {
     return "";
@@ -117,11 +121,10 @@ async function detectGpus(): Promise<HardwareInfo["gpu"]> {
       });
     }
     if (platform === "darwin") {
-      const { stdout } = await execFileAsync(
-        "system_profiler",
-        ["SPDisplaysDataType", "-json"],
-        { encoding: "utf8", timeout: TIMEOUT_MS },
-      );
+      const { stdout } = await execFileAsync("system_profiler", ["SPDisplaysDataType", "-json"], {
+        encoding: "utf8",
+        timeout: TIMEOUT_MS,
+      });
       const data = JSON.parse(stdout);
       const displays = data?.SPDisplaysDataType ?? [];
       return displays.map((d: Record<string, string>) => ({
@@ -291,10 +294,7 @@ async function detectLinuxNpu(_cpuName: string): Promise<NpuInfo | null> {
   return null;
 }
 
-function resolveNpuVendor(
-  instanceId: string,
-  cpuName: string,
-): NpuInfo["vendor"] {
+function resolveNpuVendor(instanceId: string, cpuName: string): NpuInfo["vendor"] {
   const id = instanceId.toUpperCase();
   if (id.includes("VEN_1022") || id.includes("VEN_1002")) return "amd";
   if (id.includes("VEN_8086")) return "intel";
@@ -353,7 +353,9 @@ export function formatHardwareSummary(hw: HardwareInfo): string {
     } else {
       lines.push("  Runtime: not installed");
       if (hw.npu.vendor === "amd") {
-        lines.push("  Install Ryzen AI Software: https://www.amd.com/en/developer/resources/ryzen-ai-software.html");
+        lines.push(
+          "  Install Ryzen AI Software: https://www.amd.com/en/developer/resources/ryzen-ai-software.html",
+        );
       }
     }
   }
@@ -381,7 +383,9 @@ export async function noteHardwareInfo(): Promise<HardwareInfo> {
     const warnings: string[] = [];
 
     if (hw.npu && !hw.npu.runtimeInstalled) {
-      warnings.push("NPU detected but runtime is not installed. Install the vendor SDK to enable AI acceleration.");
+      warnings.push(
+        "NPU detected but runtime is not installed. Install the vendor SDK to enable AI acceleration.",
+      );
     }
 
     if (hw.npu?.runtimeVersion && hw.npu.vendor === "amd") {
@@ -408,9 +412,7 @@ export async function noteHardwareInfo(): Promise<HardwareInfo> {
       );
     }
 
-    const message = warnings.length > 0
-      ? `${summary}\n\n${warnings.join("\n")}`
-      : summary;
+    const message = warnings.length > 0 ? `${summary}\n\n${warnings.join("\n")}` : summary;
 
     note(message, "Hardware");
   }

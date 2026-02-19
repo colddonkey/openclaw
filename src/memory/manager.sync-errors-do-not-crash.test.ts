@@ -7,8 +7,7 @@ import { getEmbedBatchMock, resetEmbeddingMocks } from "./embedding.test-mocks.j
 import type { MemoryIndexManager } from "./index.js";
 import { getRequiredMemoryIndexManager } from "./test-manager-helpers.js";
 
-const describeMemorySyncFailures =
-  process.platform === "win32" ? describe.skip : describe;
+const describeMemorySyncFailures = process.platform === "win32" ? describe.skip : describe;
 describeMemorySyncFailures("memory manager sync failures", () => {
   let workspaceDir: string;
   let indexPath: string;

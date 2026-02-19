@@ -76,18 +76,15 @@ describeMediaServer("media server", () => {
     expect(await res.text()).toBe("invalid path");
   });
 
-  it.skipIf(!canCreateSymlinksSync())(
-    "blocks symlink escaping outside media dir",
-    async () => {
-      const target = path.join(process.cwd(), "package.json"); // outside MEDIA_DIR
-      const link = path.join(MEDIA_DIR, "link-out");
-      await fs.symlink(target, link);
+  it.skipIf(!canCreateSymlinksSync())("blocks symlink escaping outside media dir", async () => {
+    const target = path.join(process.cwd(), "package.json"); // outside MEDIA_DIR
+    const link = path.join(MEDIA_DIR, "link-out");
+    await fs.symlink(target, link);
 
-      const res = await fetch(`http://127.0.0.1:${port}/media/link-out`);
-      expect(res.status).toBe(400);
-      expect(await res.text()).toBe("invalid path");
-    },
-  );
+    const res = await fetch(`http://127.0.0.1:${port}/media/link-out`);
+    expect(res.status).toBe(400);
+    expect(await res.text()).toBe("invalid path");
+  });
 
   it("rejects invalid media ids", async () => {
     const file = path.join(MEDIA_DIR, "file2");

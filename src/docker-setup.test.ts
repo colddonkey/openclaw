@@ -95,8 +95,7 @@ function resolveBashForCompatCheck(): string | null {
   return null;
 }
 
-const describeDockerSetup =
-  process.platform === "win32" ? describe.skip : describe;
+const describeDockerSetup = process.platform === "win32" ? describe.skip : describe;
 describeDockerSetup("docker-setup.sh", () => {
   let sandbox: DockerSetupSandbox | null = null;
 

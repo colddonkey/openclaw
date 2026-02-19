@@ -20,8 +20,7 @@ vi.mock("./embeddings.js", () => {
   };
 });
 
-const describeMemoryVectorDedupe =
-  process.platform === "win32" ? describe.skip : describe;
+const describeMemoryVectorDedupe = process.platform === "win32" ? describe.skip : describe;
 describeMemoryVectorDedupe("memory vector dedupe", () => {
   let workspaceDir: string;
   let indexPath: string;

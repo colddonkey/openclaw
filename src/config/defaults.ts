@@ -1,5 +1,5 @@
-import { OPUS_REF, SONNET_REF } from "../agents/model-identity.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../agents/defaults.js";
+import { OPUS_REF, SONNET_REF } from "../agents/model-identity.js";
 import { parseModelRef } from "../agents/model-selection.js";
 import { DEFAULT_AGENT_MAX_CONCURRENT, DEFAULT_SUBAGENT_MAX_CONCURRENT } from "./agent-limits.js";
 import { resolveTalkApiKey } from "./talk.js";

@@ -33,8 +33,7 @@ vi.mock("./embeddings.js", () => ({
   }),
 }));
 
-const describeMemoryWatcher =
-  process.platform === "win32" ? describe.skip : describe;
+const describeMemoryWatcher = process.platform === "win32" ? describe.skip : describe;
 describeMemoryWatcher("memory watcher config", () => {
   let manager: MemoryIndexManager | null = null;
   let workspaceDir = "";
