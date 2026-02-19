@@ -4,21 +4,33 @@ const env = {
   NODE_ENV: "production",
 };
 
+const codeSplitting = {
+  groups: [
+    {
+      name: "rolldown-runtime",
+      test: /[\\/\0]rolldown[\\/]runtime/,
+      priority: 100,
+      minSize: 0,
+    },
+  ],
+};
+
 export default defineConfig([
   {
     entry: "src/index.ts",
     env,
     fixedExtension: false,
     platform: "node",
+    outputOptions: { codeSplitting },
   },
   {
     entry: "src/entry.ts",
     env,
     fixedExtension: false,
     platform: "node",
+    outputOptions: { codeSplitting },
   },
   {
-    // Ensure this module is bundled as an entry so legacy CLI shims can resolve its exports.
     entry: "src/cli/daemon-cli.ts",
     env,
     fixedExtension: false,
@@ -36,6 +48,7 @@ export default defineConfig([
     env,
     fixedExtension: false,
     platform: "node",
+    outputOptions: { codeSplitting },
   },
   {
     entry: "src/plugin-sdk/account-id.ts",
@@ -49,11 +62,13 @@ export default defineConfig([
     env,
     fixedExtension: false,
     platform: "node",
+    outputOptions: { codeSplitting },
   },
   {
     entry: ["src/hooks/bundled/*/handler.ts", "src/hooks/llm-slug-generator.ts"],
     env,
     fixedExtension: false,
     platform: "node",
+    outputOptions: { codeSplitting },
   },
 ]);
