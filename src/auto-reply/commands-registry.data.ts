@@ -173,6 +173,27 @@ function buildChatCommands(): ChatCommandDefinition[] {
       category: "status",
     }),
     defineChatCommand({
+      key: "board",
+      nativeName: "board",
+      description: "Show the kanban task board.",
+      textAlias: "/board",
+      category: "status",
+    }),
+    defineChatCommand({
+      key: "tasks",
+      nativeName: "tasks",
+      description: "List tasks by status.",
+      textAlias: "/tasks",
+      category: "status",
+      args: [
+        {
+          name: "status",
+          description: "Filter by status (backlog, ready, in_progress, blocked, review, done)",
+          type: "string",
+        },
+      ],
+    }),
+    defineChatCommand({
       key: "allowlist",
       description: "List/add/remove allowlist entries.",
       textAlias: "/allowlist",

@@ -44,6 +44,16 @@ import {
 } from "./group-access.js";
 import { migrateTelegramGroupConfig } from "./group-migration.js";
 import { resolveTelegramInlineButtonsScope } from "./inline-buttons.js";
+import { isMultiAgentOsEnabled, isMultiAgentOsFeatureEnabled } from "../tasks/feature-gate.js";
+import {
+  findTaskByShortId,
+  moveTask,
+  parseTaskCallback,
+  renderBoardMessage,
+  renderMyTasks,
+  renderTaskDetail,
+  renderTaskList,
+} from "./tasks-board.js";
 import {
   buildModelsKeyboard,
   buildProviderKeyboard,
@@ -967,6 +977,95 @@ export const registerTelegramHandlers = ({
         }
 
         return;
+      }
+
+      // Task board callback handler (tsk_brd, tsk_vw_*, tsk_mv_*, tsk_ls_*, tsk_my)
+      if (
+        data.startsWith("tsk_") &&
+        isMultiAgentOsEnabled(cfg) &&
+        isMultiAgentOsFeatureEnabled(cfg, "telegram")
+      ) {
+        const parsed = parseTaskCallback(data);
+        if (parsed) {
+          const editBoardMessage = async (
+            text: string,
+            buttons: import("./button-types.js").TelegramInlineButtons,
+          ) => {
+            const keyboard = buildInlineKeyboard(buttons);
+            try {
+              await editCallbackMessage(text, {
+                parse_mode: "HTML",
+                ...(keyboard ? { reply_markup: keyboard } : {}),
+              });
+            } catch (editErr) {
+              const errStr = String(editErr);
+              if (errStr.includes("no text in the message")) {
+                try {
+                  await deleteCallbackMessage();
+                } catch {}
+                await replyToCallbackChat(text, {
+                  parse_mode: "HTML",
+                  ...(keyboard ? { reply_markup: keyboard } : {}),
+                });
+              } else if (!errStr.includes("message is not modified")) {
+                throw editErr;
+              }
+            }
+          };
+
+          if (parsed.action === "board") {
+            const { text, buttons } = renderBoardMessage();
+            await editBoardMessage(text, buttons);
+            return;
+          }
+
+          if (parsed.action === "my_tasks") {
+            const agentId = senderId || "unknown";
+            const { text, buttons } = renderMyTasks(agentId);
+            await editBoardMessage(text, buttons);
+            return;
+          }
+
+          if (parsed.action === "list" && parsed.status) {
+            const { text, buttons } = renderTaskList(parsed.status);
+            await editBoardMessage(text, buttons);
+            return;
+          }
+
+          if (parsed.action === "view" && parsed.shortId) {
+            const result = renderTaskDetail(parsed.shortId);
+            if (result) {
+              await editBoardMessage(result.text, result.buttons);
+            } else {
+              await editBoardMessage("Task not found.", [
+                [{ text: "Back to Board", callback_data: "tsk_brd" }],
+              ]);
+            }
+            return;
+          }
+
+          if (parsed.action === "move" && parsed.shortId && parsed.status) {
+            const actorName =
+              callback.from?.first_name ??
+              callback.from?.username ??
+              senderId;
+            const updated = moveTask(parsed.shortId, parsed.status, senderId, actorName);
+            if (updated) {
+              const detail = renderTaskDetail(parsed.shortId);
+              if (detail) {
+                await editBoardMessage(detail.text, detail.buttons);
+              } else {
+                const { text, buttons } = renderBoardMessage();
+                await editBoardMessage(text, buttons);
+              }
+            } else {
+              await editBoardMessage("Failed to move task (not found or invalid transition).", [
+                [{ text: "Back to Board", callback_data: "tsk_brd" }],
+              ]);
+            }
+            return;
+          }
+        }
       }
 
       const syntheticMessage = buildSyntheticTextMessage({
