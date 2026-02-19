@@ -2,8 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>OpenClaw - Task Board</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // Apply Telegram theme colors if running inside mini app
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      // Use Telegram's back button for navigation
+      tg.BackButton.onClick(() => history.back());
+    }
+  </script>
   <style>
     :root {
       --bg: #08080d;
@@ -939,8 +950,15 @@
 
       ws.onopen = () => {
         setWsStatus('online');
-        send('connect', { role: 'operator', scopes: ['operator.admin'] });
-        setTimeout(() => loadBoard(), 150);
+        const authToken = '__GATEWAY_AUTH_TOKEN__';
+        const connectParams = {
+          minProtocol: 3, maxProtocol: 3,
+          client: { id: 'openclaw-control-ui', version: 'dev', platform: 'browser', mode: 'ui' },
+          role: 'operator', scopes: ['operator.admin']
+        };
+        if (authToken) connectParams.auth = { token: authToken };
+        send('connect', connectParams);
+        setTimeout(() => loadBoard(), 300);
       };
 
       ws.onclose = () => {

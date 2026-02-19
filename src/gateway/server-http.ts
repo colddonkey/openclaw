@@ -567,20 +567,31 @@ export function createGatewayHttpServer(opts: {
           return;
         }
       }
-      // Multi-agent OS UI routes: /kanban and /comms
-      if ((requestPath === "/kanban" || requestPath === "/comms") && isMultiAgentOsEnabled(configSnapshot)) {
-        const fileName = requestPath === "/comms" ? "comms.html" : "index.html";
-        const uiFile = path.join(
-          import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname),
-          "kanban",
-          fileName,
-        );
-        try {
-          const html = fs.readFileSync(uiFile, "utf-8");
+      // Multi-agent OS UI routes: /kanban, /comms, /fleet
+      if ((requestPath === "/kanban" || requestPath === "/comms" || requestPath === "/fleet") && isMultiAgentOsEnabled(configSnapshot)) {
+        const fileMap: Record<string, string> = { "/kanban": "index.html", "/comms": "comms.html", "/fleet": "fleet.html" };
+        const fileName = fileMap[requestPath] ?? "index.html";
+        // Resolve from both source and dist locations
+        const moduleDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);
+        const candidates = [
+          path.join(moduleDir, "kanban", fileName),
+          path.join(process.cwd(), "src", "gateway", "kanban", fileName),
+        ];
+        let html: string | null = null;
+        for (const candidate of candidates) {
+          try {
+            html = fs.readFileSync(candidate, "utf-8");
+            break;
+          } catch { /* try next */ }
+        }
+        if (html) {
+          const authToken = resolvedAuth.token ?? resolvedAuth.password ?? "";
+          html = html.replace("__GATEWAY_AUTH_TOKEN__", authToken);
           res.statusCode = 200;
           res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.setHeader("Cache-Control", "no-store");
           res.end(html);
-        } catch {
+        } else {
           res.statusCode = 404;
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
           res.end("UI not found");

@@ -496,8 +496,15 @@
 
       ws.onopen = () => {
         setWsStatus('online');
-        send('connect', { role: 'operator', scopes: ['operator.admin'] });
-        setTimeout(() => loadChannels(), 150);
+        const authToken = '__GATEWAY_AUTH_TOKEN__';
+        const connectParams = {
+          minProtocol: 3, maxProtocol: 3,
+          client: { id: 'openclaw-control-ui', version: 'dev', platform: 'browser', mode: 'ui' },
+          role: 'operator', scopes: ['operator.admin']
+        };
+        if (authToken) connectParams.auth = { token: authToken };
+        send('connect', connectParams);
+        setTimeout(() => loadChannels(), 300);
       };
       ws.onclose = () => {
         setWsStatus('offline');
