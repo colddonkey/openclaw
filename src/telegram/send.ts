@@ -410,13 +410,18 @@ export function buildInlineKeyboard(
   const rows = buttons
     .map((row) =>
       row
-        .filter((button) => button?.text && button?.callback_data)
+        .filter((button) => button?.text && ("callback_data" in button ? button.callback_data : "web_app" in button ? button.web_app?.url : false))
         .map(
-          (button): InlineKeyboardButton => ({
-            text: button.text,
-            callback_data: button.callback_data,
-            ...(button.style ? { style: button.style } : {}),
-          }),
+          (button): InlineKeyboardButton => {
+            if ("web_app" in button) {
+              return { text: button.text, web_app: button.web_app };
+            }
+            return {
+              text: button.text,
+              callback_data: button.callback_data,
+              ...("style" in button && button.style ? { style: button.style } : {}),
+            };
+          },
         ),
     )
     .filter((row) => row.length > 0);

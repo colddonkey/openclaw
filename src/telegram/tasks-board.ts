@@ -28,20 +28,20 @@ function getBoardStore(): TaskStore {
 }
 
 const STATUS_EMOJI: Record<TaskStatus, string> = {
-  backlog: "[ ]",
-  ready: "[R]",
-  in_progress: "[>]",
-  blocked: "[X]",
-  review: "[?]",
-  done: "[v]",
-  archived: "[-]",
+  backlog: "📋",
+  ready: "🟢",
+  in_progress: "🔄",
+  blocked: "🚫",
+  review: "👀",
+  done: "✅",
+  archived: "🗄️",
 };
 
 const PRIORITY_MARKER: Record<string, string> = {
-  critical: "!!!",
-  high: "!!",
-  medium: "!",
-  low: ".",
+  critical: "🔴",
+  high: "🟠",
+  medium: "🟡",
+  low: "⚪",
   none: "",
 };
 
@@ -67,10 +67,11 @@ function truncate(text: string, max: number): string {
 
 function formatTaskLine(task: Task): string {
   const priority = PRIORITY_MARKER[task.priority] ?? "";
-  const assignee = task.assigneeName ? ` @${task.assigneeName}` : "";
+  const assignee = task.assigneeName ? `  → ${task.assigneeName}` : "";
   const title = escapeHtml(truncate(task.title, 40));
   const id = task.id.slice(-6);
-  return `${priority} <code>${id}</code> ${title}${assignee}`;
+  const prefix = priority ? `${priority} ` : "";
+  return `${prefix}${title}${assignee} <code>${id}</code>`;
 }
 
 /**
@@ -91,32 +92,27 @@ export function renderBoardMessage(opts?: { maxPerColumn?: number }): {
   }
 
   const lines: string[] = [];
-  lines.push("<b>TASK BOARD</b>");
-  lines.push("");
-
   const totalActive =
     counts.in_progress + counts.blocked + counts.review + counts.ready;
-  lines.push(
-    `<i>${totalActive} active | ${counts.done} done | ${counts.backlog} backlog</i>`,
-  );
-  lines.push("");
+
+  lines.push("<b>📋 Task Board</b>");
+  lines.push(`<i>${totalActive} active · ${counts.done} done · ${counts.backlog} backlog</i>`);
 
   for (const col of columns) {
-    const header = COLUMN_HEADERS[col.status] ?? col.status.toUpperCase();
     const count = counts[col.status as TaskStatus] ?? 0;
+    if (count === 0) continue;
+
+    const header = COLUMN_HEADERS[col.status] ?? col.status.toUpperCase();
+    lines.push("");
+    lines.push("──────────────");
     lines.push(`<b>${STATUS_EMOJI[col.status as TaskStatus]} ${header}</b> (${count})`);
 
-    if (col.tasks.length === 0) {
-      lines.push("  <i>empty</i>");
-    } else {
-      for (const task of col.tasks) {
-        lines.push(`  ${formatTaskLine(task)}`);
-      }
-      if (count > col.tasks.length) {
-        lines.push(`  <i>+${count - col.tasks.length} more</i>`);
-      }
+    for (const task of col.tasks) {
+      lines.push(`  ${formatTaskLine(task)}`);
     }
-    lines.push("");
+    if (count > col.tasks.length) {
+      lines.push(`  <i>+${count - col.tasks.length} more</i>`);
+    }
   }
 
   const buttons: TelegramInlineButtons = [
@@ -148,11 +144,11 @@ export function renderTaskDetail(taskId: string): {
   const comments = store.getComments(taskId);
 
   const lines: string[] = [];
-  lines.push(`<b>${escapeHtml(task.title)}</b>`);
+  lines.push(`${STATUS_EMOJI[task.status]} <b>${escapeHtml(task.title)}</b>`);
   lines.push(`<code>${task.id}</code>`);
   lines.push("");
-  lines.push(`Status: <b>${task.status}</b>`);
-  lines.push(`Priority: ${task.priority}`);
+  lines.push(`Status: ${STATUS_EMOJI[task.status]} <b>${task.status}</b>`);
+  lines.push(`Priority: ${PRIORITY_MARKER[task.priority] || "—"} ${task.priority}`);
   if (task.assigneeName) lines.push(`Assigned: ${escapeHtml(task.assigneeName)}`);
   if (task.estimateMinutes) lines.push(`Estimate: ${task.estimateMinutes}m`);
   if (task.labels.length > 0) lines.push(`Labels: ${task.labels.join(", ")}`);
@@ -225,7 +221,7 @@ export function renderMyTasks(agentId: string): {
   });
 
   const lines: string[] = [];
-  lines.push(`<b>MY TASKS</b> (${agentId})`);
+  lines.push(`📌 <b>MY TASKS</b> (${agentId})`);
   lines.push("");
 
   if (tasks.length === 0) {
