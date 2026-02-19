@@ -15,7 +15,10 @@ import {
   handleA2uiHttpRequest,
 } from "../canvas-host/a2ui.js";
 import type { CanvasHostHandler } from "../canvas-host/server.js";
+import fs from "node:fs";
+import path from "node:path";
 import { loadConfig } from "../config/config.js";
+import { isMultiAgentOsEnabled } from "../tasks/feature-gate.js";
 import type { createSubsystemLogger } from "../logging/subsystem.js";
 import { safeEqualSecret } from "../security/secret-equal.js";
 import { handleSlackHttpRequest } from "../slack/http/index.js";
@@ -564,6 +567,26 @@ export function createGatewayHttpServer(opts: {
           return;
         }
       }
+      // Kanban board route: /kanban
+      if (requestPath === "/kanban" && isMultiAgentOsEnabled(configSnapshot)) {
+        const kanbanHtml = path.join(
+          import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname),
+          "kanban",
+          "index.html",
+        );
+        try {
+          const html = fs.readFileSync(kanbanHtml, "utf-8");
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.end(html);
+        } catch {
+          res.statusCode = 404;
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end("Kanban UI not found");
+        }
+        return;
+      }
+
       if (controlUiEnabled) {
         if (
           handleControlUiAvatarRequest(req, res, {

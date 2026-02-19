@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw - Task Board</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface-hover: #1a1a25;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-dim: #8888a0;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --info: #3b82f6;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    header .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    header .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+    header .dot.connected { background: var(--success); }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .toolbar button {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .toolbar button:hover { background: var(--surface-hover); border-color: var(--accent); }
+    .toolbar button.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .board {
+      display: flex;
+      gap: 16px;
+      padding: 24px;
+      overflow-x: auto;
+      min-height: calc(100vh - 130px);
+    }
+    .column {
+      flex: 0 0 280px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 160px);
+    }
+    .column-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .column-header .count {
+      background: var(--border);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .column-body {
+      padding: 8px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+      transform: translateY(-1px);
+    }
+    .card-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .card-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge.critical { background: rgba(239,68,68,0.2); color: #f87171; }
+    .badge.high { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .badge.medium { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    .badge.low { background: rgba(34,197,94,0.2); color: #4ade80; }
+    .badge.none { background: rgba(136,136,160,0.15); color: var(--text-dim); }
+    .badge.label { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .card-assignee {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.in_progress { background: var(--info); }
+    .status-dot.blocked { background: var(--danger); }
+    .status-dot.review { background: var(--warning); }
+    .status-dot.ready { background: var(--success); }
+    .status-dot.backlog { background: var(--text-dim); }
+    .status-dot.done { background: #6b7280; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 20px; cursor: pointer; padding: 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 16px 20px; }
+    .modal-body .field { margin-bottom: 12px; }
+    .modal-body label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .modal-body .value { font-size: 14px; }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .modal-actions button {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-actions button:hover { border-color: var(--accent); background: var(--surface-hover); }
+    .modal-actions button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .modal-actions button.primary:hover { background: var(--accent-hover); }
+    .modal-actions button.danger { border-color: var(--danger); color: var(--danger); }
+    .modal-actions button.danger:hover { background: rgba(239,68,68,0.1); }
+
+    .comments { margin-top: 16px; }
+    .comment {
+      padding: 8px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .comment .author { font-weight: 500; margin-right: 6px; }
+    .comment .time { color: var(--text-dim); font-size: 11px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Create task form */
+    .modal-body input, .modal-body textarea, .modal-body select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .modal-body textarea { min-height: 80px; resize: vertical; }
+    .modal-body input:focus, .modal-body textarea:focus, .modal-body select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Task Board</h1>
+    <div class="status">
+      <div class="dot" id="ws-dot"></div>
+      <span id="ws-status">Connecting...</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button onclick="loadBoard()" class="active">Board</button>
+    <button onclick="showCreateModal()">+ New Task</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <!-- Task Detail Modal -->
+  <div class="modal-overlay" id="detail-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Task Detail</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Create Task Modal -->
+  <div class="modal-overlay" id="create-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>New Task</h2>
+        <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Title</label>
+          <input type="text" id="new-title" placeholder="What needs to be done?" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="new-desc" placeholder="Details..."></textarea>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="new-priority">
+            <option value="medium">Medium</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="new-status">
+            <option value="backlog">Backlog</option>
+            <option value="ready">Ready</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="primary" onclick="createTask()">Create Task</button>
+          <button onclick="closeCreateModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COLUMNS = [
+      { status: 'in_progress', label: 'In Progress', color: 'var(--info)' },
+      { status: 'blocked', label: 'Blocked', color: 'var(--danger)' },
+      { status: 'review', label: 'Review', color: 'var(--warning)' },
+      { status: 'ready', label: 'Ready', color: 'var(--success)' },
+      { status: 'backlog', label: 'Backlog', color: 'var(--text-dim)' },
+    ];
+
+    let ws = null;
+    let reqId = 0;
+    const pending = new Map();
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${location.host}`);
+
+      ws.onopen = () => {
+        document.getElementById('ws-dot').classList.add('connected');
+        document.getElementById('ws-status').textContent = 'Connected';
+        send('connect', { role: 'operator', scopes: ['operator.admin'] });
+        setTimeout(() => loadBoard(), 200);
+      };
+
+      ws.onclose = () => {
+        document.getElementById('ws-dot').classList.remove('connected');
+        document.getElementById('ws-status').textContent = 'Disconnected';
+        setTimeout(connect, 3000);
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === 'res' && pending.has(msg.id)) {
+            const { resolve } = pending.get(msg.id);
+            pending.delete(msg.id);
+            resolve(msg);
+          }
+          if (msg.type === 'event' && msg.event === 'tasks.changed') {
+            loadBoard();
+          }
+        } catch {}
+      };
+    }
+
+    function send(method, params) {
+      return new Promise((resolve) => {
+        const id = String(++reqId);
+        pending.set(id, { resolve });
+        ws.send(JSON.stringify({ type: 'req', id, method, params }));
+        setTimeout(() => {
+          if (pending.has(id)) {
+            pending.delete(id);
+            resolve({ ok: false, error: { message: 'timeout' } });
+          }
+        }, 10000);
+      });
+    }
+
+    async function loadBoard() {
+      const res = await send('tasks.board', {});
+      if (!res.ok) return;
+
+      const { counts, columns: cols } = res.payload;
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+
+      for (const col of COLUMNS) {
+        const tasks = cols[col.status] || [];
+        const count = counts[col.status] || 0;
+        const el = document.createElement('div');
+        el.className = 'column';
+        el.innerHTML = `
+          <div class="column-header" style="border-left: 3px solid ${col.color}">
+            <span>${col.label}</span>
+            <span class="count">${count}</span>
+          </div>
+          <div class="column-body">
+            ${tasks.length === 0
+              ? '<div class="empty-state">No tasks</div>'
+              : tasks.map(t => `
+                <div class="card" onclick="openTask('${t.id}')">
+                  <div class="card-title">${esc(t.title)}</div>
+                  <div class="card-meta">
+                    <span class="badge ${t.priority}">${t.priority}</span>
+                    ${(t.labels || []).slice(0, 2).map(l =>
+                      `<span class="badge label">${esc(l)}</span>`
+                    ).join('')}
+                    ${t.assigneeName ? `<span class="card-assignee">@${esc(t.assigneeName)}</span>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+          </div>
+        `;
+        board.appendChild(el);
+      }
+    }
+
+    async function openTask(id) {
+      const res = await send('tasks.get', { id });
+      if (!res.ok) return;
+
+      const { task: t, dependencies, comments, events } = res.payload;
+      document.getElementById('modal-title').textContent = t.title;
+
+      const actions = getStatusActions(t.status);
+      document.getElementById('modal-body').innerHTML = `
+        <div class="field">
+          <label>Status</label>
+          <div class="value"><span class="status-dot ${t.status}"></span> ${t.status}</div>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <div class="value"><span class="badge ${t.priority}">${t.priority}</span></div>
+        </div>
+        <div class="field">
+          <label>ID</label>
+          <div class="value" style="font-family:monospace;font-size:12px;color:var(--text-dim)">${t.id}</div>
+        </div>
+        ${t.description ? `<div class="field"><label>Description</label><div class="value">${esc(t.description)}</div></div>` : ''}
+        ${t.assigneeName ? `<div class="field"><label>Assignee</label><div class="value">${esc(t.assigneeName)}</div></div>` : ''}
+        ${t.labels?.length ? `<div class="field"><label>Labels</label><div class="value">${t.labels.map(l => `<span class="badge label">${esc(l)}</span>`).join(' ')}</div></div>` : ''}
+        <div class="field">
+          <label>Created</label>
+          <div class="value" style="font-size:12px;color:var(--text-dim)">${new Date(t.createdAt).toLocaleString()}</div>
+        </div>
+        <div class="modal-actions">
+          ${actions.map(a => `<button class="${a.cls || ''}" onclick="moveTask('${t.id}', '${a.status}')">${a.label}</button>`).join('')}
+        </div>
+        ${comments.length > 0 ? `
+          <div class="comments">
+            <label>Comments</label>
+            ${comments.map(c => `
+              <div class="comment">
+                <span class="author">${esc(c.authorName)}</span>
+                <span class="time">${new Date(c.createdAt).toLocaleString()}</span>
+                <div>${esc(c.text)}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      `;
+      document.getElementById('detail-modal').classList.add('open');
+    }
+
+    function getStatusActions(status) {
+      switch (status) {
+        case 'backlog': return [{ label: 'Move to Ready', status: 'ready', cls: 'primary' }];
+        case 'ready': return [{ label: 'Start', status: 'in_progress', cls: 'primary' }];
+        case 'in_progress': return [
+          { label: 'Review', status: 'review', cls: 'primary' },
+          { label: 'Done', status: 'done' },
+          { label: 'Block', status: 'blocked', cls: 'danger' },
+        ];
+        case 'blocked': return [{ label: 'Unblock', status: 'ready', cls: 'primary' }];
+        case 'review': return [
+          { label: 'Done', status: 'done', cls: 'primary' },
+          { label: 'Rework', status: 'in_progress' },
+        ];
+        case 'done': return [{ label: 'Reopen', status: 'ready' }];
+        default: return [];
+      }
+    }
+
+    async function moveTask(id, status) {
+      await send('tasks.update', { id, status });
+      closeModal();
+      loadBoard();
+    }
+
+    async function createTask() {
+      const title = document.getElementById('new-title').value.trim();
+      if (!title) return;
+      await send('tasks.create', {
+        title,
+        description: document.getElementById('new-desc').value,
+        priority: document.getElementById('new-priority').value,
+        status: document.getElementById('new-status').value,
+      });
+      closeCreateModal();
+      document.getElementById('new-title').value = '';
+      document.getElementById('new-desc').value = '';
+      loadBoard();
+    }
+
+    function closeModal() { document.getElementById('detail-modal').classList.remove('open'); }
+    function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); }
+    function showCreateModal() { document.getElementById('create-modal').classList.add('open'); }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeModal(); closeCreateModal(); }
+    });
+
+    connect();
+  </script>
+</body>
+</html>
