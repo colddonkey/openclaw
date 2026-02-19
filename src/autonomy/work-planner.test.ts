@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decide, planWork, pickNextTask } from "./work-planner.js";
+import { decide, planWork, pickNextTask, pickNextTriageTask } from "./work-planner.js";
 import type { DecisionContext, AgentState, WorkStep } from "./types.js";
 import type { Task } from "../tasks/types.js";
 import type { AgentIdentity } from "../tasks/agent-identity.js";
@@ -11,6 +11,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     description: "",
     status: "ready",
     priority: "medium",
+    type: "task",
     assigneeId: null,
     assigneeName: null,
     creatorId: "system",
@@ -25,6 +26,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     startedAt: null,
     completedAt: null,
     estimateMinutes: null,
+    triagePlan: null,
+    triagedAt: null,
     ...overrides,
   };
 }
@@ -64,6 +67,7 @@ function makeContext(overrides: Partial<DecisionContext> = {}): DecisionContext 
     agent: makeIdentity(),
     state: makeState(),
     assignedTasks: [],
+    triageTasks: [],
     unreadMessages: [],
     recentSystemEvents: [],
     currentLoad: 0,
@@ -220,6 +224,71 @@ describe("planWork", () => {
       expect(step.startedAt).toBeNull();
       expect(step.completedAt).toBeNull();
     }
+  });
+});
+
+describe("triage decisions", () => {
+  it("decides to triage a task before picking ready tasks", () => {
+    const readyTask = makeTask({ id: "ready-1", status: "ready" });
+    const triageTask = makeTask({ id: "triage-1", status: "triage", type: "story" });
+    const ctx = makeContext({
+      assignedTasks: [readyTask],
+      triageTasks: [triageTask],
+    });
+    const decision = decide(ctx);
+    expect(decision.type).toBe("triage_task");
+    if (decision.type === "triage_task") {
+      expect(decision.taskId).toBe("triage-1");
+    }
+  });
+
+  it("continues triage when already planning a triage task", () => {
+    const triageTask = makeTask({ id: "triage-1", status: "triage", type: "epic" });
+    const state = makeState({
+      phase: "planning",
+      currentTaskId: "triage-1",
+    });
+    const ctx = makeContext({
+      state,
+      triageTasks: [triageTask],
+    });
+    const decision = decide(ctx);
+    expect(decision.type).toBe("triage_task");
+  });
+
+  it("falls through to pick_task when no triage tasks exist", () => {
+    const readyTask = makeTask({ id: "ready-1", status: "ready" });
+    const ctx = makeContext({
+      assignedTasks: [readyTask],
+      triageTasks: [],
+    });
+    const decision = decide(ctx);
+    expect(decision.type).toBe("pick_task");
+  });
+});
+
+describe("pickNextTriageTask", () => {
+  it("returns null when no triage tasks", () => {
+    expect(pickNextTriageTask([], makeState())).toBeNull();
+  });
+
+  it("picks highest priority triage task", () => {
+    const tasks = [
+      makeTask({ id: "low", status: "triage", priority: "low" }),
+      makeTask({ id: "high", status: "triage", priority: "high" }),
+    ];
+    const result = pickNextTriageTask(tasks, makeState());
+    expect(result?.id).toBe("high");
+  });
+
+  it("skips current task", () => {
+    const tasks = [
+      makeTask({ id: "current", status: "triage" }),
+      makeTask({ id: "other", status: "triage" }),
+    ];
+    const state = makeState({ currentTaskId: "current" });
+    const result = pickNextTriageTask(tasks, state);
+    expect(result?.id).toBe("other");
   });
 });
 

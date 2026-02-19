@@ -83,6 +83,26 @@ function buildStepMessage(
   stepIndex: number,
   totalSteps: number,
 ): string {
+  // Detect triage steps by prefix convention
+  if (stepDescription.startsWith("TRIAGE:")) {
+    return [
+      "## Task Triage",
+      "",
+      `**Task ID:** ${taskId}`,
+      `**Objective:** ${stepDescription.slice(7).trim()}`,
+      "",
+      "Produce a structured plan with:",
+      "1. **Context**: What you know about this work area",
+      "2. **Approach**: How to tackle it",
+      "3. **Risks**: Potential issues or unknowns",
+      "4. **Estimate**: Time/effort estimate",
+      "",
+      "If this task should be broken into smaller subtasks, list them under a `## Subtasks` heading:",
+      "- Each subtask on its own bullet line",
+      "- Keep subtasks small and actionable",
+    ].join("\n");
+  }
+
   return [
     `## Task Step ${stepIndex + 1}/${totalSteps}`,
     "",

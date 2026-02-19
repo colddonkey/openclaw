@@ -52,15 +52,32 @@ export function decide(ctx: DecisionContext): Decision {
 
   // 2. If currently working on a task (planning or working phase), continue
   if (state.currentTaskId && (state.phase === "working" || state.phase === "planning")) {
-    const currentTask = assignedTasks.find((t) => t.id === state.currentTaskId);
+    const currentTask = assignedTasks.find((t) => t.id === state.currentTaskId)
+      ?? ctx.triageTasks.find((t) => t.id === state.currentTaskId);
     if (currentTask) {
+      if (currentTask.status === "triage") {
+        return {
+          type: "triage_task",
+          taskId: currentTask.id,
+          reason: "Continuing triage analysis",
+        };
+      }
       return continueWork(state, currentTask);
     }
-    // Task was unassigned or completed elsewhere
     return { type: "idle", reason: "Current task no longer assigned" };
   }
 
-  // 3. Pick highest-priority assigned task
+  // 3. Check for triage tasks first — planning before execution
+  const nextTriageTask = pickNextTriageTask(ctx.triageTasks, state);
+  if (nextTriageTask) {
+    return {
+      type: "triage_task",
+      taskId: nextTriageTask.id,
+      reason: buildTriageReason(nextTriageTask),
+    };
+  }
+
+  // 4. Pick highest-priority assigned task (ready/in_progress)
   const nextTask = pickNextTask(assignedTasks, state);
   if (nextTask) {
     return {
@@ -70,7 +87,7 @@ export function decide(ctx: DecisionContext): Decision {
     };
   }
 
-  // 4. If idle for a while, reflect
+  // 5. If idle for a while, reflect
   const idleTime = Date.now() - state.phaseChangedAt;
   if (state.phase === "idle" && idleTime > 60_000 && state.cyclesCompleted > 0) {
     return {
@@ -79,7 +96,7 @@ export function decide(ctx: DecisionContext): Decision {
     };
   }
 
-  // 5. Nothing to do
+  // 6. Nothing to do
   return { type: "idle", reason: "No assigned tasks" };
 }
 
@@ -141,6 +158,23 @@ export function pickNextTask(tasks: Task[], state: AgentState): Task | null {
   return candidates[0] ?? null;
 }
 
+/**
+ * Select the highest-priority triage task from the agent's queue.
+ */
+export function pickNextTriageTask(tasks: Task[], state: AgentState): Task | null {
+  const candidates = tasks
+    .filter((t) => t.status === "triage")
+    .filter((t) => t.id !== state.currentTaskId)
+    .sort((a, b) => {
+      const pa = PRIORITY_ORDER[a.priority] ?? 99;
+      const pb = PRIORITY_ORDER[b.priority] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return a.createdAt - b.createdAt;
+    });
+
+  return candidates[0] ?? null;
+}
+
 // ── Internal helpers ────────────────────────────────────────────────
 
 function findUrgentMessage(ctx: DecisionContext): Decision | null {
@@ -177,6 +211,10 @@ function continueWork(state: AgentState, task: Task): Decision {
     type: "continue_work",
     stepIndex: pendingStep,
   };
+}
+
+function buildTriageReason(task: Task): string {
+  return `${task.type} "${task.title}" needs planning before execution`;
 }
 
 function buildPickReason(task: Task, ctx: DecisionContext): string {

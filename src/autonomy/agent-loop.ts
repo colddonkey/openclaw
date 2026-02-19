@@ -203,6 +203,11 @@ export class AgentLoop {
       status: ["ready", "in_progress", "review"],
     });
 
+    const triageTasks = this.deps.taskStore.list({
+      assigneeId: this.agentId,
+      status: ["triage"],
+    });
+
     const channels = this.deps.commsStore.getChannelsForMember(this.agentId);
     const unreadMessages = channels
       .map((ch) => {
@@ -219,6 +224,7 @@ export class AgentLoop {
       agent: identity,
       state: this.state,
       assignedTasks,
+      triageTasks,
       unreadMessages,
       recentSystemEvents: [],
       currentLoad: assignedTasks.filter((t) => t.status === "in_progress").length,
@@ -232,6 +238,14 @@ export class AgentLoop {
     switch (decision.type) {
       case "pick_task":
         await this.handlePickTask(decision.taskId, decision.reason, result);
+        break;
+
+      case "triage_task":
+        await this.handleTriageTask(decision.taskId, decision.reason, result);
+        break;
+
+      case "complete_triage":
+        await this.handleCompleteTriage(decision.taskId, decision.plan, decision.subtasks, result);
         break;
 
       case "continue_work":
@@ -273,6 +287,132 @@ export class AgentLoop {
   }
 
   // ── Action handlers ─────────────────────────────────────────────
+
+  private async handleTriageTask(taskId: string, reason: string, result: WorkCycleResult): Promise<void> {
+    const task = this.deps.taskStore.get(taskId);
+    if (!task || task.status !== "triage") return;
+
+    this.state.currentTaskId = taskId;
+    this.state.currentTaskTitle = task.title;
+    this.setPhase("planning");
+
+    autoJoinChannels(this.deps.commsStore, this.deps.identityStore, this.agentId, taskId, task.title);
+
+    const taskChannel = this.deps.commsStore.getChannelForTask(taskId);
+    if (taskChannel) {
+      sendAgentMessage(this.deps.commsStore, this.deps.identityStore, {
+        channelId: taskChannel.id,
+        agentId: this.agentId,
+        text: `Triaging ${task.type}: "${task.title}"\n${reason}`,
+        kind: "status",
+      });
+      result.messagesPosted++;
+    }
+
+    const executor = this.deps.workExecutor;
+    if (executor) {
+      const { output, success } = await executor({
+        agentId: this.agentId,
+        taskId,
+        stepDescription: `TRIAGE: Analyze "${task.title}" (${task.type}). Review the description, understand scope, identify risks, and produce a plan. If this is a story or epic, list subtasks to create.`,
+        stepIndex: 0,
+        totalSteps: 1,
+      });
+
+      if (success && output) {
+        const subtasks = extractSubtasksFromTriageOutput(output);
+        // The planner completed; now transition the task
+        await this.handleCompleteTriage(taskId, output, subtasks, result);
+      } else {
+        if (taskChannel) {
+          sendAgentMessage(this.deps.commsStore, this.deps.identityStore, {
+            channelId: taskChannel.id,
+            agentId: this.agentId,
+            text: `Triage incomplete: ${output?.slice(0, 200) ?? "no output"}`,
+            kind: "status",
+          });
+          result.messagesPosted++;
+        }
+      }
+    } else {
+      // No executor: auto-promote quick triage
+      this.deps.taskStore.update(taskId, {
+        status: "ready",
+        triagePlan: `Auto-triaged (no executor): ${task.title}`,
+      }, this.agentId, this.agentId);
+      this.state.currentTaskId = null;
+      this.state.currentTaskTitle = null;
+      this.setPhase("idle");
+    }
+  }
+
+  private async handleCompleteTriage(
+    taskId: string,
+    plan: string,
+    subtasks: Array<{ title: string; description: string }>,
+    result: WorkCycleResult,
+  ): Promise<void> {
+    const task = this.deps.taskStore.get(taskId);
+    if (!task) return;
+
+    // Save the plan and move task to ready
+    this.deps.taskStore.update(taskId, {
+      status: "ready",
+      triagePlan: plan,
+    }, this.agentId, this.agentId);
+
+    postTaskStatusUpdate(
+      this.deps.commsStore,
+      this.deps.identityStore,
+      this.agentId,
+      taskId,
+      task.title,
+      "triage",
+      "ready",
+    );
+
+    // Create subtasks for stories/epics
+    for (const sub of subtasks) {
+      this.deps.taskStore.create({
+        title: sub.title,
+        description: sub.description,
+        parentId: taskId,
+        creatorId: this.agentId,
+        creatorName: this.agentId,
+        labels: task.labels,
+        priority: task.priority,
+        type: "task",
+        source: "triage",
+      });
+      result.subtasksCreated++;
+    }
+
+    // Update identity — triage is a planning skill
+    this.deps.identityStore.recordSkillUpdate(this.agentId, {
+      domain: "planning",
+      success: true,
+      taskId,
+    });
+
+    const taskChannel = this.deps.commsStore.getChannelForTask(taskId);
+    if (taskChannel) {
+      const subNote = subtasks.length > 0
+        ? `\nCreated ${subtasks.length} subtask(s)`
+        : "";
+      sendAgentMessage(this.deps.commsStore, this.deps.identityStore, {
+        channelId: taskChannel.id,
+        agentId: this.agentId,
+        text: `Triage complete for "${task.title}" — moved to ready${subNote}`,
+        kind: "status",
+      });
+      result.messagesPosted++;
+    }
+
+    this.state.currentTaskId = null;
+    this.state.currentTaskTitle = null;
+    this.state.workPlan = [];
+    this.setPhase("idle");
+  }
 
   private async handlePickTask(taskId: string, reason: string, result: WorkCycleResult): Promise<void> {
     const task = this.deps.taskStore.get(taskId);
@@ -503,4 +643,41 @@ export class AgentLoop {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Extract subtask titles from an LLM triage output.
+ * Looks for numbered/bulleted items under "subtask" or "task" headings.
+ */
+function extractSubtasksFromTriageOutput(output: string): Array<{ title: string; description: string }> {
+  const subtasks: Array<{ title: string; description: string }> = [];
+  const lines = output.split("\n");
+
+  let inSubtaskSection = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (/^#+\s*(sub\s*)?tasks?/i.test(trimmed) || /^(sub\s*)?tasks?:/i.test(trimmed)) {
+      inSubtaskSection = true;
+      continue;
+    }
+
+    if (inSubtaskSection && /^#+\s/.test(trimmed) && !/^#+\s*(sub\s*)?tasks?/i.test(trimmed)) {
+      inSubtaskSection = false;
+      continue;
+    }
+
+    if (inSubtaskSection) {
+      const match = trimmed.match(/^[-*\d.)]+\s+(.+)/);
+      if (match) {
+        const title = match[1].replace(/^\*\*(.+)\*\*$/, "$1").trim();
+        if (title.length > 3) {
+          subtasks.push({ title, description: "" });
+        }
+      }
+    }
+  }
+
+  return subtasks;
 }

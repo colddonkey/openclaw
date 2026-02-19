@@ -70,6 +70,8 @@ export type DecisionContext = {
   agent: AgentIdentity;
   state: AgentState;
   assignedTasks: Task[];
+  /** Tasks in triage status assigned to this agent (need planning). */
+  triageTasks: Task[];
   unreadMessages: Array<{ channel: Channel; messages: Message[] }>;
   recentSystemEvents: string[];
   currentLoad: number;
@@ -78,8 +80,10 @@ export type DecisionContext = {
 
 export type Decision =
   | { type: "pick_task"; taskId: string; reason: string }
+  | { type: "triage_task"; taskId: string; reason: string }
   | { type: "continue_work"; stepIndex: number }
   | { type: "complete_task"; taskId: string; summary: string }
+  | { type: "complete_triage"; taskId: string; plan: string; subtasks: Array<{ title: string; description: string }> }
   | { type: "report_progress"; channelId: string; text: string }
   | { type: "respond_message"; channelId: string; messageId: string; text: string }
   | { type: "create_subtask"; parentId: string; title: string; description: string }
