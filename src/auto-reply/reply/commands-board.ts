@@ -4,6 +4,7 @@
  * Gated behind multiAgentOs.enabled and multiAgentOs.telegram.enabled.
  */
 
+import { loadConfig } from "../../config/config.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
 import { isMultiAgentOsFeatureEnabled } from "../../tasks/feature-gate.js";
 import {
@@ -13,6 +14,26 @@ import {
 } from "../../telegram/tasks-board.js";
 import type { TaskStatus } from "../../tasks/types.js";
 import type { CommandHandler, CommandHandlerResult } from "./commands-types.js";
+
+function resolveKanbanUrl(): string | undefined {
+  // Try to get Tailscale hostname via CLI for a stable HTTPS URL
+  try {
+    const { execSync } = require("node:child_process");
+    const result = execSync("tailscale status --json", { timeout: 3000, encoding: "utf8" });
+    const status = JSON.parse(result);
+    const dnsName = status?.Self?.DNSName as string | undefined;
+    if (dnsName) {
+      // DNSName includes trailing dot, strip it
+      const hostname = dnsName.replace(/\.$/, "");
+      return `https://${hostname}/kanban`;
+    }
+  } catch {
+    // Tailscale not available, fall through
+  }
+  const cfg = loadConfig();
+  const port = cfg.gateway?.port ?? 18789;
+  return `http://localhost:${port}/kanban`;
+}
 
 const VALID_STATUSES = new Set<string>([
   "backlog",
@@ -40,12 +61,16 @@ export const handleBoardCommand: CommandHandler = async (params, allowTextComman
 
   try {
     const { text, buttons } = renderBoardMessage();
+    const miniAppUrl = resolveKanbanUrl();
+    const miniAppButtons = miniAppUrl
+      ? [[{ text: "Open Task Board", web_app: { url: miniAppUrl } }], ...buttons]
+      : buttons;
     return {
       shouldContinue: false,
       reply: {
         text,
         channelData: {
-          telegram: { buttons, parseMode: "HTML" },
+          telegram: { buttons: miniAppButtons, parseMode: "HTML" },
         },
       },
     };

@@ -84,6 +84,7 @@ import {
   refreshGatewayHealthSnapshot,
 } from "./server/health-state.js";
 import { loadGatewayTlsRuntime } from "./server/tls.js";
+import { startMultiAgentServices, type MultiAgentHandle } from "./server-multi-agent.js";
 
 export { __resetModelCatalogCacheForTest } from "./server-model-catalog.js";
 
@@ -645,6 +646,45 @@ export async function startGatewayServer(
     }
   }
 
+  // Multi-agent OS services (auto-tasks, scheduler, comms forwarding)
+  let multiAgentHandle: MultiAgentHandle = { stop: () => {} };
+  if (!minimalTestGateway) {
+    const telegramPlugin = listChannelPlugins().find((p) => p.id === "telegram");
+    const tgConfig = cfgAtStart.channels?.telegram;
+    const tgBotToken = typeof tgConfig === "object" && tgConfig && "botToken" in tgConfig
+      ? String((tgConfig as Record<string, unknown>).botToken ?? "")
+      : "";
+    const tgChatIds = typeof tgConfig === "object" && tgConfig && "allowFrom" in tgConfig
+      ? (tgConfig as Record<string, unknown>).allowFrom
+      : undefined;
+    const tgChatId = Array.isArray(tgChatIds) && tgChatIds.length > 0
+      ? String(tgChatIds[0])
+      : undefined;
+
+    let telegramSender: ((chatId: string, text: string, opts?: { parseMode?: string }) => Promise<unknown>) | undefined;
+    if (tgBotToken && tgChatId) {
+      telegramSender = async (chatId: string, text: string, opts?: { parseMode?: string }) => {
+        const body = JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: opts?.parseMode,
+        });
+        const resp = await fetch(`https://api.telegram.org/bot${tgBotToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+        return resp.json();
+      };
+    }
+
+    multiAgentHandle = startMultiAgentServices({
+      cfg: cfgAtStart,
+      telegramSender,
+      telegramChatId: tgChatId,
+    });
+  }
+
   const configReloader = minimalTestGateway
     ? { stop: async () => {} }
     : (() => {
@@ -715,6 +755,7 @@ export async function startGatewayServer(
 
   return {
     close: async (opts) => {
+      multiAgentHandle.stop();
       // Run gateway_stop plugin hook before shutdown
       await runGlobalGatewayStopSafely({
         event: { reason: opts?.reason ?? "gateway stopping" },

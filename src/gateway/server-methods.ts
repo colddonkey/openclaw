@@ -20,6 +20,7 @@ import { systemHandlers } from "./server-methods/system.js";
 import { talkHandlers } from "./server-methods/talk.js";
 import { tasksHandlers } from "./server-methods/tasks.js";
 import { commsHandlers } from "./server-methods/comms.js";
+import { autonomyHandlers } from "./server-methods/autonomy.js";
 import { ttsHandlers } from "./server-methods/tts.js";
 import type { GatewayRequestHandlers, GatewayRequestOptions } from "./server-methods/types.js";
 import { updateHandlers } from "./server-methods/update.js";
@@ -71,6 +72,9 @@ const READ_METHODS = new Set([
   "voicewake.get",
   "sessions.list",
   "sessions.preview",
+  "autonomy.status",
+  "autonomy.cycles",
+  "autonomy.agent.state",
   "cron.list",
   "cron.status",
   "cron.runs",
@@ -164,7 +168,8 @@ function authorizeGatewayMethod(method: string, client: GatewayRequestOptions["c
     method === "sessions.patch" ||
     method === "sessions.reset" ||
     method === "sessions.delete" ||
-    method === "sessions.compact"
+    method === "sessions.compact" ||
+    method.startsWith("autonomy.")
   ) {
     return errorShape(ErrorCodes.INVALID_REQUEST, "missing scope: operator.admin");
   }
@@ -199,6 +204,7 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...browserHandlers,
   ...tasksHandlers,
   ...commsHandlers,
+  ...autonomyHandlers,
 };
 
 export async function handleGatewayRequest(
