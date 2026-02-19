@@ -567,22 +567,23 @@ export function createGatewayHttpServer(opts: {
           return;
         }
       }
-      // Kanban board route: /kanban
-      if (requestPath === "/kanban" && isMultiAgentOsEnabled(configSnapshot)) {
-        const kanbanHtml = path.join(
+      // Multi-agent OS UI routes: /kanban and /comms
+      if ((requestPath === "/kanban" || requestPath === "/comms") && isMultiAgentOsEnabled(configSnapshot)) {
+        const fileName = requestPath === "/comms" ? "comms.html" : "index.html";
+        const uiFile = path.join(
           import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname),
           "kanban",
-          "index.html",
+          fileName,
         );
         try {
-          const html = fs.readFileSync(kanbanHtml, "utf-8");
+          const html = fs.readFileSync(uiFile, "utf-8");
           res.statusCode = 200;
           res.setHeader("Content-Type", "text/html; charset=utf-8");
           res.end(html);
         } catch {
           res.statusCode = 404;
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
-          res.end("Kanban UI not found");
+          res.end("UI not found");
         }
         return;
       }

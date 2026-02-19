@@ -32,6 +32,14 @@ export type MultiAgentOsConfig = {
     enabled?: boolean;
   };
 
+  /** Configuration for the agent communication board. */
+  comms?: {
+    /** Enable inter-agent messaging and communication channels. Default: true. */
+    enabled?: boolean;
+    /** Forward agent messages to Telegram. Default: false. */
+    telegramForward?: boolean;
+  };
+
   /** SQLite database path override. Default: ~/.openclaw/tasks/tasks.sqlite */
   dbPath?: string;
 };

@@ -22,6 +22,10 @@ export type MultiAgentOsGate = {
   traitDecayRate: number;
   /** Should Telegram kanban commands be registered? */
   telegramEnabled: boolean;
+  /** Should the agent communication board be active? */
+  commsEnabled: boolean;
+  /** Should agent messages be forwarded to Telegram? */
+  commsTelegramForward: boolean;
   /** SQLite database path override (undefined = use default). */
   dbPath: string | undefined;
 };
@@ -44,6 +48,8 @@ export function resolveMultiAgentOsGate(cfg: OpenClawConfig): MultiAgentOsGate {
       identityEnabled: false,
       traitDecayRate: DEFAULT_TRAIT_DECAY_RATE,
       telegramEnabled: false,
+      commsEnabled: false,
+      commsTelegramForward: false,
       dbPath: undefined,
     };
   }
@@ -55,6 +61,8 @@ export function resolveMultiAgentOsGate(cfg: OpenClawConfig): MultiAgentOsGate {
     identityEnabled: os?.identity?.enabled !== false,
     traitDecayRate: os?.identity?.traitDecayRate ?? DEFAULT_TRAIT_DECAY_RATE,
     telegramEnabled: os?.telegram?.enabled !== false,
+    commsEnabled: os?.comms?.enabled !== false,
+    commsTelegramForward: os?.comms?.telegramForward === true,
     dbPath: os?.dbPath,
   };
 }

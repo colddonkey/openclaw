@@ -19,6 +19,7 @@ import { skillsHandlers } from "./server-methods/skills.js";
 import { systemHandlers } from "./server-methods/system.js";
 import { talkHandlers } from "./server-methods/talk.js";
 import { tasksHandlers } from "./server-methods/tasks.js";
+import { commsHandlers } from "./server-methods/comms.js";
 import { ttsHandlers } from "./server-methods/tts.js";
 import type { GatewayRequestHandlers, GatewayRequestOptions } from "./server-methods/types.js";
 import { updateHandlers } from "./server-methods/update.js";
@@ -197,6 +198,7 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...agentsHandlers,
   ...browserHandlers,
   ...tasksHandlers,
+  ...commsHandlers,
 };
 
 export async function handleGatewayRequest(
