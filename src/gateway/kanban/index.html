@@ -6,14 +6,34 @@
   <title>OpenClaw - Task Board</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    // Apply Telegram theme colors if running inside mini app
-    if (window.Telegram?.WebApp) {
+    const isTgMiniApp = !!window.Telegram?.WebApp?.initData;
+    const isMobile = isTgMiniApp || window.innerWidth <= 640;
+    if (isTgMiniApp) {
       const tg = window.Telegram.WebApp;
       tg.ready();
       tg.expand();
-      // Use Telegram's back button for navigation
-      tg.BackButton.onClick(() => history.back());
+      tg.BackButton.onClick(() => {
+        if (document.querySelector('.modal-overlay.open')) {
+          document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+          tg.BackButton.hide();
+        }
+      });
+      document.documentElement.classList.add('tg-miniapp');
+      const tp = tg.themeParams;
+      if (tp) {
+        const r = document.documentElement.style;
+        if (tp.bg_color) r.setProperty('--bg', tp.bg_color);
+        if (tp.secondary_bg_color) r.setProperty('--bg-elevated', tp.secondary_bg_color);
+        if (tp.section_bg_color) r.setProperty('--surface', tp.section_bg_color);
+        if (tp.text_color) r.setProperty('--text', tp.text_color);
+        if (tp.hint_color) r.setProperty('--text-dim', tp.hint_color);
+        if (tp.link_color) r.setProperty('--accent', tp.link_color);
+        if (tp.button_color) r.setProperty('--accent', tp.button_color);
+        if (tp.button_text_color) document.documentElement.style.setProperty('--accent-text', tp.button_text_color);
+        if (tp.section_separator_color) r.setProperty('--border', tp.section_separator_color);
+      }
     }
+    if (isMobile) document.documentElement.classList.add('mobile');
   </script>
   <style>
     :root {
@@ -556,6 +576,7 @@
       font-size: 12px;
       font-weight: 500;
     }
+    .status-pill.triage { background: rgba(167,139,250,0.15); color: #c4b5fd; }
     .status-pill.in_progress { background: var(--info-dim); color: #60a5fa; }
     .status-pill.blocked { background: var(--danger-dim); color: #f87171; }
     .status-pill.review { background: var(--warning-dim); color: #fbbf24; }
@@ -810,7 +831,58 @@
       line-height: 1.4;
     }
 
-    /* Responsive */
+    /* Mobile column tabs */
+    .mobile-tabs {
+      display: none;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 0;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0;
+    }
+    .mobile-tabs::-webkit-scrollbar { display: none; }
+    .mobile-tab {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+      position: relative;
+    }
+    .mobile-tab.active {
+      color: var(--accent-hover, var(--accent));
+      border-bottom-color: var(--accent);
+    }
+    .mobile-tab .tab-count {
+      display: inline-block;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 8px;
+      background: var(--border);
+      color: var(--text-dim);
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      margin-left: 4px;
+    }
+    .mobile-tab.active .tab-count {
+      background: var(--accent-glow, rgba(99,102,241,0.2));
+      color: var(--accent-hover, var(--accent));
+    }
+
+    /* Responsive - tablet */
     @media (max-width: 768px) {
       .toolbar { overflow-x: auto; padding: 0 12px; }
       .board { padding: 12px; gap: 8px; }
@@ -818,6 +890,137 @@
       .task-stats { display: none; }
       header { padding: 0 12px; }
     }
+
+    /* Responsive - mobile phone */
+    @media (max-width: 640px) {
+      :root {
+        --header-height: 48px;
+        --toolbar-height: 0px;
+      }
+      body {
+        overflow: auto;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+      header {
+        padding: 0 12px;
+        height: var(--header-height);
+      }
+      header h1 { font-size: 14px; }
+      .logo { width: 24px; height: 24px; font-size: 11px; }
+      .header-right { gap: 8px; }
+      .task-stats { display: none; }
+      .ws-badge { font-size: 10px; padding: 3px 8px; }
+
+      .toolbar { display: none; }
+      .mobile-tabs { display: flex; }
+
+      .board {
+        display: block;
+        padding: 0;
+        overflow: visible;
+        height: auto;
+        min-height: calc(100vh - var(--header-height) - 42px);
+      }
+      .column {
+        display: none;
+        flex: none;
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        max-height: none;
+      }
+      .column.mobile-active {
+        display: block;
+      }
+      .column-header { display: none; }
+      .column-body {
+        padding: 8px 12px;
+        overflow: visible;
+      }
+      .card {
+        padding: 14px;
+        margin-bottom: 8px;
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+      .card-title { font-size: 14px; margin-bottom: 10px; }
+      .card-footer { gap: 6px; }
+      .tag { font-size: 11px; padding: 3px 8px; }
+
+      .empty-state { padding: 40px 20px; font-size: 14px; }
+      .empty-state-icon { font-size: 32px; }
+
+      /* Bottom sheet modals on mobile */
+      .modal-overlay {
+        align-items: flex-end;
+        padding-top: 0;
+      }
+      .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        animation: slideUpMobile var(--transition-slow) both;
+      }
+      @keyframes slideUpMobile {
+        from { opacity: 0; transform: translateY(100%); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .modal-header { padding: 16px; }
+      .modal-header h2 { font-size: 15px; }
+      .modal-body { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .action-bar { gap: 8px; }
+      .action-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        flex: 1;
+        text-align: center;
+        min-height: 44px;
+      }
+      .comment-input { min-height: 44px; }
+      .comment-submit { min-height: 44px; padding: 10px 20px; }
+      .form-input, .form-textarea, .form-select { min-height: 44px; font-size: 16px; }
+
+      /* FAB for new task */
+      .mobile-fab {
+        position: fixed;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: white;
+        border: none;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        cursor: pointer;
+        z-index: 100;
+        transition: transform var(--transition-fast);
+      }
+      .mobile-fab:active { transform: scale(0.9); }
+
+      /* Hide desktop new task button */
+      .toolbar-right { display: none; }
+
+      /* Nav links in header - smaller */
+      header a {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+      }
+    }
+
+    /* Telegram miniapp-specific overrides */
+    .tg-miniapp header {
+      padding-top: env(safe-area-inset-top, 0);
+    }
+    .tg-miniapp .ws-badge { display: none; }
   </style>
 </head>
 <body>
@@ -854,7 +1057,9 @@
     </div>
   </div>
 
+  <div class="mobile-tabs" id="mobile-tabs"></div>
   <div class="board" id="board"></div>
+  <button class="mobile-fab" onclick="showCreateModal()" style="display:none" id="mobile-fab">+</button>
 
   <!-- Task Detail Modal -->
   <div class="modal-overlay" id="detail-modal">
@@ -885,6 +1090,15 @@
         </div>
         <div class="form-row">
           <div class="form-field">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="new-type">
+              <option value="task">Task</option>
+              <option value="quick_fix">Quick Fix</option>
+              <option value="story">Story</option>
+              <option value="epic">Epic</option>
+            </select>
+          </div>
+          <div class="form-field">
             <label class="form-label">Priority</label>
             <select class="form-select" id="new-priority">
               <option value="medium">Medium</option>
@@ -892,14 +1106,6 @@
               <option value="high">High</option>
               <option value="low">Low</option>
               <option value="none">None</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">Status</label>
-            <select class="form-select" id="new-status">
-              <option value="backlog">Backlog</option>
-              <option value="ready">Ready</option>
-              <option value="in_progress">In Progress</option>
             </select>
           </div>
         </div>
@@ -921,6 +1127,7 @@
 
   <script>
     const COLUMNS = [
+      { status: 'triage', label: 'Triage', color: '#a78bfa' },
       { status: 'in_progress', label: 'In Progress', color: 'var(--info)' },
       { status: 'blocked', label: 'Blocked', color: 'var(--danger)' },
       { status: 'review', label: 'Review', color: 'var(--warning)' },
@@ -941,6 +1148,8 @@
     let newLabels = [];
     let dragData = null;
     let currentTaskId = null;
+    let mobileActiveTab = 'in_progress';
+    let lastCounts = {};
 
     // WebSocket
     function connect() {
@@ -1060,8 +1269,12 @@
     function renderBoard(cols, counts) {
       const board = document.getElementById('board');
       board.innerHTML = '';
+      lastCounts = counts;
 
       const activeCols = showDone ? [...COLUMNS, DONE_COL] : COLUMNS;
+      const mobile = window.innerWidth <= 640;
+
+      if (mobile) renderMobileTabs(activeCols, counts);
 
       for (const col of activeCols) {
         let tasks = cols[col.status] || [];
@@ -1071,6 +1284,7 @@
         const colEl = document.createElement('div');
         colEl.className = 'column';
         colEl.dataset.status = col.status;
+        if (mobile && col.status === mobileActiveTab) colEl.classList.add('mobile-active');
 
         colEl.addEventListener('dragover', (e) => {
           e.preventDefault();
@@ -1103,9 +1317,43 @@
         `;
         board.appendChild(colEl);
       }
+
+      // Show FAB on mobile
+      const fab = document.getElementById('mobile-fab');
+      if (fab) fab.style.display = mobile ? 'flex' : 'none';
     }
 
+    function renderMobileTabs(cols, counts) {
+      const tabBar = document.getElementById('mobile-tabs');
+      tabBar.innerHTML = cols.map(col => {
+        const count = counts[col.status] || 0;
+        const active = col.status === mobileActiveTab ? 'active' : '';
+        return `<button class="mobile-tab ${active}" data-tab="${col.status}" onclick="switchMobileTab('${col.status}')">
+          ${col.label}<span class="tab-count">${count}</span>
+        </button>`;
+      }).join('');
+
+      // Auto-scroll active tab into view
+      requestAnimationFrame(() => {
+        const activeBtn = tabBar.querySelector('.mobile-tab.active');
+        if (activeBtn) activeBtn.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    function switchMobileTab(status) {
+      mobileActiveTab = status;
+      document.querySelectorAll('.column').forEach(c => {
+        c.classList.toggle('mobile-active', c.dataset.status === status);
+      });
+      document.querySelectorAll('.mobile-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === status);
+      });
+    }
+
+    const TYPE_BADGES = { quick_fix: 'QF', story: 'S', epic: 'E' };
+
     function renderCard(t, status) {
+      const typeBadge = TYPE_BADGES[t.type] ? `<span class="tag label-tag">${TYPE_BADGES[t.type]}</span>` : '';
       return `
         <div class="card"
              draggable="true"
@@ -1117,6 +1365,7 @@
           <div class="card-priority-bar ${t.priority}"></div>
           <div class="card-title">${esc(t.title)}</div>
           <div class="card-footer">
+            ${typeBadge}
             <span class="tag priority-${t.priority}">${t.priority}</span>
             ${(t.labels || []).slice(0, 2).map(l =>
               `<span class="tag label-tag">${esc(l)}</span>`
@@ -1192,6 +1441,18 @@
               <span class="tag priority-${t.priority}">${t.priority}</span>
             </div>
           </div>
+          ${t.type && t.type !== 'task' ? `
+          <div class="detail-field">
+            <div class="detail-label">Type</div>
+            <div class="detail-value"><span class="tag label-tag">${formatStatus(t.type)}</span></div>
+          </div>
+          ` : ''}
+          ${t.triagePlan ? `
+          <div class="detail-field full">
+            <div class="detail-label">Triage Plan</div>
+            <div class="detail-value" style="line-height:1.6;white-space:pre-wrap;font-size:13px;color:var(--text-secondary)">${esc(t.triagePlan)}</div>
+          </div>
+          ` : ''}
           <div class="detail-field">
             <div class="detail-label">Created</div>
             <div class="detail-value" style="font-size:13px;color:var(--text-secondary)">${formatTime(t.createdAt)}</div>
@@ -1229,6 +1490,7 @@
         ${renderComments(comments)}
       `;
       document.getElementById('detail-modal').classList.add('open');
+      if (isTgMiniApp) window.Telegram.WebApp.BackButton.show();
     }
 
     function renderComments(comments) {
@@ -1265,8 +1527,14 @@
 
     function getStatusActions(status) {
       switch (status) {
+        case 'triage': return [
+          { label: 'Ready', status: 'ready', cls: 'primary' },
+          { label: 'Backlog', status: 'backlog' },
+          { label: 'Start', status: 'in_progress' },
+        ];
         case 'backlog': return [
           { label: 'Move to Ready', status: 'ready', cls: 'primary' },
+          { label: 'Triage', status: 'triage' },
         ];
         case 'ready': return [
           { label: 'Start Work', status: 'in_progress', cls: 'primary' },
@@ -1307,11 +1575,12 @@
         toast('Title is required', 'error');
         return;
       }
+      const taskType = document.getElementById('new-type').value;
       const res = await send('tasks.create', {
         title,
         description: document.getElementById('new-desc').value,
         priority: document.getElementById('new-priority').value,
-        status: document.getElementById('new-status').value,
+        type: taskType,
         labels: newLabels.length > 0 ? newLabels : undefined,
       });
       if (res.ok) {
@@ -1327,8 +1596,8 @@
     function resetCreateForm() {
       document.getElementById('new-title').value = '';
       document.getElementById('new-desc').value = '';
+      document.getElementById('new-type').value = 'task';
       document.getElementById('new-priority').value = 'medium';
-      document.getElementById('new-status').value = 'backlog';
       newLabels = [];
       renderLabelChips();
     }
@@ -1400,6 +1669,7 @@
     function closeDetailModal() {
       document.getElementById('detail-modal').classList.remove('open');
       currentTaskId = null;
+      if (isTgMiniApp) window.Telegram.WebApp.BackButton.hide();
     }
     function closeCreateModal() {
       document.getElementById('create-modal').classList.remove('open');
@@ -1474,6 +1744,33 @@
       container.appendChild(el);
       setTimeout(() => el.remove(), 3200);
     }
+
+    // Touch swipe between columns on mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+    document.getElementById('board').addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    document.getElementById('board').addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+      const activeCols = showDone ? [...COLUMNS, DONE_COL] : COLUMNS;
+      const idx = activeCols.findIndex(c => c.status === mobileActiveTab);
+      if (dx < 0 && idx < activeCols.length - 1) switchMobileTab(activeCols[idx + 1].status);
+      else if (dx > 0 && idx > 0) switchMobileTab(activeCols[idx - 1].status);
+    }, { passive: true });
+
+    // Handle resize: re-render when crossing mobile breakpoint
+    let wasMobile = window.innerWidth <= 640;
+    window.addEventListener('resize', () => {
+      const nowMobile = window.innerWidth <= 640;
+      if (nowMobile !== wasMobile) {
+        wasMobile = nowMobile;
+        loadBoard();
+      }
+    });
 
     // Boot
     connect();

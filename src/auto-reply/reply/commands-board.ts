@@ -36,6 +36,7 @@ function resolveKanbanUrl(): string | undefined {
 }
 
 const VALID_STATUSES = new Set<string>([
+  "triage",
   "backlog",
   "ready",
   "in_progress",
