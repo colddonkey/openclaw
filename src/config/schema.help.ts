@@ -428,6 +428,18 @@ export const FIELD_HELP: Record<string, string> = {
     "Rate at which unused agent traits decay per day (0.0-1.0). Default: 0.02.",
   "multiAgentOs.telegram.enabled":
     "Show /board and /tasks commands in Telegram for kanban board access. Default: true.",
+  "multiAgentOs.comms.enabled":
+    "Enable inter-agent messaging and communication channels. Default: true.",
+  "multiAgentOs.comms.telegramForward":
+    "Forward agent communication board messages to Telegram. Default: false.",
+  "multiAgentOs.comms.telegramGroupId":
+    "Telegram group/chat ID for agent comms forwarding. When set, agent messages go to this group instead of your primary DM.",
+  "multiAgentOs.scheduler.enabled":
+    "Enable the automatic task scheduler (assigns ready tasks to agents based on skills). Default: true.",
+  "multiAgentOs.scheduler.intervalMs":
+    "Interval between scheduling runs in milliseconds. Default: 30000.",
+  "multiAgentOs.autonomy.enabled":
+    "Enable autonomous agent loops (agents pick up tasks and work independently). Default: false.",
   "multiAgentOs.dbPath":
     "Override the SQLite database path for the task store. Default: ~/.openclaw/tasks/tasks.sqlite.",
 };

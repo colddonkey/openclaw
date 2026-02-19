@@ -675,6 +675,37 @@ export const OpenClawSchema = z
           })
           .strict()
           .optional(),
+        comms: z
+          .object({
+            enabled: z.boolean().optional(),
+            telegramForward: z.boolean().optional(),
+            telegramGroupId: z.string().optional(),
+          })
+          .strict()
+          .optional(),
+        scheduler: z
+          .object({
+            enabled: z.boolean().optional(),
+            intervalMs: z.number().positive().optional(),
+            maxConcurrentPerAgent: z.number().int().positive().optional(),
+            minScoreThreshold: z.number().min(0).max(1).optional(),
+            skillWeight: z.number().min(0).max(1).optional(),
+            loadWeight: z.number().min(0).max(1).optional(),
+            recencyWeight: z.number().min(0).max(1).optional(),
+          })
+          .strict()
+          .optional(),
+        autonomy: z
+          .object({
+            enabled: z.boolean().optional(),
+            tickIntervalMs: z.number().positive().optional(),
+            maxConsecutiveErrors: z.number().int().positive().optional(),
+            maxCyclesPerSession: z.number().int().positive().optional(),
+            completionCooldownMs: z.number().nonnegative().optional(),
+            activeAgents: z.array(z.string()).optional(),
+          })
+          .strict()
+          .optional(),
         dbPath: z.string().optional(),
       })
       .strict()

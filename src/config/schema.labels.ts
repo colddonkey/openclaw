@@ -324,5 +324,11 @@ export const FIELD_LABELS: Record<string, string> = {
   "multiAgentOs.identity.enabled": "Agent Identity System",
   "multiAgentOs.identity.traitDecayRate": "Trait Decay Rate",
   "multiAgentOs.telegram.enabled": "Telegram Kanban Board",
+  "multiAgentOs.comms.enabled": "Agent Communication Board",
+  "multiAgentOs.comms.telegramForward": "Forward Comms to Telegram",
+  "multiAgentOs.comms.telegramGroupId": "Comms Telegram Group ID",
+  "multiAgentOs.scheduler.enabled": "Auto Task Scheduler",
+  "multiAgentOs.scheduler.intervalMs": "Scheduler Interval (ms)",
+  "multiAgentOs.autonomy.enabled": "Agent Autonomy Loops",
   "multiAgentOs.dbPath": "Task Store DB Path",
 };

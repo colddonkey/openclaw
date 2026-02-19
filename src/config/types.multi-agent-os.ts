@@ -38,6 +38,12 @@ export type MultiAgentOsConfig = {
     enabled?: boolean;
     /** Forward agent messages to Telegram. Default: false. */
     telegramForward?: boolean;
+    /**
+     * Telegram chat/group ID for agent comms forwarding.
+     * When set, agent messages go to this group instead of your primary DM.
+     * Create a Telegram group, add the bot, and use the group's chat ID here.
+     */
+    telegramGroupId?: string;
   };
 
   /** Configuration for the automatic task scheduler. */
@@ -56,6 +62,22 @@ export type MultiAgentOsConfig = {
     loadWeight?: number;
     /** Weight for recency scoring (0.0-1.0). Default: 0.2. */
     recencyWeight?: number;
+  };
+
+  /** Configuration for the agent autonomy loop (agents work independently). */
+  autonomy?: {
+    /** Enable autonomous agent loops. Default: false (must be explicitly enabled). */
+    enabled?: boolean;
+    /** How often each agent's loop ticks, in milliseconds. Default: 10000. */
+    tickIntervalMs?: number;
+    /** Max consecutive errors before an agent is paused. Default: 5. */
+    maxConsecutiveErrors?: number;
+    /** Max work cycles per session before forced pause. Default: 100. */
+    maxCyclesPerSession?: number;
+    /** Cooldown between task completions in ms. Default: 2000. */
+    completionCooldownMs?: number;
+    /** Agent IDs to activate. Empty = all registered agents. */
+    activeAgents?: string[];
   };
 
   /** SQLite database path override. Default: ~/.openclaw/tasks/tasks.sqlite */
