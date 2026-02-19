@@ -20,7 +20,7 @@ import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
 import { CommsStore } from "../../comms/store.js";
 import type { Channel, MessageFilter } from "../../comms/types.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
-import type { GatewayRequestHandlers } from "./types.js";
+import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 
 let _store: CommsStore | null = null;
 
@@ -38,7 +38,7 @@ function getStore(): CommsStore | null {
   return _store;
 }
 
-function requireStore(respond: (ok: boolean, payload?: unknown, error?: unknown) => void): CommsStore | null {
+function requireStore(respond: RespondFn): CommsStore | null {
   const store = getStore();
   if (!store) {
     respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "multiAgentOs is not enabled"));

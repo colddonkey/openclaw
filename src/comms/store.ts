@@ -237,7 +237,7 @@ export class CommsStore {
 
   listChannels(opts?: { kind?: Channel["kind"]; includeArchived?: boolean }): Channel[] {
     const conditions: string[] = [];
-    const params: unknown[] = [];
+    const params: (string | number | null)[] = [];
 
     if (opts?.kind) {
       conditions.push("kind = ?");
@@ -297,7 +297,7 @@ export class CommsStore {
 
   listMessages(filter?: MessageFilter): Message[] {
     const conditions: string[] = [];
-    const params: unknown[] = [];
+    const params: (string | number | null)[] = [];
 
     if (filter?.channelId) {
       conditions.push("channel_id = ?");

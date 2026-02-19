@@ -225,7 +225,7 @@ export class TaskStore {
 
     const now = Date.now();
     const sets: string[] = ["updated_at = ?"];
-    const values: unknown[] = [now];
+    const values: (string | number | null)[] = [now];
 
     if (input.title !== undefined) {
       sets.push("title = ?");
@@ -313,7 +313,7 @@ export class TaskStore {
 
   list(filter?: TaskFilter): Task[] {
     const conditions: string[] = [];
-    const params: unknown[] = [];
+    const params: (string | number | null)[] = [];
 
     if (filter?.status) {
       const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];

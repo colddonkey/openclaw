@@ -20,7 +20,7 @@ import { PRIORITY_WEIGHT, STATUS_WEIGHT } from "../../tasks/state-machine.js";
 import { TaskStore } from "../../tasks/store.js";
 import type { TaskFilter, TaskStatus } from "../../tasks/types.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
-import type { GatewayRequestHandlers } from "./types.js";
+import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 
 let _store: TaskStore | null = null;
 
@@ -36,7 +36,7 @@ function getStore(): TaskStore | null {
   return _store;
 }
 
-function requireStore(respond: (ok: boolean, payload?: unknown, error?: unknown) => void): TaskStore | null {
+function requireStore(respond: RespondFn): TaskStore | null {
   const store = getStore();
   if (!store) {
     respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "multiAgentOs is not enabled"));
