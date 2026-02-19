@@ -318,4 +318,11 @@ export const FIELD_LABELS: Record<string, string> = {
   "plugins.installs.*.installPath": "Plugin Install Path",
   "plugins.installs.*.version": "Plugin Install Version",
   "plugins.installs.*.installedAt": "Plugin Install Time",
+  "multiAgentOs.enabled": "Multi-Agent OS",
+  "multiAgentOs.autoTasks.enabled": "Auto Task Extraction",
+  "multiAgentOs.autoTasks.explicitOnly": "Explicit Tasks Only",
+  "multiAgentOs.identity.enabled": "Agent Identity System",
+  "multiAgentOs.identity.traitDecayRate": "Trait Decay Rate",
+  "multiAgentOs.telegram.enabled": "Telegram Kanban Board",
+  "multiAgentOs.dbPath": "Task Store DB Path",
 };

@@ -359,7 +359,7 @@ export const FIELD_HELP: Record<string, string> = {
   "channels.telegram.dmPolicy":
     'Direct message access control ("pairing" recommended). "open" requires channels.telegram.allowFrom=["*"].',
   "channels.telegram.streamMode":
-    "Live stream preview mode for Telegram replies (off | partial | block). Separate from block streaming; uses sendMessage + editMessageText.",
+    "Live stream preview mode for Telegram replies (off | partial | block). Default: off. When partial/block, uses sendMessage + editMessageText to show streaming progress.",
   "channels.telegram.draftChunk.minChars":
     'Minimum chars before emitting a Telegram stream preview update when channels.telegram.streamMode="block" (default: 200).',
   "channels.telegram.draftChunk.maxChars":
@@ -416,4 +416,18 @@ export const FIELD_HELP: Record<string, string> = {
     'Direct message access control ("pairing" recommended). "open" requires channels.slack.allowFrom=["*"] (legacy: channels.slack.dm.allowFrom).',
   "channels.slack.dmPolicy":
     'Direct message access control ("pairing" recommended). "open" requires channels.slack.allowFrom=["*"].',
+  "multiAgentOs.enabled":
+    "Enable the multi-agent OS features: task store, agent identity, auto task generation, and kanban board. Default: false.",
+  "multiAgentOs.autoTasks.enabled":
+    "Automatically extract tasks from conversation messages. Default: true when multiAgentOs is enabled.",
+  "multiAgentOs.autoTasks.explicitOnly":
+    "Only extract explicitly marked tasks (TODO/FIXME/Action items). Disables implicit extraction (commitments, requests).",
+  "multiAgentOs.identity.enabled":
+    "Enable emergent agent personas (traits, skills, stats that develop over time). Default: true.",
+  "multiAgentOs.identity.traitDecayRate":
+    "Rate at which unused agent traits decay per day (0.0-1.0). Default: 0.02.",
+  "multiAgentOs.telegram.enabled":
+    "Show /board and /tasks commands in Telegram for kanban board access. Default: true.",
+  "multiAgentOs.dbPath":
+    "Override the SQLite database path for the task store. Default: ~/.openclaw/tasks/tasks.sqlite.",
 };

@@ -19,6 +19,7 @@ import type {
   CommandsConfig,
   MessagesConfig,
 } from "./types.messages.js";
+import type { MultiAgentOsConfig } from "./types.multi-agent-os.js";
 import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
@@ -97,6 +98,7 @@ export type OpenClawConfig = {
   talk?: TalkConfig;
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
+  multiAgentOs?: MultiAgentOsConfig;
 };
 
 export type ConfigValidationIssue = {

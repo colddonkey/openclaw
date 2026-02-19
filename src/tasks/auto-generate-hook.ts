@@ -9,6 +9,7 @@
  */
 
 import path from "node:path";
+import type { OpenClawConfig } from "../config/types.js";
 import { resolveStateDir } from "../config/paths.js";
 import {
   type InternalHookEvent,
@@ -19,6 +20,7 @@ import {
 } from "../hooks/internal-hooks.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { extractTasksFromText, fingerprint, toTaskCreateInputs, type ExtractionContext } from "./auto-generate.js";
+import { resolveMultiAgentOsGate } from "./feature-gate.js";
 import { TaskStore } from "./store.js";
 
 const log = createSubsystemLogger("tasks:auto-generate");
@@ -148,9 +150,19 @@ let registered = false;
 /**
  * Register the auto task generation hooks.
  * Safe to call multiple times; only registers once.
+ * Pass config to check the feature gate — if multiAgentOs is disabled, this is a no-op.
  */
-export function registerAutoTaskGenerationHooks(): void {
+export function registerAutoTaskGenerationHooks(cfg?: OpenClawConfig): void {
   if (registered) return;
+
+  if (cfg) {
+    const gate = resolveMultiAgentOsGate(cfg);
+    if (!gate.enabled || !gate.autoTasksEnabled) {
+      log.info("auto task generation disabled by config");
+      return;
+    }
+  }
+
   registerInternalHook("message:received", handleMessage);
   registerInternalHook("message:sent", handleMessage);
   registered = true;

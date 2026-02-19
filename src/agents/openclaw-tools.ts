@@ -1,5 +1,6 @@
 import type { OpenClawConfig } from "../config/config.js";
 import { resolvePluginTools } from "../plugins/tools.js";
+import { isMultiAgentOsEnabled } from "../tasks/feature-gate.js";
 import type { GatewayMessageChannel } from "../utils/message-channel.js";
 import { resolveSessionAgentId } from "./agent-scope.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
@@ -156,10 +157,14 @@ export function createOpenClawTools(options?: {
       agentSessionKey: options?.agentSessionKey,
       config: options?.config,
     }),
-    createTaskTool({
-      agentSessionKey: options?.agentSessionKey,
-      config: options?.config as Record<string, unknown> | undefined,
-    }),
+    ...(options?.config && isMultiAgentOsEnabled(options.config)
+      ? [
+          createTaskTool({
+            agentSessionKey: options?.agentSessionKey,
+            config: options?.config as Record<string, unknown> | undefined,
+          }),
+        ]
+      : []),
     ...(webSearchTool ? [webSearchTool] : []),
     ...(webFetchTool ? [webFetchTool] : []),
     ...(imageTool ? [imageTool] : []),

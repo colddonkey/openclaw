@@ -652,6 +652,33 @@ export const OpenClawSchema = z
       })
       .strict()
       .optional(),
+    multiAgentOs: z
+      .object({
+        enabled: z.boolean().optional(),
+        autoTasks: z
+          .object({
+            enabled: z.boolean().optional(),
+            explicitOnly: z.boolean().optional(),
+          })
+          .strict()
+          .optional(),
+        identity: z
+          .object({
+            enabled: z.boolean().optional(),
+            traitDecayRate: z.number().min(0).max(1).optional(),
+          })
+          .strict()
+          .optional(),
+        telegram: z
+          .object({
+            enabled: z.boolean().optional(),
+          })
+          .strict()
+          .optional(),
+        dbPath: z.string().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((cfg, ctx) => {
