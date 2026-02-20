@@ -570,11 +570,16 @@ export function createGatewayHttpServer(opts: {
       // Multi-agent OS UI routes: /kanban, /comms, /fleet
       if ((requestPath === "/kanban" || requestPath === "/comms" || requestPath === "/fleet") && isMultiAgentOsEnabled(configSnapshot)) {
         const fileName = "index.html";
-        // Resolve from both source and dist locations
+        // Resolve from multiple locations: source tree, dist, and relative to module
         const moduleDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);
         const candidates = [
           path.join(moduleDir, "kanban", fileName),
           path.join(process.cwd(), "src", "gateway", "kanban", fileName),
+          // When running from dist/, go up one level to find the source tree
+          path.join(moduleDir, "..", "src", "gateway", "kanban", fileName),
+          // When moduleDir is deep inside dist/, try resolving from the script path
+          path.join(path.dirname(process.argv[1] ?? ""), "src", "gateway", "kanban", fileName),
+          path.join(path.dirname(process.argv[1] ?? ""), "..", "src", "gateway", "kanban", fileName),
         ];
         let html: string | null = null;
         for (const candidate of candidates) {

@@ -7,6 +7,7 @@
  */
 
 import type { DatabaseSync } from "node:sqlite";
+import { EventEmitter } from "node:events";
 import fs from "node:fs";
 import path from "node:path";
 import { createSubsystemLogger } from "../logging/subsystem.js";
@@ -157,8 +158,18 @@ function rowToTask(row: Record<string, unknown>): Task {
   };
 }
 
+export type TaskChangeEvent = {
+  action: "created" | "updated" | "deleted" | "commented";
+  task?: Task;
+  taskId?: string;
+  comment?: TaskComment;
+};
+
+export type TaskChangeListener = (event: TaskChangeEvent) => void;
+
 export class TaskStore {
   private db: DatabaseSync;
+  private emitter = new EventEmitter();
 
   constructor(dbPath: string) {
     const dir = path.dirname(dbPath);
@@ -173,6 +184,16 @@ export class TaskStore {
 
   close(): void {
     this.db.close();
+  }
+
+  /** Subscribe to task mutations (create/update/delete/comment). */
+  onChange(listener: TaskChangeListener): () => void {
+    this.emitter.on("change", listener);
+    return () => this.emitter.off("change", listener);
+  }
+
+  private emit(event: TaskChangeEvent): void {
+    this.emitter.emit("change", event);
   }
 
   // ── CRUD ──────────────────────────────────────────────────────────
@@ -242,7 +263,9 @@ export class TaskStore {
       this.checkAutoTransition(id, input.creatorId, input.creatorName);
     }
 
-    return this.get(id)!;
+    const task = this.get(id)!;
+    this.emit({ action: "created", task });
+    return task;
   }
 
   get(id: string): Task | null {
@@ -351,7 +374,9 @@ export class TaskStore {
       this.cascadeBlockerResolution(id, actorId, actorName);
     }
 
-    return this.get(id);
+    const updated = this.get(id);
+    if (updated) this.emit({ action: "updated", task: updated });
+    return updated;
   }
 
   delete(id: string): boolean {
@@ -360,6 +385,7 @@ export class TaskStore {
       this.db.prepare(`DELETE FROM task_dependencies WHERE task_id = ? OR depends_on_id = ?`).run(id, id);
       this.db.prepare(`DELETE FROM task_comments WHERE task_id = ?`).run(id);
       this.db.prepare(`DELETE FROM task_history WHERE task_id = ?`).run(id);
+      this.emit({ action: "deleted", taskId: id });
       return true;
     }
     return false;
@@ -507,7 +533,9 @@ export class TaskStore {
       detail: text.slice(0, 200),
     });
 
-    return { id, taskId, authorId, authorName, text, createdAt: now };
+    const comment: TaskComment = { id, taskId, authorId, authorName, text, createdAt: now };
+    this.emit({ action: "commented", taskId, comment });
+    return comment;
   }
 
   getComments(taskId: string): TaskComment[] {

@@ -682,6 +682,7 @@ export async function startGatewayServer(
       cfg: cfgAtStart,
       telegramSender,
       telegramChatId: tgChatId,
+      broadcast,
     });
   }
 
