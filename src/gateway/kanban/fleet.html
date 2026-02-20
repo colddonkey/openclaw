@@ -1,9 +1,33 @@
 <!DOCTYPE html>
+<!-- Cache-Control: no-store -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Fleet Dashboard — OpenClaw</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  const isTgMiniApp = !!window.Telegram?.WebApp?.initData;
+  const isMobile = isTgMiniApp || window.innerWidth <= 640;
+  if (isTgMiniApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    document.documentElement.classList.add('tg-miniapp');
+    const tp = tg.themeParams;
+    if (tp) {
+      const r = document.documentElement.style;
+      if (tp.bg_color) r.setProperty('--bg', tp.bg_color);
+      if (tp.secondary_bg_color) r.setProperty('--surface', tp.section_bg_color || tp.secondary_bg_color);
+      if (tp.section_bg_color) r.setProperty('--surface', tp.section_bg_color);
+      if (tp.text_color) r.setProperty('--text', tp.text_color);
+      if (tp.hint_color) r.setProperty('--text-muted', tp.hint_color);
+      if (tp.button_color) r.setProperty('--accent', tp.button_color);
+      if (tp.section_separator_color) r.setProperty('--border', tp.section_separator_color);
+    }
+  }
+  if (isMobile) document.documentElement.classList.add('mobile');
+</script>
 <style>
   :root {
     --bg: #0f1117;
@@ -27,20 +51,30 @@
     --mono: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+  body {
+    font-family: var(--font);
+    font-size: clamp(14px, 1vw + 14px, 18px);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
 
   .header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 24px; border-bottom: 1px solid var(--border);
     background: var(--surface);
+    flex-wrap: wrap;
+    gap: 12px;
   }
-  .header h1 { font-size: 18px; font-weight: 600; }
+  .header h1 { font-size: clamp(18px, 1.2vw + 16px, 22px); font-weight: 600; }
   .header h1 span { color: var(--accent); }
   .header-actions { display: flex; gap: 8px; align-items: center; }
   .nav-links { display: flex; gap: 12px; }
   .nav-links a {
-    color: var(--text-muted); text-decoration: none; font-size: 13px;
-    padding: 4px 10px; border-radius: 6px; transition: all 0.2s;
+    color: var(--text-muted); text-decoration: none; font-size: clamp(13px, 0.9vw + 12px, 15px);
+    padding: 8px 14px; min-height: 44px; min-width: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; transition: all 0.2s;
   }
   .nav-links a:hover { color: var(--text); background: var(--surface-hover); }
 
@@ -52,8 +86,9 @@
   .status-badge.stopped { background: var(--red-dim); color: var(--red); }
 
   .btn {
-    padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
-    font-size: 13px; font-weight: 500; transition: all 0.2s;
+    padding: 10px 16px; min-height: 44px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: clamp(13px, 0.9vw + 12px, 15px); font-weight: 500; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center;
   }
   .btn-primary { background: var(--accent); color: white; }
   .btn-primary:hover { background: #7c6cf7; }
@@ -65,14 +100,15 @@
   .stats-bar {
     display: flex; gap: 16px; padding: 16px 24px;
     border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
   .stat {
     display: flex; flex-direction: column; gap: 2px;
     padding: 12px 20px; background: var(--surface); border-radius: 8px;
     border: 1px solid var(--border); min-width: 120px;
   }
-  .stat-value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
-  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: clamp(20px, 1.5vw + 16px, 24px); font-weight: 700; font-family: var(--mono); }
+  .stat-label { font-size: clamp(11px, 0.8vw + 10px, 13px); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
   .main { padding: 24px; }
 
@@ -87,7 +123,7 @@
   }
   .agent-card:hover { border-color: var(--accent); }
   .agent-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .agent-name { font-size: 15px; font-weight: 600; }
+  .agent-name { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; }
   .agent-phase {
     font-size: 11px; padding: 3px 8px; border-radius: 10px;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
@@ -113,8 +149,8 @@
 
   .agent-actions { display: flex; gap: 6px; margin-top: 10px; }
 
-  .cycle-log { margin-top: 24px; }
-  .cycle-log h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .cycle-log { margin-top: 24px; overflow: hidden; }
+  .cycle-log h2 { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; margin-bottom: 12px; }
   .cycle-table {
     width: 100%; border-collapse: collapse; font-size: 12px;
     background: var(--surface); border-radius: 8px; overflow: hidden;
@@ -149,8 +185,56 @@
   .empty-state {
     text-align: center; padding: 60px 20px; color: var(--text-muted);
   }
-  .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
-  .empty-state p { font-size: 13px; max-width: 400px; margin: 0 auto; line-height: 1.6; }
+  .empty-state h3 { font-size: clamp(17px, 1vw + 15px, 18px); margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: clamp(14px, 1vw + 13px, 15px); max-width: 400px; margin: 0 auto; line-height: 1.6; }
+
+  /* Mobile responsive */
+  @media (max-width: 1024px) {
+    .agents-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .header { padding: 12px 16px; }
+    .stats-bar { padding: 12px 16px; gap: 12px; }
+    .stat { min-width: 100px; padding: 10px 14px; }
+    .main { padding: 16px; }
+    .agents-grid { grid-template-columns: 1fr; gap: 12px; }
+    .cycle-table { font-size: clamp(11px, 0.9vw + 10px, 13px); }
+  }
+  @media (max-width: 640px) {
+    body { overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom, 0); }
+    .header {
+      padding: 12px 16px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    .header-actions { flex-wrap: wrap; }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 12px 16px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    .stat { min-width: 0; }
+    .main {
+      padding: 12px 16px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    .cycle-log { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .cycle-table-wrap { overflow-x: auto; min-width: 0; }
+    .cycle-table { min-width: 520px; display: table; }
+    .ws-badge {
+      bottom: max(12px, env(safe-area-inset-bottom));
+      right: max(12px, env(safe-area-inset-right));
+    }
+  }
+  @media (max-width: 380px) {
+    .header, .main { padding: 12px; }
+    .stats-bar { grid-template-columns: 1fr; }
+  }
+  .tg-miniapp .header { padding-top: env(safe-area-inset-top, 0); }
 </style>
 </head>
 <body>
@@ -185,10 +269,12 @@
 
   <div class="cycle-log">
     <h2>Recent Cycles</h2>
-    <table class="cycle-table">
-      <thead><tr><th>Agent</th><th>Phase</th><th>Decision</th><th>Tasks</th><th>Messages</th><th>Duration</th></tr></thead>
-      <tbody id="cycle-tbody"></tbody>
-    </table>
+    <div class="cycle-table-wrap">
+      <table class="cycle-table">
+        <thead><tr><th>Agent</th><th>Phase</th><th>Decision</th><th>Tasks</th><th>Messages</th><th>Duration</th></tr></thead>
+        <tbody id="cycle-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 

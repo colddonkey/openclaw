@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Cache-Control: no-store -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -79,6 +80,7 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: clamp(18px, 0.6vw + 16px, 18px);
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -123,7 +125,7 @@
       color: white;
     }
     header h1 {
-      font-size: 16px;
+      font-size: clamp(18px, 1.2vw + 14px, 20px);
       font-weight: 600;
       letter-spacing: -0.3px;
       color: var(--text);
@@ -141,7 +143,7 @@
     .task-stats {
       display: flex;
       gap: 12px;
-      font-size: 12px;
+      font-size: clamp(12px, 0.8vw + 12px, 14px);
       color: var(--text-dim);
     }
     .task-stat {
@@ -160,7 +162,7 @@
       gap: 6px;
       padding: 4px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: clamp(11px, 0.7vw + 11px, 13px);
       font-weight: 500;
       letter-spacing: 0.3px;
       text-transform: uppercase;
@@ -223,7 +225,7 @@
       border-radius: 20px;
       background: var(--surface);
       color: var(--text);
-      font-size: 13px;
+      font-size: clamp(13px, 0.9vw + 13px, 15px);
       font-family: inherit;
       transition: all var(--transition-normal);
     }
@@ -249,7 +251,7 @@
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: clamp(12px, 0.8vw + 12px, 14px);
       font-weight: 500;
       cursor: pointer;
       transition: all var(--transition-fast);
@@ -321,7 +323,7 @@
     }
     .column-label {
       font-weight: 600;
-      font-size: 12px;
+      font-size: clamp(12px, 0.8vw + 12px, 14px);
       text-transform: uppercase;
       letter-spacing: 0.6px;
       color: var(--text-secondary);
@@ -385,7 +387,7 @@
     .card-priority-bar.medium { background: var(--accent); opacity: 0.5; }
     .card-priority-bar.low { background: var(--success); opacity: 0.3; }
     .card-title {
-      font-size: 13px;
+      font-size: clamp(15px, 1.5vw + 14px, 20px);
       font-weight: 500;
       line-height: 1.4;
       margin-bottom: 8px;
@@ -402,7 +404,7 @@
       align-items: center;
     }
     .tag {
-      font-size: 10px;
+      font-size: clamp(10px, 0.7vw + 10px, 12px);
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: 600;
@@ -421,7 +423,7 @@
       font-weight: 500;
     }
     .card-assignee {
-      font-size: 10px;
+      font-size: clamp(10px, 0.7vw + 10px, 12px);
       color: var(--text-dim);
       margin-left: auto;
       display: flex;
@@ -455,7 +457,7 @@
       text-align: center;
       padding: 24px 12px;
       color: var(--text-dim);
-      font-size: 12px;
+      font-size: clamp(12px, 1vw + 14px, 18px);
     }
     .empty-state-icon {
       font-size: 24px;
@@ -509,7 +511,7 @@
       flex-shrink: 0;
     }
     .modal-header h2 {
-      font-size: 16px;
+      font-size: clamp(18px, 1.2vw + 14px, 20px);
       font-weight: 600;
       line-height: 1.3;
       flex: 1;
@@ -547,7 +549,7 @@
     .detail-field {}
     .detail-field.full { grid-column: 1 / -1; }
     .detail-label {
-      font-size: 11px;
+      font-size: clamp(11px, 0.8vw + 11px, 13px);
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -555,7 +557,7 @@
       font-weight: 500;
     }
     .detail-value {
-      font-size: 14px;
+      font-size: clamp(14px, 1vw + 14px, 17px);
       color: var(--text);
     }
     .detail-value.mono {
@@ -604,7 +606,7 @@
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: clamp(12px, 0.9vw + 12px, 15px);
       font-weight: 500;
       cursor: pointer;
       transition: all var(--transition-fast);
@@ -623,7 +625,7 @@
       padding-top: 16px;
     }
     .comments-title {
-      font-size: 12px;
+      font-size: clamp(12px, 0.8vw + 12px, 14px);
       font-weight: 600;
       color: var(--text-secondary);
       text-transform: uppercase;
@@ -642,7 +644,7 @@
       margin-bottom: 4px;
     }
     .comment-author {
-      font-size: 13px;
+      font-size: clamp(13px, 1vw + 13px, 16px);
       font-weight: 600;
       color: var(--text);
     }
@@ -651,7 +653,7 @@
       color: var(--text-dim);
     }
     .comment-text {
-      font-size: 13px;
+      font-size: clamp(13px, 1vw + 14px, 17px);
       color: var(--text-secondary);
       line-height: 1.5;
     }
@@ -708,7 +710,7 @@
       border-radius: var(--radius);
       background: var(--bg);
       color: var(--text);
-      font-size: 14px;
+      font-size: clamp(14px, 1vw + 14px, 17px);
       font-family: inherit;
       transition: all var(--transition-fast);
     }
@@ -845,8 +847,8 @@
     .mobile-tabs::-webkit-scrollbar { display: none; }
     .mobile-tab {
       flex: 0 0 auto;
-      padding: 10px 16px;
-      font-size: 12px;
+      padding: 12px 18px;
+      font-size: clamp(14px, 1vw + 14px, 16px);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.4px;
@@ -882,6 +884,13 @@
       color: var(--accent-hover, var(--accent));
     }
 
+    /* Responsive - small desktop */
+    @media (max-width: 1024px) {
+      .toolbar { overflow-x: auto; padding: 0 16px; }
+      .board { padding: 16px; gap: 10px; }
+      .column { flex: 0 0 280px; }
+    }
+
     /* Responsive - tablet */
     @media (max-width: 768px) {
       .toolbar { overflow-x: auto; padding: 0 12px; }
@@ -903,13 +912,14 @@
       }
       header {
         padding: 0 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         height: var(--header-height);
       }
-      header h1 { font-size: 14px; }
       .logo { width: 24px; height: 24px; font-size: 11px; }
       .header-right { gap: 8px; }
       .task-stats { display: none; }
-      .ws-badge { font-size: 10px; padding: 3px 8px; }
+      .ws-badge { padding: 6px 12px; min-height: 44px; align-items: center; }
 
       .toolbar { display: none; }
       .mobile-tabs { display: flex; }
@@ -936,21 +946,24 @@
       .column-header { display: none; }
       .column-body {
         padding: 8px 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         overflow: visible;
       }
       .card {
-        padding: 14px;
-        margin-bottom: 8px;
+        padding: 16px;
+        margin-bottom: 10px;
         border-radius: var(--radius-lg);
         background: var(--surface);
         border: 1px solid var(--border);
+        min-height: 44px;
       }
-      .card-title { font-size: 14px; margin-bottom: 10px; }
+      .card-title { line-height: 1.5; margin-bottom: 10px; }
       .card-footer { gap: 6px; }
-      .tag { font-size: 11px; padding: 3px 8px; }
+      .tag { padding: 4px 10px; }
 
-      .empty-state { padding: 40px 20px; font-size: 14px; }
-      .empty-state-icon { font-size: 32px; }
+      .empty-state { padding: 40px 20px; }
+      .empty-state-icon { font-size: clamp(28px, 4vw + 20px, 32px); }
 
       /* Bottom sheet modals on mobile */
       .modal-overlay {
@@ -968,14 +981,13 @@
         from { opacity: 0; transform: translateY(100%); }
         to { opacity: 1; transform: translateY(0); }
       }
-      .modal-header { padding: 16px; }
-      .modal-header h2 { font-size: 15px; }
-      .modal-body { padding: 16px; }
-      .detail-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .modal-header { padding: 16px; padding-left: max(16px, env(safe-area-inset-left)); }
+      .modal-body { padding: 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+      .detail-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
       .action-bar { gap: 8px; }
       .action-btn {
-        padding: 10px 16px;
-        font-size: 13px;
+        padding: 12px 18px;
+        font-size: 15px;
         flex: 1;
         text-align: center;
         min-height: 44px;
@@ -1009,11 +1021,22 @@
       /* Hide desktop new task button */
       .toolbar-right { display: none; }
 
-      /* Nav links in header - smaller */
+      /* Nav links - touch targets 44px+ */
       header a {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
+        padding: 10px 14px !important;
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(13px, 0.8vw + 11px, 12px) !important;
       }
+    }
+
+    /* Small phone */
+    @media (max-width: 380px) {
+      header { padding: 0 8px; }
+      .column-body { padding: 8px; }
     }
 
     /* Telegram miniapp-specific overrides */
