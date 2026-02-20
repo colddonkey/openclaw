@@ -30,6 +30,7 @@ export type FleetStatus = {
   agentCount: number;
   agents: Array<{
     agentId: string;
+    displayName?: string;
     phase: AgentPhase;
     running: boolean;
     currentTaskId: string | null;
@@ -53,7 +54,7 @@ export class AutonomyService {
     this.deps = deps;
     this.config = {
       enabled: config.enabled ?? false,
-      tickIntervalMs: config.tickIntervalMs ?? 10_000,
+      tickIntervalMs: config.tickIntervalMs ?? 3_600_000,
       maxConsecutiveErrors: config.maxConsecutiveErrors ?? 5,
       maxCyclesPerSession: config.maxCyclesPerSession ?? 100,
       completionCooldownMs: config.completionCooldownMs ?? 2_000,
@@ -163,8 +164,10 @@ export class AutonomyService {
         .reduce((sum, c) => sum + c.tasksCompleted, 0);
       totalTasks += completed;
 
+      const identity = this.deps.identityStore.get(id);
       return {
         agentId: id,
+        displayName: identity?.seed?.displayName,
         phase: state.phase,
         running: loop.isRunning(),
         currentTaskId: state.currentTaskId,
@@ -205,8 +208,13 @@ export class AutonomyService {
     if (this.config.activeAgents.length > 0) {
       return this.config.activeAgents;
     }
-    // Use all registered agents from the identity store
-    return this.deps.identityStore.listAll().map((a) => a.agentId);
+    const registered = this.deps.identityStore.listAll().map((a) => a.agentId);
+    if (registered.length > 0) {
+      return registered;
+    }
+    // Auto-create a default agent if none exist
+    this.deps.identityStore.getOrCreate("agent-alpha");
+    return ["agent-alpha"];
   }
 
   private recordCycle(result: WorkCycleResult): void {

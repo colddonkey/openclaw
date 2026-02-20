@@ -440,6 +440,12 @@ export const FIELD_HELP: Record<string, string> = {
     "Interval between scheduling runs in milliseconds. Default: 30000.",
   "multiAgentOs.autonomy.enabled":
     "Enable autonomous agent loops (agents pick up tasks and work independently). Default: false.",
+  "multiAgentOs.autonomy.tickIntervalMs":
+    "How often each agent ticks (ms). Default: 3600000 (1 hour). Lower = more active but costs more API tokens.",
+  "multiAgentOs.autonomy.lightModel":
+    "Model for cheap actions (chat, reflection, triage). E.g. 'anthropic/claude-haiku-3.5'. Default: gateway agent model.",
+  "multiAgentOs.autonomy.workModel":
+    "Model for heavy work (task execution, code changes). E.g. 'anthropic/claude-sonnet-4-6'. Default: gateway agent model.",
   "multiAgentOs.dbPath":
     "Override the SQLite database path for the task store. Default: ~/.openclaw/tasks/tasks.sqlite.",
 };

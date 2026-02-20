@@ -68,7 +68,7 @@ export type MultiAgentOsConfig = {
   autonomy?: {
     /** Enable autonomous agent loops. Default: false (must be explicitly enabled). */
     enabled?: boolean;
-    /** How often each agent's loop ticks, in milliseconds. Default: 10000. */
+    /** How often each agent's loop ticks, in milliseconds. Default: 3600000 (1 hour). */
     tickIntervalMs?: number;
     /** Max consecutive errors before an agent is paused. Default: 5. */
     maxConsecutiveErrors?: number;
@@ -78,6 +78,16 @@ export type MultiAgentOsConfig = {
     completionCooldownMs?: number;
     /** Agent IDs to activate. Empty = all registered agents. */
     activeAgents?: string[];
+    /**
+     * Model used for lightweight agent actions: chat replies, reflection, triage summaries.
+     * Should be cheap/fast (e.g. "anthropic/claude-haiku-3.5"). Default: uses gateway agent model.
+     */
+    lightModel?: string;
+    /**
+     * Model used for heavy agent work: task execution, code changes, deep analysis.
+     * Should be capable (e.g. "anthropic/claude-sonnet-4-6"). Default: uses gateway agent model.
+     */
+    workModel?: string;
   };
 
   /** SQLite database path override. Default: ~/.openclaw/tasks/tasks.sqlite */

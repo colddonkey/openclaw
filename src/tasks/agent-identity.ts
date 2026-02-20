@@ -50,6 +50,8 @@ export type AgentStats = {
 export type AgentSeed = {
   personality?: string;
   focus?: string[];
+  displayName?: string;
+  avatarUrl?: string;
 };
 
 export type AgentIdentity = {
@@ -398,10 +400,14 @@ export class AgentIdentityStore {
 
   // ── Self-reflection ──────────────────────────────────────────────
 
-  /**
-   * Let the agent write about itself. This is free-form text the agent
-   * generates during reflection moments (after completing tasks, periodically).
-   */
+  updateSeed(agentId: string, patch: Partial<AgentSeed>): void {
+    const identity = this.getOrCreate(agentId);
+    const merged = { ...identity.seed, ...patch };
+    this.db.prepare(`
+      UPDATE agent_identities SET seed = ?, updated_at = ? WHERE agent_id = ?
+    `).run(JSON.stringify(merged), Date.now(), agentId);
+  }
+
   updateSelfReflection(agentId: string, reflection: string): void {
     this.getOrCreate(agentId);
     this.db.prepare(`

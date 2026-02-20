@@ -178,17 +178,30 @@ export function pickNextTriageTask(tasks: Task[], state: AgentState): Task | nul
 // ── Internal helpers ────────────────────────────────────────────────
 
 function findUrgentMessage(ctx: DecisionContext): Decision | null {
+  // Direct messages get highest priority
   for (const { channel, messages } of ctx.unreadMessages) {
-    if (channel.kind === "direct") {
+    if (channel.kind === "direct" && messages.length > 0) {
       const last = messages[messages.length - 1];
-      if (last) {
-        return {
-          type: "respond_message",
-          channelId: channel.id,
-          messageId: last.id,
-          text: `Acknowledged: "${last.text.slice(0, 100)}"`,
-        };
-      }
+      const context = messages.slice(-5).map(m => `${m.authorName}: ${m.text}`).join("\n");
+      return {
+        type: "respond_message",
+        channelId: channel.id,
+        messageId: last.id,
+        text: context,
+      };
+    }
+  }
+  // Then general/task channels with unread messages
+  for (const { channel, messages } of ctx.unreadMessages) {
+    if (messages.length > 0) {
+      const last = messages[messages.length - 1];
+      const context = messages.slice(-5).map(m => `${m.authorName}: ${m.text}`).join("\n");
+      return {
+        type: "respond_message",
+        channelId: channel.id,
+        messageId: last.id,
+        text: context,
+      };
     }
   }
   return null;

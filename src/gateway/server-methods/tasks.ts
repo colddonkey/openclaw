@@ -7,6 +7,7 @@
  *   tasks.board   — Get board overview (status counts + active columns)
  *   tasks.update  — Update a task (status, assignee, priority, etc.)
  *   tasks.create  — Create a new task
+ *   tasks.delete  — Delete a task
  *   tasks.comment — Add a comment to a task
  *
  * All methods are gated behind multiAgentOs.enabled.
@@ -129,6 +130,8 @@ export const tasksHandlers: GatewayRequestHandlers = {
       description: typeof params.description === "string" ? params.description : "",
       status: typeof params.status === "string" ? (params.status as TaskStatus) : undefined,
       priority: typeof params.priority === "string" ? (params.priority as any) : undefined,
+      assigneeId: typeof params.assigneeId === "string" ? params.assigneeId : undefined,
+      assigneeName: typeof params.assigneeName === "string" ? params.assigneeName : undefined,
       creatorId: typeof params.creatorId === "string" ? params.creatorId : "web-user",
       creatorName: typeof params.creatorName === "string" ? params.creatorName : "Web User",
       labels: Array.isArray(params.labels) ? (params.labels as string[]) : undefined,
@@ -159,6 +162,7 @@ export const tasksHandlers: GatewayRequestHandlers = {
       if (typeof params.description === "string") update.description = params.description;
       if (typeof params.status === "string") update.status = params.status;
       if (typeof params.priority === "string") update.priority = params.priority;
+      if (typeof params.type === "string") update.type = params.type;
       if (params.assigneeId !== undefined) update.assigneeId = params.assigneeId;
       if (params.assigneeName !== undefined) update.assigneeName = params.assigneeName;
       if (Array.isArray(params.labels)) update.labels = params.labels;
@@ -178,6 +182,26 @@ export const tasksHandlers: GatewayRequestHandlers = {
         errorShape(ErrorCodes.INVALID_REQUEST, err instanceof Error ? err.message : String(err)),
       );
     }
+  },
+
+  "tasks.delete": async ({ params, respond, context }) => {
+    const store = requireStore(respond);
+    if (!store) return;
+
+    const id = typeof params.id === "string" ? params.id : "";
+    if (!id) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "missing params.id"));
+      return;
+    }
+
+    const deleted = store.delete(id);
+    if (!deleted) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, `task not found: ${id}`));
+      return;
+    }
+
+    context.broadcast("tasks.changed", { action: "deleted", taskId: id });
+    respond(true, { deleted: true });
   },
 
   "tasks.comment": async ({ params, respond, context }) => {

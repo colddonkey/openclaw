@@ -69,7 +69,62 @@ function requireService(
   return svc;
 }
 
+function getIdentityStore(): AgentIdentityStore | null {
+  const cfg = loadConfig();
+  if (!isMultiAgentOsEnabled(cfg)) return null;
+  const base = cfg.multiAgentOs?.dbPath
+    ? path.dirname(cfg.multiAgentOs.dbPath)
+    : path.join(resolveStateDir(), "tasks");
+  return new AgentIdentityStore(path.join(base, "identities.sqlite"));
+}
+
 export const autonomyHandlers: GatewayRequestHandlers = {
+  "agents.identities.list": async ({ respond }) => {
+    const store = getIdentityStore();
+    if (!store) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "multiAgentOs is not enabled"));
+      return;
+    }
+    const agents = store.listAll();
+    respond(true, { agents });
+  },
+
+  "agents.identities.get": async ({ params, respond }) => {
+    const store = getIdentityStore();
+    if (!store) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "multiAgentOs is not enabled"));
+      return;
+    }
+    const agentId = typeof params.agentId === "string" ? params.agentId : "";
+    if (!agentId) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "missing params.agentId"));
+      return;
+    }
+    const agent = store.getOrCreate(agentId);
+    respond(true, { agent });
+  },
+
+  "agents.identities.update": async ({ params, respond }) => {
+    const store = getIdentityStore();
+    if (!store) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "multiAgentOs is not enabled"));
+      return;
+    }
+    const agentId = typeof params.agentId === "string" ? params.agentId : "";
+    if (!agentId) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "missing params.agentId"));
+      return;
+    }
+    store.getOrCreate(agentId);
+    if (typeof params.selfReflection === "string") store.updateSelfReflection(agentId, params.selfReflection);
+    const seedPatch: Record<string, string> = {};
+    if (typeof params.personality === "string") seedPatch.personality = params.personality;
+    if (typeof params.displayName === "string") seedPatch.displayName = params.displayName;
+    if (typeof params.avatarUrl === "string") seedPatch.avatarUrl = params.avatarUrl;
+    if (Object.keys(seedPatch).length > 0) store.updateSeed(agentId, seedPatch);
+    respond(true, { agent: store.getOrCreate(agentId) });
+  },
+
   "autonomy.status": async ({ respond }) => {
     const svc = requireService(respond);
     if (!svc) return;

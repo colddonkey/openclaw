@@ -703,6 +703,8 @@ export const OpenClawSchema = z
             maxCyclesPerSession: z.number().int().positive().optional(),
             completionCooldownMs: z.number().nonnegative().optional(),
             activeAgents: z.array(z.string()).optional(),
+            lightModel: z.string().optional(),
+            workModel: z.string().optional(),
           })
           .strict()
           .optional(),

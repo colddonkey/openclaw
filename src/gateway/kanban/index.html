@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>OpenClaw - Task Board</title>
+  <title>OpenClaw</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     const isTgMiniApp = !!window.Telegram?.WebApp?.initData;
@@ -17,6 +17,8 @@
         if (document.querySelector('.modal-overlay.open')) {
           document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
           tg.BackButton.hide();
+        } else if (document.getElementById('app-sidebar')?.classList.contains('open')) {
+          closeSidebar();
         }
       });
       document.documentElement.classList.add('tg-miniapp');
@@ -78,6 +80,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { overflow-x: hidden; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: clamp(18px, 0.6vw + 16px, 18px);
@@ -85,6 +88,7 @@
       color: var(--text);
       min-height: 100vh;
       overflow: hidden;
+      height: 100vh;
     }
 
     /* Scrollbar styling */
@@ -93,49 +97,134 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--border-accent); }
 
-    /* Header */
-    header {
+    /* App layout */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .app-sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-brand {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sidebar-brand h2 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-brand .brand-accent {
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(180deg, var(--accent), #a78bfa);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .sidebar-brand .subtitle {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .sidebar-nav {
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      border: none;
+      border-left: 3px solid transparent;
+      background: none;
+      font-family: inherit;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+    .sidebar-nav-item.active {
+      background: var(--accent-glow);
+      color: var(--accent-hover);
+      border-left: 3px solid var(--accent);
+    }
+    .sidebar-nav-item .nav-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    .sidebar-sections {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .main-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
-      height: var(--header-height);
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      padding: 0 20px;
+      height: 48px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
     }
-    .header-left {
+    .main-header .header-left {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .logo {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, var(--accent), #a78bfa);
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-      color: white;
-    }
-    header h1 {
+    .main-header h1 {
       font-size: clamp(18px, 1.2vw + 14px, 20px);
       font-weight: 600;
       letter-spacing: -0.3px;
       color: var(--text);
     }
-    header h1 span {
+    .main-header h1 span {
       color: var(--text-dim);
       font-weight: 400;
       margin-left: 6px;
     }
-    .header-right {
+    .main-header .header-right {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -156,6 +245,55 @@
       color: var(--text-secondary);
       font-variant-numeric: tabular-nums;
     }
+    .menu-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .menu-btn:hover { background: var(--surface-hover); }
+    .mobile-nav {
+      display: none;
+      gap: 4px;
+    }
+    .nav-pill {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    .nav-pill:hover { background: var(--surface-hover); color: var(--text); }
+    .nav-pill.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent-hover); }
+    .fleet-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .fleet-badge.running { background: var(--success-dim); color: #4ade80; }
+    .fleet-badge.stopped { background: var(--danger-dim); color: #f87171; }
+    .btn { padding: 8px 14px; border-radius: 6px; font-size: clamp(12px, 0.8vw + 12px, 14px); font-weight: 500; cursor: pointer; font-family: inherit; transition: all var(--transition-fast); }
+    .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--danger-dim); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: var(--danger-dim); border-color: var(--danger); }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); background: var(--surface-hover); }
     .ws-badge {
       display: flex;
       align-items: center;
@@ -194,57 +332,68 @@
       50% { opacity: 0.4; }
     }
 
-    /* Toolbar */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 24px;
-      height: var(--toolbar-height);
-      border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-elevated);
-    }
-    .toolbar-group {
-      display: flex;
-      gap: 4px;
-    }
-    .toolbar-separator {
-      width: 1px;
-      height: 24px;
-      background: var(--border);
-      margin: 0 8px;
-    }
-    .search-box {
-      position: relative;
-      flex: 0 0 auto;
-    }
-    .search-box input {
-      width: 220px;
-      padding: 6px 12px 6px 32px;
+    /* Sidebar section styles */
+    .sidebar-search input {
+      width: 100%;
+      padding: 8px 12px;
       border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--surface);
+      border-radius: var(--radius);
+      background: var(--bg);
       color: var(--text);
-      font-size: clamp(13px, 0.9vw + 13px, 15px);
+      font-size: 13px;
       font-family: inherit;
-      transition: all var(--transition-normal);
     }
-    .search-box input:focus {
+    .sidebar-search input:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-glow);
-      width: 280px;
     }
-    .search-box input::placeholder { color: var(--text-dim); }
-    .search-icon {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+    .sidebar-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
       color: var(--text-dim);
-      font-size: 13px;
-      pointer-events: none;
+      padding: 8px 0 4px;
     }
+    .sidebar-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .sidebar-action-btn {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+      text-align: center;
+    }
+    .sidebar-action-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .sidebar-action-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .sidebar-action-btn.primary:hover { background: var(--accent-hover); }
+    .sidebar-action-btn.danger { background: var(--danger-dim); color: #f87171; border-color: rgba(239,68,68,0.3); }
+    .sidebar-action-btn.danger:hover { border-color: var(--danger); }
+    .fleet-sidebar-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .fleet-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .fleet-stat .stat-label { font-size: 12px; color: var(--text-dim); }
+    .fleet-stat .stat-value { font-size: 16px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
     .tb-btn {
       padding: 6px 12px;
       border-radius: 6px;
@@ -289,7 +438,8 @@
       gap: 12px;
       padding: 20px 24px;
       overflow-x: auto;
-      height: calc(100vh - var(--header-height) - var(--toolbar-height));
+      flex: 1;
+      min-height: 0;
       align-items: flex-start;
     }
 
@@ -692,6 +842,75 @@
     .comment-submit:hover { background: var(--accent-hover); }
     .comment-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* Editable detail fields */
+    .detail-editable {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: clamp(14px, 1vw + 14px, 17px);
+      transition: all var(--transition-fast);
+      cursor: text;
+    }
+    .detail-editable:hover { border-color: var(--border); background: var(--bg); }
+    .detail-editable:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .detail-editable.title-edit {
+      font-size: clamp(18px, 1.2vw + 14px, 20px);
+      font-weight: 600;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      width: calc(100% + 16px);
+    }
+    textarea.detail-editable {
+      min-height: 60px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    select.detail-editable {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b6b82'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+    .detail-actions-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .detail-actions-bar .spacer { flex: 1; }
+    .delete-confirm {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--danger-dim);
+      border-radius: 8px;
+      font-size: 13px;
+      color: #f87171;
+      animation: fadeIn 0.15s both;
+    }
+    .delete-confirm.show { display: flex; }
+    .save-indicator {
+      font-size: 12px;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .save-indicator.visible { opacity: 1; color: #4ade80; }
+
     /* Form fields */
     .form-field {
       margin-bottom: 16px;
@@ -741,6 +960,33 @@
       gap: 8px;
       margin-top: 20px;
       justify-content: flex-end;
+    }
+
+    /* Agent checkboxes for channel membership */
+    .agent-checkboxes {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+    .agent-check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .agent-check-label input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
     }
 
     /* Labels input */
@@ -886,42 +1132,34 @@
 
     /* Responsive - small desktop */
     @media (max-width: 1024px) {
-      .toolbar { overflow-x: auto; padding: 0 16px; }
       .board { padding: 16px; gap: 10px; }
       .column { flex: 0 0 280px; }
     }
 
     /* Responsive - tablet */
     @media (max-width: 768px) {
-      .toolbar { overflow-x: auto; padding: 0 12px; }
       .board { padding: 12px; gap: 8px; }
       .column { flex: 0 0 260px; }
       .task-stats { display: none; }
-      header { padding: 0 12px; }
+      .main-header { padding: 0 12px; }
     }
 
     /* Responsive - mobile phone */
     @media (max-width: 640px) {
-      :root {
-        --header-height: 48px;
-        --toolbar-height: 0px;
-      }
       body {
         overflow: auto;
         padding-bottom: env(safe-area-inset-bottom, 0);
       }
-      header {
+      .main-header {
         padding: 0 12px;
         padding-left: max(12px, env(safe-area-inset-left));
         padding-right: max(12px, env(safe-area-inset-right));
-        height: var(--header-height);
+        height: 48px;
       }
-      .logo { width: 24px; height: 24px; font-size: 11px; }
-      .header-right { gap: 8px; }
+      .main-header .header-right { gap: 8px; }
       .task-stats { display: none; }
-      .ws-badge { padding: 6px 12px; min-height: 44px; align-items: center; }
+      .sidebar-footer .ws-badge { padding: 6px 12px; min-height: 44px; align-items: center; }
 
-      .toolbar { display: none; }
       .mobile-tabs { display: flex; }
 
       .board {
@@ -929,7 +1167,7 @@
         padding: 0;
         overflow: visible;
         height: auto;
-        min-height: calc(100vh - var(--header-height) - 42px);
+        min-height: calc(100vh - 48px - 42px);
       }
       .column {
         display: none;
@@ -1018,18 +1256,14 @@
       }
       .mobile-fab:active { transform: scale(0.9); }
 
-      /* Hide desktop new task button */
-      .toolbar-right { display: none; }
-
-      /* Nav links - touch targets 44px+ */
-      header a {
-        padding: 10px 14px !important;
+      /* Nav pills - touch targets 44px+ */
+      .mobile-nav .nav-pill {
+        padding: 10px 14px;
         min-height: 44px;
         min-width: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: clamp(13px, 0.8vw + 11px, 12px) !important;
       }
     }
 
@@ -1039,50 +1273,274 @@
       .column-body { padding: 8px; }
     }
 
+    /* View containers when visible */
+    #view-tasks, #view-comms, #view-fleet {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* Comms: channel list in sidebar, chat in main */
+    .channel-list { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
+    .channel-group-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); padding: 8px 8px 4px; }
+    .channel-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: all var(--transition-fast); }
+    .channel-item:hover { background: var(--surface-hover); }
+    .channel-item.active { background: var(--accent-glow); }
+    .channel-icon { width: 20px; height: 20px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+    .channel-icon.general { color: var(--accent-hover); }
+    .channel-icon.system { color: var(--warning); }
+    .channel-icon.task { color: var(--info); }
+    .channel-icon.direct { color: var(--success); }
+    .channel-name { font-size: clamp(13px, 0.9vw + 12px, 15px); font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .channel-item.active .channel-name { color: var(--text); }
+    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    .chat-header { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .chat-header-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--accent-glow); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .chat-header-info { flex: 1; }
+    .chat-header-name { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; }
+    .chat-header-desc { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-members-btn { font-size: 11px; color: var(--text-dim); padding: 4px 10px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+    .chat-members-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+    .members-panel { padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+    .members-panel-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .messages-area { flex: 1; overflow-y: auto; padding: 16px 20px; }
+    .msg-group { margin-bottom: 16px; }
+    .msg-row { display: flex; gap: 10px; padding: 2px 0; }
+    .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #a78bfa); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+    .msg-avatar.system-avatar { background: linear-gradient(135deg, var(--warning), #f97316); }
+    .msg-avatar.operator-avatar { background: linear-gradient(135deg, var(--success), #10b981); }
+    .msg-content { flex: 1; min-width: 0; }
+    .msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+    .msg-author { font-size: clamp(15px, 1vw + 13px, 16px); font-weight: 600; color: var(--text); }
+    .msg-time { font-size: 11px; color: var(--text-dim); }
+    .msg-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
+    .msg-badge.task_ref { background: var(--info-dim); color: #60a5fa; }
+    .msg-badge.status { background: var(--warning-dim); color: #fbbf24; }
+    .msg-badge.system { background: rgba(107,107,130,0.15); color: var(--text-dim); }
+    .msg-text { font-size: clamp(14px, 1vw + 14px, 17px); line-height: 1.55; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; }
+    .msg-edited { font-size: 10px; color: var(--text-dim); font-style: italic; }
+    .msg-task-ref { display: inline-flex; align-items: center; gap: 4px; background: var(--info-dim); color: #60a5fa; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; cursor: pointer; transition: background var(--transition-fast); }
+    .msg-task-ref:hover { background: rgba(59,130,246,0.25); }
+    .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); gap: 8px; }
+    .empty-chat-icon { font-size: 40px; opacity: 0.2; }
+    .empty-chat-text { font-size: 14px; }
+    .empty-chat-hint { font-size: 12px; color: var(--text-dim); opacity: 0.6; }
+    .no-channel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    .no-channel-icon { font-size: 48px; opacity: 0.15; }
+    .no-channel-text { font-size: 16px; color: var(--text-dim); }
+    .no-channel-hint { font-size: 13px; color: var(--text-dim); opacity: 0.5; }
+    .input-area { padding: 12px 20px 16px; border-top: 1px solid var(--border-subtle); background: var(--bg-elevated); flex-shrink: 0; }
+    .input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+    .input-field { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); font-size: clamp(14px, 1vw + 14px, 17px); font-family: inherit; resize: none; min-height: 44px; max-height: 120px; transition: border-color var(--transition-fast); line-height: 1.4; }
+    .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .input-field::placeholder { color: var(--text-dim); }
+    .send-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: var(--radius-lg); border: none; background: var(--accent); color: white; font-size: 18px; cursor: pointer; transition: background var(--transition-fast); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .send-btn:hover { background: var(--accent-hover); }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .typing-indicator { padding: 4px 20px; font-size: clamp(12px, 0.8vw + 11px, 14px); color: var(--text-dim); font-style: italic; min-height: 20px; }
+
+    /* Fleet: agents, cycles (stats in sidebar) */
+    #view-fleet { display: flex; flex-direction: column; gap: 0; overflow: hidden; }
+    .fleet-main { flex: 1; overflow-y: auto; padding: 24px; }
+    .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+    .agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all 0.2s; }
+    .agent-card:hover { border-color: var(--accent); }
+    .agent-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .agent-name { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; }
+    .agent-phase { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .phase-idle { background: var(--border); color: var(--text-dim); }
+    .phase-planning { background: var(--info-dim); color: #60a5fa; }
+    .phase-working { background: var(--success-dim); color: #4ade80; }
+    .phase-reporting, .phase-communicating { background: var(--accent-glow); color: var(--accent-hover); }
+    .phase-reflecting { background: var(--warning-dim); color: #fbbf24; }
+    .phase-paused { background: var(--warning); color: var(--bg); }
+    .phase-error { background: var(--danger-dim); color: #f87171; }
+    .agent-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+    .agent-meta-item { display: flex; justify-content: space-between; color: var(--text-dim); }
+    .agent-meta-item .val { color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; }
+    .agent-task { margin-top: 10px; padding: 8px 10px; background: var(--bg); border-radius: 6px; font-size: 12px; }
+    .agent-task .label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 2px; }
+    .agent-task .title { color: #4ade80; }
+    .agent-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .cycle-log { margin-top: 24px; overflow: hidden; }
+    .cycle-log h2 { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; margin-bottom: 12px; }
+    .cycle-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--surface); border-radius: 8px; overflow: hidden; }
+    .cycle-table th { text-align: left; padding: 8px 12px; background: var(--bg); color: var(--text-dim); font-weight: 500; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+    .cycle-table td { padding: 6px 12px; border-top: 1px solid var(--border); }
+    .cycle-table tr:hover td { background: var(--surface-hover); }
+    .decision-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .decision-pick_task { background: var(--success-dim); color: #4ade80; }
+    .decision-continue_work { background: var(--info-dim); color: #60a5fa; }
+    .decision-complete_task { background: var(--accent-glow); color: var(--accent-hover); }
+    .decision-idle { background: var(--border); color: var(--text-dim); }
+    .decision-reflect { background: var(--warning-dim); color: #fbbf24; }
+    .decision-respond_message, .decision-report_progress { background: var(--warning); color: var(--bg); }
+    @media (max-width: 768px) { .agents-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+
+    /* Mobile: sidebar overlay */
+    @media (max-width: 640px) {
+      .app-sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+        z-index: 200;
+        transition: left var(--transition-slow);
+        width: 260px;
+        min-width: 260px;
+      }
+      .app-sidebar.open {
+        left: 0;
+      }
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 199;
+      }
+      .sidebar-backdrop.open {
+        display: block;
+      }
+      .main-header .menu-btn {
+        display: flex;
+      }
+      .mobile-nav {
+        display: flex;
+      }
+    }
+    @media (min-width: 641px) {
+      .main-header .menu-btn { display: none; }
+      .mobile-nav { display: none; }
+      .sidebar-backdrop { display: none !important; }
+    }
+
     /* Telegram miniapp-specific overrides */
-    .tg-miniapp header {
+    .tg-miniapp .main-header {
       padding-top: env(safe-area-inset-top, 0);
     }
     .tg-miniapp .ws-badge { display: none; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <div class="logo">OC</div>
-      <h1>Task Board <span id="board-title-count"></span></h1>
-    </div>
-    <div style="display:flex;gap:4px">
-      <a href="/kanban" style="padding:5px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent-hover);font-size:12px;text-decoration:none;font-weight:500">Tasks</a>
-      <a href="/comms" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-size:12px;text-decoration:none;font-weight:500">Comms</a>
-    </div>
-    <div class="header-right">
-      <div class="task-stats" id="task-stats"></div>
-      <div class="ws-badge offline" id="ws-badge">
-        <div class="ws-dot"></div>
-        <span id="ws-label">Offline</span>
+  <div class="app-layout">
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-brand">
+        <h2><span class="brand-accent"></span>OpenClaw</h2>
+        <div class="subtitle">Control Center</div>
       </div>
-    </div>
-  </header>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-view="tasks" onclick="switchView('tasks')">
+          <span class="nav-icon">&#x2611;</span>
+          Tasks
+        </button>
+        <button class="sidebar-nav-item" data-view="comms" onclick="switchView('comms')">
+          <span class="nav-icon">&#x1F4AC;</span>
+          Comms
+        </button>
+        <button class="sidebar-nav-item" data-view="fleet" onclick="switchView('fleet')">
+          <span class="nav-icon">&#x1F680;</span>
+          Fleet
+        </button>
+      </nav>
+      <div class="sidebar-sections">
+        <div id="sidebar-tasks" class="sidebar-section">
+          <div class="sidebar-search">
+            <input type="text" id="search-input" placeholder="Search tasks..." />
+          </div>
+          <div class="sidebar-group-label">Priority</div>
+          <div class="sidebar-filters" id="priority-filters"></div>
+          <div class="sidebar-group-label">Labels</div>
+          <div class="sidebar-filters" id="label-filters"></div>
+          <div style="margin-top: auto; padding-top: 12px;">
+            <button class="sidebar-action-btn" onclick="toggleDoneColumn()" id="toggle-done-btn">Show Done</button>
+            <button class="sidebar-action-btn primary" onclick="showCreateModal()">+ New Task</button>
+          </div>
+        </div>
+        <div id="sidebar-comms" class="sidebar-section" style="display:none">
+          <div class="channel-list" id="channel-list"></div>
+          <button class="sidebar-action-btn primary" onclick="showCreateChannelModal()">+ New Channel</button>
+        </div>
+        <div id="sidebar-fleet" class="sidebar-section" style="display:none">
+          <div class="fleet-sidebar-stats">
+            <div class="fleet-stat"><span class="stat-label">Status</span><div id="fleet-badge" class="fleet-badge stopped">stopped</div></div>
+            <div class="fleet-stat"><span class="stat-value" id="stat-agents">0</span><span class="stat-label">Agents</span></div>
+            <div class="fleet-stat"><span class="stat-value" id="stat-cycles">0</span><span class="stat-label">Cycles</span></div>
+            <div class="fleet-stat"><span class="stat-value" id="stat-tasks">0</span><span class="stat-label">Tasks Done</span></div>
+            <div class="fleet-stat"><span class="stat-value" id="stat-errors">0</span><span class="stat-label">Errors</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 12px;">
+            <button id="btn-start" class="sidebar-action-btn primary" onclick="startFleet()">Start Fleet</button>
+            <button id="btn-stop" class="sidebar-action-btn danger" onclick="stopFleet()" style="display:none">Stop Fleet</button>
+            <button class="sidebar-action-btn" onclick="refreshFleet()">Refresh</button>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="ws-badge offline" id="ws-badge">
+          <div class="ws-dot"></div>
+          <span id="ws-label">Offline</span>
+        </div>
+      </div>
+    </aside>
+    <main class="app-main">
+      <header class="main-header">
+        <div class="header-left">
+          <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()" title="Menu" aria-label="Menu">&#9776;</button>
+          <h1 id="page-title">Tasks <span>Board</span><span id="board-title-count"></span></h1>
+          <div class="mobile-nav">
+            <button class="nav-pill active" data-view="tasks" onclick="switchView('tasks')">Tasks</button>
+            <button class="nav-pill" data-view="comms" onclick="switchView('comms')">Comms</button>
+            <button class="nav-pill" data-view="fleet" onclick="switchView('fleet')">Fleet</button>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="task-stats" id="task-stats"></div>
+        </div>
+      </header>
 
-  <div class="toolbar">
-    <div class="search-box">
-      <span class="search-icon">&#x1F50D;</span>
-      <input type="text" id="search-input" placeholder="Search tasks..." />
-    </div>
-    <div class="toolbar-separator"></div>
-    <div class="toolbar-group" id="priority-filters"></div>
-    <div class="toolbar-separator"></div>
-    <div class="toolbar-group" id="label-filters"></div>
-    <div class="toolbar-right">
-      <button class="tb-btn" onclick="toggleDoneColumn()" id="toggle-done-btn">Show Done</button>
-      <button class="tb-btn primary" onclick="showCreateModal()">+ New Task</button>
-    </div>
+      <!-- TASKS VIEW -->
+      <div id="view-tasks">
+        <div class="mobile-tabs" id="mobile-tabs"></div>
+        <div class="board" id="board"></div>
+        <button class="mobile-fab" onclick="showCreateModal()" style="display:none" id="mobile-fab">+</button>
+      </div>
+
+      <!-- COMMS VIEW -->
+      <div id="view-comms" style="display:none">
+        <div class="chat-area" id="chat-area">
+          <div class="no-channel">
+            <div class="no-channel-icon">&#x1F4AC;</div>
+            <div class="no-channel-text">Select a channel</div>
+            <div class="no-channel-hint">Pick a channel from the sidebar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET VIEW -->
+      <div id="view-fleet" style="display:none">
+        <div class="fleet-main">
+          <div id="agents-grid" class="agents-grid"></div>
+          <div id="fleet-empty-state" class="empty-state" style="display:none">
+            <h3>No agents running</h3>
+            <p>Enable autonomy and start the fleet.</p>
+          </div>
+          <div class="cycle-log">
+            <h2>Recent Cycles</h2>
+            <div class="cycle-table-wrap">
+              <table class="cycle-table">
+                <thead><tr><th>Agent</th><th>Phase</th><th>Decision</th><th>Reason</th><th>Tasks</th><th>Msgs</th><th>Duration</th></tr></thead>
+                <tbody id="cycle-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
-
-  <div class="mobile-tabs" id="mobile-tabs"></div>
-  <div class="board" id="board"></div>
-  <button class="mobile-fab" onclick="showCreateModal()" style="display:none" id="mobile-fab">+</button>
 
   <!-- Task Detail Modal -->
   <div class="modal-overlay" id="detail-modal">
@@ -1133,6 +1591,13 @@
           </div>
         </div>
         <div class="form-field">
+          <label class="form-label">Assignee</label>
+          <select class="form-select" id="new-assignee">
+            <option value="">Unassigned</option>
+            <option value="operator">Me (Operator)</option>
+          </select>
+        </div>
+        <div class="form-field">
           <label class="form-label">Labels</label>
           <div class="labels-input-wrap" id="labels-wrap" onclick="document.getElementById('labels-field').focus()">
             <input type="text" class="labels-input-field" id="labels-field" placeholder="Type and press Enter..." />
@@ -1143,6 +1608,53 @@
           <button class="action-btn primary" onclick="createTask()">Create Task</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Create Channel Modal -->
+  <div class="modal-overlay" id="create-channel-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>New Channel</h2>
+        <button class="modal-close" onclick="closeCreateChannelModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="ch-name" placeholder="e.g. dev-discussion" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Kind</label>
+          <select class="form-select" id="ch-kind">
+            <option value="general">General</option>
+            <option value="task">Task-related</option>
+            <option value="direct">Direct Message</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-input" id="ch-desc" placeholder="What's this channel for?" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Add Agents</label>
+          <div id="ch-agents-list" class="agent-checkboxes"></div>
+        </div>
+        <div class="form-actions">
+          <button class="action-btn" onclick="closeCreateChannelModal()">Cancel</button>
+          <button class="action-btn primary" onclick="createChannel()">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Detail Modal -->
+  <div class="modal-overlay" id="agent-detail-modal">
+    <div class="modal" style="max-width: 520px">
+      <div class="modal-header">
+        <h2 id="agent-detail-title">Agent</h2>
+        <button class="modal-close" onclick="closeAgentDetailModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body" id="agent-detail-body"></div>
     </div>
   </div>
 
@@ -1173,6 +1685,49 @@
     let currentTaskId = null;
     let mobileActiveTab = 'in_progress';
     let lastCounts = {};
+    let channels = [];
+    let activeChannelId = null;
+    let knownAgents = [];
+    let currentView = 'tasks';
+
+    // Router
+    function switchView(name) {
+      if (!['tasks','comms','fleet'].includes(name)) name = 'tasks';
+      currentView = name;
+      const pathMap = { tasks: '/kanban', comms: '/comms', fleet: '/fleet' };
+      history.replaceState(null, '', pathMap[name]);
+
+      document.getElementById('view-tasks').style.display = name === 'tasks' ? '' : 'none';
+      document.getElementById('view-comms').style.display = name === 'comms' ? 'flex' : 'none';
+      document.getElementById('view-fleet').style.display = name === 'fleet' ? 'flex' : 'none';
+
+      document.getElementById('sidebar-tasks').style.display = name === 'tasks' ? '' : 'none';
+      document.getElementById('sidebar-comms').style.display = name === 'comms' ? '' : 'none';
+      document.getElementById('sidebar-fleet').style.display = name === 'fleet' ? '' : 'none';
+
+      document.querySelectorAll('.sidebar-nav-item').forEach(a => a.classList.remove('active'));
+      const navItem = document.querySelector('.sidebar-nav-item[data-view="' + name + '"]');
+      if (navItem) navItem.classList.add('active');
+
+      document.querySelectorAll('.mobile-nav .nav-pill').forEach(a => a.classList.remove('active'));
+      const mobilePill = document.querySelector('.mobile-nav .nav-pill[data-view="' + name + '"]');
+      if (mobilePill) mobilePill.classList.add('active');
+
+      const title = document.getElementById('page-title');
+      if (title) {
+        if (name === 'tasks') title.innerHTML = 'Tasks <span>Board</span><span id="board-title-count"></span>';
+        else if (name === 'comms') title.innerHTML = 'Communication';
+        else if (name === 'fleet') title.innerHTML = 'Fleet <span>Dashboard</span>';
+      }
+
+      document.getElementById('task-stats').style.display = name === 'tasks' ? '' : 'none';
+
+      closeSidebar();
+
+      if (name === 'tasks') loadBoard();
+      else if (name === 'comms') loadChannels();
+      else if (name === 'fleet') refreshFleet();
+    }
 
     // WebSocket
     function connect() {
@@ -1180,18 +1735,7 @@
       ws = new WebSocket(`${proto}://${location.host}`);
       setWsStatus('reconnecting');
 
-      ws.onopen = () => {
-        setWsStatus('online');
-        const authToken = '__GATEWAY_AUTH_TOKEN__';
-        const connectParams = {
-          minProtocol: 3, maxProtocol: 3,
-          client: { id: 'openclaw-control-ui', version: 'dev', platform: 'browser', mode: 'ui' },
-          role: 'operator', scopes: ['operator.admin']
-        };
-        if (authToken) connectParams.auth = { token: authToken };
-        send('connect', connectParams);
-        setTimeout(() => loadBoard(), 300);
-      };
+      ws.onopen = () => setWsStatus('reconnecting');
 
       ws.onclose = () => {
         setWsStatus('offline');
@@ -1203,13 +1747,35 @@
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
+          if (msg.type === 'event' && msg.event === 'connect.challenge') {
+            const authToken = '__GATEWAY_AUTH_TOKEN__';
+            const connectParams = {
+              minProtocol: 3, maxProtocol: 3,
+              client: { id: 'openclaw-control-ui', version: 'dev', platform: 'browser', mode: 'ui' },
+              role: 'operator', scopes: ['operator.admin']
+            };
+            if (authToken) connectParams.auth = { token: authToken };
+            send('connect', connectParams).then(() => {
+              setWsStatus('online');
+              loadAgents();
+              loadBoard();
+              loadChannels();
+              refreshFleet();
+            });
+            return;
+          }
           if (msg.type === 'res' && pending.has(msg.id)) {
             const { resolve } = pending.get(msg.id);
             pending.delete(msg.id);
             resolve(msg);
           }
-          if (msg.type === 'event' && msg.event === 'tasks.changed') {
-            loadBoard();
+          if (msg.type === 'event') {
+            if (msg.event === 'tasks.changed') loadBoard();
+            if (msg.event === 'comms.message' && msg.payload?.channelId === activeChannelId) {
+              appendMessage(msg.payload.message);
+              scrollToBottom();
+            }
+            if (msg.event === 'comms.channel.created') loadChannels();
           }
         } catch {}
       };
@@ -1267,8 +1833,10 @@
       const total = Object.values(counts).reduce((s, n) => s + n, 0);
       const active = (counts.in_progress || 0) + (counts.review || 0);
       const blocked = counts.blocked || 0;
-      document.getElementById('board-title-count').textContent = total > 0 ? `(${total})` : '';
-      document.getElementById('task-stats').innerHTML = `
+      const titleCount = document.getElementById('board-title-count');
+      if (titleCount) titleCount.textContent = total > 0 ? `(${total})` : '';
+      const statsEl = document.getElementById('task-stats');
+      if (statsEl) statsEl.innerHTML = `
         <div class="task-stat"><span class="num">${active}</span> active</div>
         <div class="task-stat"><span class="num">${blocked}</span> blocked</div>
         <div class="task-stat"><span class="num">${total}</span> total</div>
@@ -1277,20 +1845,24 @@
 
     function renderFilters() {
       const priorityContainer = document.getElementById('priority-filters');
-      const priorities = ['critical', 'high', 'medium', 'low'];
-      priorityContainer.innerHTML = priorities.map(p =>
-        `<button class="tb-btn ${priorityFilter === p ? 'active' : ''}" onclick="togglePriorityFilter('${p}')">${p}</button>`
-      ).join('');
-
+      if (priorityContainer) {
+        const priorities = ['critical', 'high', 'medium', 'low'];
+        priorityContainer.innerHTML = priorities.map(p =>
+          `<button class="tb-btn ${priorityFilter === p ? 'active' : ''}" onclick="togglePriorityFilter('${p}')">${p}</button>`
+        ).join('');
+      }
       const labelContainer = document.getElementById('label-filters');
-      const labels = [...allLabels].slice(0, 5);
-      labelContainer.innerHTML = labels.map(l =>
-        `<button class="tb-btn ${labelFilter === l ? 'active' : ''}" onclick="toggleLabelFilter('${esc(l)}')">${esc(l)}</button>`
-      ).join('');
+      if (labelContainer) {
+        const labels = [...allLabels].slice(0, 5);
+        labelContainer.innerHTML = labels.map(l =>
+          `<button class="tb-btn ${labelFilter === l ? 'active' : ''}" onclick="toggleLabelFilter('${esc(l)}')">${esc(l)}</button>`
+        ).join('');
+      }
     }
 
     function renderBoard(cols, counts) {
       const board = document.getElementById('board');
+      if (!board) return;
       board.innerHTML = '';
       lastCounts = counts;
 
@@ -1435,6 +2007,8 @@
     }
 
     // Task operations
+    let editDebounce = null;
+
     async function openTask(id) {
       currentTaskId = id;
       const res = await send('tasks.get', { id });
@@ -1444,7 +2018,15 @@
       }
 
       const { task: t, dependencies, comments } = res.payload;
-      document.getElementById('detail-title').textContent = t.title;
+
+      const statusOpts = ['triage','backlog','ready','in_progress','blocked','review','done','archived'];
+      const priorityOpts = ['critical','high','medium','low','none'];
+      const typeOpts = ['task','quick_fix','story','epic'];
+
+      document.getElementById('detail-title').innerHTML = `
+        <input type="text" class="detail-editable title-edit" id="edit-title"
+               value="${esc(t.title)}" data-field="title" />
+      `;
 
       const actions = getStatusActions(t.status);
       document.getElementById('detail-body').innerHTML = `
@@ -1452,30 +2034,51 @@
           <div class="detail-field">
             <div class="detail-label">Status</div>
             <div class="detail-value">
-              <span class="status-pill ${t.status}">
-                <span class="status-pip"></span>
-                ${formatStatus(t.status)}
-              </span>
+              <select class="detail-editable" data-field="status" id="edit-status">
+                ${statusOpts.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${formatStatus(s)}</option>`).join('')}
+              </select>
             </div>
           </div>
           <div class="detail-field">
             <div class="detail-label">Priority</div>
             <div class="detail-value">
-              <span class="tag priority-${t.priority}">${t.priority}</span>
+              <select class="detail-editable" data-field="priority" id="edit-priority">
+                ${priorityOpts.map(p => `<option value="${p}" ${p === t.priority ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}
+              </select>
             </div>
           </div>
-          ${t.type && t.type !== 'task' ? `
           <div class="detail-field">
             <div class="detail-label">Type</div>
-            <div class="detail-value"><span class="tag label-tag">${formatStatus(t.type)}</span></div>
+            <div class="detail-value">
+              <select class="detail-editable" data-field="type" id="edit-type">
+                ${typeOpts.map(tp => `<option value="${tp}" ${tp === (t.type || 'task') ? 'selected' : ''}>${formatStatus(tp)}</option>`).join('')}
+              </select>
+            </div>
           </div>
-          ` : ''}
+          <div class="detail-field">
+            <div class="detail-label">Assignee</div>
+            <div class="detail-value">
+              <select class="detail-editable" id="edit-assignee" data-field="assigneeName"
+                      onchange="scheduleAutoSave('${esc(t.id)}')">
+                <option value="">Unassigned</option>
+                <option value="operator" ${(t.assigneeName||'')==='operator'?'selected':''}>Me (Operator)</option>
+                ${knownAgents.map(a => '<option value="' + esc(a.agentId) + '"' + ((t.assigneeName||'')===a.agentId?' selected':'') + '>' + esc(a.seed?.displayName || a.agentId) + '</option>').join('')}
+              </select>
+            </div>
+          </div>
           ${t.triagePlan ? `
           <div class="detail-field full">
             <div class="detail-label">Triage Plan</div>
             <div class="detail-value" style="line-height:1.6;white-space:pre-wrap;font-size:13px;color:var(--text-secondary)">${esc(t.triagePlan)}</div>
           </div>
           ` : ''}
+          <div class="detail-field full">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">
+              <textarea class="detail-editable" id="edit-desc" data-field="description"
+                        placeholder="Add a description...">${esc(t.description || '')}</textarea>
+            </div>
+          </div>
           <div class="detail-field">
             <div class="detail-label">Created</div>
             <div class="detail-value" style="font-size:13px;color:var(--text-secondary)">${formatTime(t.createdAt)}</div>
@@ -1484,22 +2087,10 @@
             <div class="detail-label">Updated</div>
             <div class="detail-value" style="font-size:13px;color:var(--text-secondary)">${formatTime(t.updatedAt)}</div>
           </div>
-          ${t.assigneeName ? `
-            <div class="detail-field">
-              <div class="detail-label">Assignee</div>
-              <div class="detail-value">${esc(t.assigneeName)}</div>
-            </div>
-          ` : ''}
           ${t.labels?.length ? `
-            <div class="detail-field">
+            <div class="detail-field full">
               <div class="detail-label">Labels</div>
               <div class="detail-value">${t.labels.map(l => `<span class="tag label-tag">${esc(l)}</span>`).join(' ')}</div>
-            </div>
-          ` : ''}
-          ${t.description ? `
-            <div class="detail-field full">
-              <div class="detail-label">Description</div>
-              <div class="detail-value" style="line-height:1.6;white-space:pre-wrap">${esc(t.description)}</div>
             </div>
           ` : ''}
           <div class="detail-field full">
@@ -1507,13 +2098,77 @@
             <div class="detail-value mono">${t.id}</div>
           </div>
         </div>
-        <div class="action-bar">
+        <div class="detail-actions-bar">
           ${actions.map(a => `<button class="action-btn ${a.cls || ''}" onclick="moveTask('${t.id}', '${a.status}')">${a.label}</button>`).join('')}
+          <span class="save-indicator" id="save-indicator">Saved</span>
+          <span class="spacer"></span>
+          <button class="action-btn danger" onclick="showDeleteConfirm()">Delete</button>
+        </div>
+        <div class="delete-confirm" id="delete-confirm">
+          <span>Permanently delete this task?</span>
+          <button class="action-btn danger" onclick="deleteTask('${t.id}')">Yes, delete</button>
+          <button class="action-btn" onclick="hideDeleteConfirm()">Cancel</button>
         </div>
         ${renderComments(comments)}
       `;
+
+      document.querySelectorAll('.detail-editable').forEach(el => {
+        const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+        el.addEventListener(evt, () => scheduleAutoSave(t.id));
+      });
+
       document.getElementById('detail-modal').classList.add('open');
       if (isTgMiniApp) window.Telegram.WebApp.BackButton.show();
+    }
+
+    function scheduleAutoSave(taskId) {
+      clearTimeout(editDebounce);
+      editDebounce = setTimeout(() => autoSaveTask(taskId), 600);
+    }
+
+    async function autoSaveTask(taskId) {
+      const fields = {};
+      const title = document.getElementById('edit-title')?.value?.trim();
+      const desc = document.getElementById('edit-desc')?.value;
+      const status = document.getElementById('edit-status')?.value;
+      const priority = document.getElementById('edit-priority')?.value;
+      const assignee = document.getElementById('edit-assignee')?.value?.trim();
+
+      if (title) fields.title = title;
+      if (desc !== undefined) fields.description = desc;
+      if (status) fields.status = status;
+      if (priority) fields.priority = priority;
+      fields.assigneeName = assignee || '';
+
+      const res = await send('tasks.update', { id: taskId, ...fields });
+      if (res.ok) {
+        const indicator = document.getElementById('save-indicator');
+        if (indicator) {
+          indicator.classList.add('visible');
+          setTimeout(() => indicator.classList.remove('visible'), 1500);
+        }
+      } else {
+        toast('Failed to save', 'error');
+      }
+    }
+
+    function showDeleteConfirm() {
+      document.getElementById('delete-confirm')?.classList.add('show');
+    }
+
+    function hideDeleteConfirm() {
+      document.getElementById('delete-confirm')?.classList.remove('show');
+    }
+
+    async function deleteTask(id) {
+      const res = await send('tasks.delete', { id });
+      if (res.ok) {
+        toast('Task deleted', 'success');
+        closeDetailModal();
+        loadBoard();
+      } else {
+        toast('Failed to delete task', 'error');
+      }
     }
 
     function renderComments(comments) {
@@ -1599,13 +2254,16 @@
         return;
       }
       const taskType = document.getElementById('new-type').value;
-      const res = await send('tasks.create', {
+      const assignee = document.getElementById('new-assignee').value;
+      const params = {
         title,
         description: document.getElementById('new-desc').value,
         priority: document.getElementById('new-priority').value,
         type: taskType,
         labels: newLabels.length > 0 ? newLabels : undefined,
-      });
+      };
+      if (assignee) params.assigneeName = assignee;
+      const res = await send('tasks.create', params);
       if (res.ok) {
         toast('Task created', 'success');
         closeCreateModal();
@@ -1621,6 +2279,8 @@
       document.getElementById('new-desc').value = '';
       document.getElementById('new-type').value = 'task';
       document.getElementById('new-priority').value = 'medium';
+      const assigneeSel = document.getElementById('new-assignee');
+      if (assigneeSel) assigneeSel.value = '';
       newLabels = [];
       renderLabelChips();
     }
@@ -1678,6 +2338,336 @@
       loadBoard();
     }
 
+    async function loadAgents() {
+      try {
+        const res = await send('agents.identities.list', {});
+        if (res.ok && Array.isArray(res.payload?.agents)) {
+          knownAgents = res.payload.agents;
+        }
+      } catch (e) {}
+    }
+
+    async function loadChannels() {
+      const res = await send('comms.channels.list', {});
+      if (!res.ok) return;
+      channels = res.payload.channels || [];
+      renderChannelList();
+    }
+    function renderChannelList() {
+      const list = document.getElementById('channel-list');
+      if (!list) return;
+      const grouped = { general: [], system: [], task: [], direct: [] };
+      for (const ch of channels) (grouped[ch.kind] || grouped.general).push(ch);
+      let html = '';
+      const kindIcons = { general: '#', system: '!', task: 'T', direct: '@' };
+      const kindLabels = { general: 'Channels', system: 'System', task: 'Tasks', direct: 'Direct' };
+      for (const kind of ['general', 'task', 'direct', 'system']) {
+        const items = grouped[kind];
+        if (!items || items.length === 0) continue;
+        html += '<div class="channel-group-label">' + kindLabels[kind] + '</div>';
+        for (const ch of items) {
+          const active = ch.id === activeChannelId ? 'active' : '';
+          html += '<div class="channel-item ' + active + '" onclick="selectChannel(\'' + ch.id + '\')"><div class="channel-icon ' + ch.kind + '">' + kindIcons[ch.kind] + '</div><span class="channel-name">' + esc(ch.name) + '</span></div>';
+        }
+      }
+      list.innerHTML = html;
+    }
+    async function selectChannel(id) {
+      activeChannelId = id;
+      renderChannelList();
+      if (window.innerWidth <= 640) closeSidebar();
+      const res = await send('comms.channels.get', { id });
+      if (!res.ok) return;
+      const { channel, members, recentMessages } = res.payload;
+      renderChat(channel, members, recentMessages || []);
+    }
+    function renderChat(channel, members, messages) {
+      const area = document.getElementById('chat-area');
+      if (!area) return;
+      const kindIcons = { general: '#', system: '!', task: 'T', direct: '@' };
+      const memberIds = new Set((members || []).map(m => m.memberId || m.id));
+      const membersHtml = knownAgents.map(a => {
+        const isMember = memberIds.has(a.agentId);
+        return '<label class="agent-check-label"><input type="checkbox" value="' + esc(a.agentId) + '"' +
+          (isMember ? ' checked' : '') +
+          ' onchange="toggleChannelMember(\'' + esc(channel.id) + '\', \'' + esc(a.agentId) + '\', this.checked)" /> ' +
+          esc(a.seed?.displayName || a.agentId) + '</label>';
+      }).join('');
+      area.innerHTML =
+        '<div class="chat-header">' +
+          '<div class="chat-header-icon">' + (kindIcons[channel.kind] || '#') + '</div>' +
+          '<div class="chat-header-info">' +
+            '<div class="chat-header-name">' + esc(channel.name) + '</div>' +
+            '<div class="chat-header-desc">' + esc(channel.description || '') + '</div>' +
+          '</div>' +
+          '<button class="btn btn-ghost chat-members-btn" onclick="toggleMembersPanel()">' +
+            (members?.length || 0) + ' member' + ((members?.length || 0) !== 1 ? 's' : '') +
+          '</button>' +
+        '</div>' +
+        '<div class="members-panel" id="members-panel" style="display:none">' +
+          '<div class="members-panel-title">Manage Agent Membership</div>' +
+          (knownAgents.length === 0
+            ? '<span class="text-dim">No agents registered</span>'
+            : membersHtml) +
+        '</div>' +
+        '<div class="messages-area" id="messages-area">' +
+          (messages.length === 0
+            ? '<div class="empty-chat"><div class="empty-chat-icon">&#x1F30A;</div><div class="empty-chat-text">No messages yet</div><div class="empty-chat-hint">Be the first to say something</div></div>'
+            : renderMessages(messages)) +
+        '</div>' +
+        '<div class="typing-indicator" id="typing-indicator"></div>' +
+        '<div class="input-area"><div class="input-wrap">' +
+          '<textarea class="input-field" id="msg-input" placeholder="Type a message..." rows="1" onkeydown="handleInputKey(event)" oninput="autoGrow(this)"></textarea>' +
+          '<button class="send-btn" id="send-btn" onclick="sendMessage()">&#x27A4;</button>' +
+        '</div></div>';
+      scrollToBottom();
+      document.getElementById('msg-input')?.focus();
+    }
+    function toggleMembersPanel() {
+      const panel = document.getElementById('members-panel');
+      if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    async function toggleChannelMember(channelId, agentId, add) {
+      const method = add ? 'comms.members.add' : 'comms.members.remove';
+      const res = await send(method, { channelId, memberId: agentId, memberType: 'agent' });
+      if (res.ok) {
+        toast(add ? 'Agent added to channel' : 'Agent removed from channel', 'success');
+      } else {
+        toast('Failed to update membership', 'error');
+        selectChannel(channelId);
+      }
+    }
+    function renderMessages(messages) {
+      let html = '', lastAuthor = null, lastTime = 0;
+      for (const msg of messages) {
+        const ts = typeof msg.createdAt === 'number' ? msg.createdAt : new Date(msg.createdAt).getTime();
+        const sameAuthor = msg.authorId === lastAuthor && (ts - lastTime) < 120000;
+        const avatarClass = msg.authorId === 'system' ? 'system-avatar' : (msg.authorId?.startsWith('web') || msg.authorId === 'operator') ? 'operator-avatar' : '';
+        if (!sameAuthor) {
+          html += '<div class="msg-group"><div class="msg-row"><div class="msg-avatar ' + avatarClass + '">' + esc((msg.authorName || '?')[0]) + '</div><div class="msg-content"><div class="msg-header"><span class="msg-author">' + esc(msg.authorName) + '</span><span class="msg-time">' + formatTime(ts) + '</span>' + (msg.kind !== 'text' ? '<span class="msg-badge ' + msg.kind + '">' + msg.kind + '</span>' : '') + '</div><div class="msg-text">' + esc(msg.text) + '</div>' + (msg.taskRef ? '<div class="msg-task-ref" onclick="switchView(\'tasks\')">&#x1F4CB; ' + esc(msg.taskRef) + '</div>' : '') + '</div></div>';
+        } else {
+          html += '<div class="msg-row" style="padding-left:42px"><div class="msg-content"><div class="msg-text">' + esc(msg.text) + '</div>' + (msg.taskRef ? '<div class="msg-task-ref">&#x1F4CB; ' + esc(msg.taskRef) + '</div>' : '') + '</div></div>';
+        }
+        lastAuthor = msg.authorId; lastTime = ts;
+        const next = messages[messages.indexOf(msg) + 1];
+        if (!next || next.authorId !== msg.authorId || ((typeof next.createdAt === 'number' ? next.createdAt : new Date(next.createdAt).getTime()) - ts) >= 120000) html += '</div>';
+      }
+      return html;
+    }
+    function appendMessage(msg) {
+      const area = document.getElementById('messages-area');
+      if (!area) return;
+      const empty = area.querySelector('.empty-chat');
+      if (empty) empty.remove();
+      const avatarClass = msg.authorId === 'system' ? 'system-avatar' : (msg.authorId?.startsWith('web') || msg.authorId === 'operator') ? 'operator-avatar' : '';
+      const ts = typeof msg.createdAt === 'number' ? msg.createdAt : new Date(msg.createdAt).getTime();
+      const el = document.createElement('div');
+      el.className = 'msg-group';
+      el.innerHTML = '<div class="msg-row"><div class="msg-avatar ' + avatarClass + '">' + esc((msg.authorName || '?')[0]) + '</div><div class="msg-content"><div class="msg-header"><span class="msg-author">' + esc(msg.authorName) + '</span><span class="msg-time">' + formatTime(ts) + '</span></div><div class="msg-text">' + esc(msg.text) + '</div></div></div>';
+      area.appendChild(el);
+    }
+    async function sendMessage() {
+      const input = document.getElementById('msg-input');
+      const text = input?.value?.trim();
+      if (!text || !activeChannelId) return;
+      input.value = ''; input.style.height = 'auto';
+      const res = await send('comms.messages.send', { channelId: activeChannelId, text, authorId: 'operator', authorName: 'Operator' });
+      if (!res.ok) toast('Failed to send message', 'error');
+    }
+    function handleInputKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+    function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+    function scrollToBottom() { const area = document.getElementById('messages-area'); if (area) requestAnimationFrame(() => area.scrollTop = area.scrollHeight); }
+    function showCreateChannelModal() {
+      const list = document.getElementById('ch-agents-list');
+      if (list) {
+        list.innerHTML = knownAgents.length === 0 ? '<span class="text-dim">No agents registered yet</span>' :
+          knownAgents.map(a => '<label class="agent-check-label"><input type="checkbox" value="' + esc(a.agentId) + '" /> ' + esc(a.seed?.displayName || a.agentId) + '</label>').join('');
+      }
+      document.getElementById('create-channel-modal')?.classList.add('open');
+      document.getElementById('ch-name')?.focus();
+      if (isTgMiniApp) window.Telegram.WebApp.BackButton.show();
+    }
+    function closeCreateChannelModal() { document.getElementById('create-channel-modal')?.classList.remove('open'); if (isTgMiniApp) window.Telegram.WebApp.BackButton.hide(); }
+    async function createChannel() {
+      const name = document.getElementById('ch-name')?.value?.trim();
+      if (!name) { toast('Name required', 'error'); return; }
+      const res = await send('comms.channels.create', { name, kind: document.getElementById('ch-kind')?.value || 'general', description: document.getElementById('ch-desc')?.value || '' });
+      if (res.ok) {
+        const chId = res.payload?.channel?.id;
+        const checkedAgents = Array.from(document.querySelectorAll('#ch-agents-list input:checked')).map(cb => cb.value);
+        for (const agentId of checkedAgents) {
+          await send('comms.members.add', { channelId: chId, memberId: agentId, memberType: 'agent' });
+        }
+        toast('Channel created' + (checkedAgents.length ? ' with ' + checkedAgents.length + ' agent(s)' : ''), 'success');
+        closeCreateChannelModal();
+        document.getElementById('ch-name').value = '';
+        document.getElementById('ch-desc').value = '';
+        loadChannels();
+        if (chId) selectChannel(chId);
+      } else toast('Failed to create channel', 'error');
+    }
+    function toggleSidebar() { document.getElementById('app-sidebar')?.classList.toggle('open'); document.getElementById('sidebar-backdrop')?.classList.toggle('open'); }
+    function closeSidebar() { document.getElementById('app-sidebar')?.classList.remove('open'); document.getElementById('sidebar-backdrop')?.classList.remove('open'); }
+
+    // Fleet module
+    async function refreshFleet() {
+      try {
+        const statusRes = await send('autonomy.status', {});
+        if (!statusRes.ok) { renderFleetEmpty(statusRes.error?.message || 'Autonomy not available'); return; }
+        const status = statusRes.payload;
+        renderFleetStatus(status);
+        const cyclesRes = await send('autonomy.cycles', { limit: 30 });
+        const cycles = cyclesRes.ok && Array.isArray(cyclesRes.payload) ? cyclesRes.payload : [];
+        renderFleetCycles(cycles);
+      } catch (e) { renderFleetEmpty(e.message || 'Autonomy not available'); }
+    }
+    function renderFleetStatus(s) {
+      const badge = document.getElementById('fleet-badge');
+      const startBtn = document.getElementById('btn-start');
+      const stopBtn = document.getElementById('btn-stop');
+      if (s?.error) {
+        if (badge) { badge.className = 'fleet-badge stopped'; badge.textContent = 'disabled'; }
+        if (startBtn) startBtn.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
+        renderFleetEmpty(s.error);
+        return;
+      }
+      if (badge) { badge.className = s.running ? 'fleet-badge running' : 'fleet-badge stopped'; badge.textContent = s.running ? 'running' : 'stopped'; }
+      if (startBtn) startBtn.style.display = s.running ? 'none' : '';
+      if (stopBtn) stopBtn.style.display = s.running ? '' : 'none';
+      const sa = document.getElementById('stat-agents'); if (sa) sa.textContent = s.agentCount ?? 0;
+      const sc = document.getElementById('stat-cycles'); if (sc) sc.textContent = s.totalCyclesCompleted ?? 0;
+      const st = document.getElementById('stat-tasks'); if (st) st.textContent = s.totalTasksCompleted ?? 0;
+      const se = document.getElementById('stat-errors'); if (se) se.textContent = s.totalErrors ?? 0;
+      const grid = document.getElementById('agents-grid');
+      const empty = document.getElementById('fleet-empty-state');
+      if (!s.agents || s.agents.length === 0) {
+        if (grid) grid.innerHTML = '';
+        if (empty) empty.style.display = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      if (grid) grid.innerHTML = s.agents.map(renderAgentCard).join('');
+    }
+    function agentLabel(a) { return a.displayName || a.seed?.displayName || a.agentId; }
+
+    function renderAgentCard(a) {
+      const phaseClass = 'phase-' + (a.phase || 'idle');
+      const name = agentLabel(a);
+      const taskHtml = a.currentTaskId ? '<div class="agent-task"><div class="label">Current Task</div><div class="title">' + esc(a.currentTaskId) + '</div></div>' : '';
+      return '<div class="agent-card" onclick="openAgentDetail(\'' + esc(a.agentId) + '\')" style="cursor:pointer">' +
+        '<div class="agent-card-header">' +
+          '<span class="agent-name">' + esc(name) + '</span>' +
+          '<span class="agent-phase ' + phaseClass + '">' + (a.phase || 'idle') + '</span>' +
+        '</div>' +
+        '<div class="agent-meta">' +
+          '<div class="agent-meta-item"><span>Cycles</span><span class="val">' + (a.cyclesCompleted ?? 0) + '</span></div>' +
+          '<div class="agent-meta-item"><span>Errors</span><span class="val">' + (a.errorCount ?? 0) + '</span></div>' +
+          '<div class="agent-meta-item"><span>Running</span><span class="val">' + (a.running ? 'yes' : 'no') + '</span></div>' +
+        '</div>' +
+        taskHtml +
+        '<div class="agent-actions">' +
+          '<button class="btn btn-primary" onclick="event.stopPropagation(); tickAgent(\'' + esc(a.agentId) + '\')">Run Now</button>' +
+          '<button class="btn btn-danger" onclick="event.stopPropagation(); removeAgent(\'' + esc(a.agentId) + '\')">Remove</button>' +
+        '</div>' +
+      '</div>';
+    }
+    function renderFleetCycles(cycles) {
+      const tbody = document.getElementById('cycle-tbody');
+      if (!tbody) return;
+      if (!cycles.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">No cycles yet</td></tr>'; return; }
+      tbody.innerHTML = cycles.reverse().map(c => {
+        const decType = (c.decision?.type ?? 'unknown').replace(/[^a-z0-9_]/g, '_');
+        const reason = c.decision?.reason || c.decision?.summary || c.decision?.reflection || c.decision?.text || '';
+        const reasonTrunc = reason.length > 80 ? reason.slice(0, 77) + '...' : reason;
+        return '<tr><td>' + esc(c.agentId) + '</td><td><span class="agent-phase phase-' + (c.phase || 'idle') + '">' + (c.phase || 'idle') + '</span></td><td><span class="decision-badge decision-' + decType + '">' + decType + '</span></td><td style="font-size:11px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(reason) + '">' + esc(reasonTrunc) + '</td><td>' + (c.tasksCompleted ?? 0) + '</td><td>' + (c.messagesPosted ?? 0) + '</td><td style="font-family:monospace;font-size:11px">' + (c.durationMs ?? 0) + 'ms</td></tr>';
+      }).join('');
+    }
+    function renderFleetEmpty(msg) {
+      const grid = document.getElementById('agents-grid');
+      const empty = document.getElementById('fleet-empty-state');
+      if (grid) grid.innerHTML = '';
+      if (empty) { empty.style.display = ''; const p = empty.querySelector('p'); if (p) p.textContent = msg || 'Enable autonomy in your config.'; }
+    }
+    async function startFleet() { const res = await send('autonomy.start', {}); if (res.ok) refreshFleet(); }
+    async function stopFleet() { const res = await send('autonomy.stop', {}); if (res.ok) refreshFleet(); }
+    async function tickAgent(id) { const res = await send('autonomy.agent.tick', { agentId: id }); if (res.ok) { toast('Agent tick triggered', 'success'); setTimeout(refreshFleet, 1500); } }
+    async function removeAgent(id) { const res = await send('autonomy.agent.remove', { agentId: id }); if (res.ok) refreshFleet(); }
+
+    async function openAgentDetail(agentId) {
+      const titleEl = document.getElementById('agent-detail-title');
+      const bodyEl = document.getElementById('agent-detail-body');
+      if (titleEl) titleEl.textContent = agentId;
+      if (bodyEl) bodyEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim)">Loading...</div>';
+      document.getElementById('agent-detail-modal')?.classList.add('open');
+      const res = await send('agents.identities.get', { agentId });
+      if (!res.ok || !res.payload?.agent) {
+        if (bodyEl) bodyEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger)">Failed to load agent identity</div>';
+        return;
+      }
+      const agent = res.payload.agent;
+      const seed = agent.seed || {};
+      if (titleEl) titleEl.textContent = seed.displayName || agentId;
+      if (bodyEl) bodyEl.innerHTML =
+        '<div class="form-field">' +
+          '<label class="form-label">Display Name</label>' +
+          '<input class="form-input" id="agent-display-name" value="' + esc(seed.displayName || '') + '" placeholder="Give this agent a name..." />' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label" style="font-size:11px;color:var(--text-dim)">Agent ID: ' + esc(agentId) + '</label>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label">Personality</label>' +
+          '<textarea class="form-textarea" id="agent-personality" rows="3" placeholder="Describe this agent\'s personality...">' + esc(seed.personality || '') + '</textarea>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label">Self-Reflection</label>' +
+          '<textarea class="form-textarea" id="agent-reflection" rows="3" placeholder="Agent\'s latest self-reflection..." readonly style="opacity:0.8">' + esc(agent.selfReflection || '') + '</textarea>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label">Traits</label>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
+            (agent.traits?.length ? agent.traits.map(t => '<span class="tag label-tag" title="Strength: ' + ((t.strength || 0) * 100).toFixed(0) + '%">' + esc(t.key || String(t)) + ' <small style="opacity:0.6">' + ((t.strength || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span class="text-dim">No traits discovered yet</span>') +
+          '</div>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label">Skills</label>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
+            (agent.skills?.length ? agent.skills.map(s => '<span class="tag label-tag" title="Level: ' + ((s.level || 0) * 100).toFixed(0) + '% (' + (s.taskCount || 0) + ' tasks)">' + esc(s.domain || String(s)) + ' <small style="opacity:0.6">' + ((s.level || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span class="text-dim">No skills discovered yet</span>') +
+          '</div>' +
+        '</div>' +
+        '<div class="form-field">' +
+          '<label class="form-label">Stats</label>' +
+          '<div class="agent-meta">' +
+            '<div class="agent-meta-item"><span>Tasks Completed</span><span class="val">' + (agent.stats?.tasksCompleted ?? 0) + '</span></div>' +
+            '<div class="agent-meta-item"><span>Messages Sent</span><span class="val">' + (agent.stats?.messagesSent ?? 0) + '</span></div>' +
+            '<div class="agent-meta-item"><span>Reflections</span><span class="val">' + (agent.stats?.reflections ?? 0) + '</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-actions">' +
+          '<button class="action-btn" onclick="closeAgentDetailModal()">Cancel</button>' +
+          '<button class="action-btn primary" onclick="saveAgentDetail(\'' + esc(agentId) + '\')">Save Changes</button>' +
+        '</div>';
+    }
+    async function saveAgentDetail(agentId) {
+      const personality = document.getElementById('agent-personality')?.value?.trim();
+      const displayName = document.getElementById('agent-display-name')?.value?.trim();
+      const params = { agentId };
+      if (personality !== undefined) params.personality = personality;
+      if (displayName !== undefined) params.displayName = displayName;
+      const res = await send('agents.identities.update', params);
+      if (res.ok) {
+        toast('Agent updated', 'success');
+        closeAgentDetailModal();
+        loadAgents();
+      } else {
+        toast('Failed to update agent', 'error');
+      }
+    }
+    function closeAgentDetailModal() {
+      document.getElementById('agent-detail-modal')?.classList.remove('open');
+    }
+
     // Search with debounce
     let searchTimeout;
     document.getElementById('search-input').addEventListener('input', (e) => {
@@ -1698,6 +2688,11 @@
       document.getElementById('create-modal').classList.remove('open');
     }
     function showCreateModal() {
+      const sel = document.getElementById('new-assignee');
+      if (sel) {
+        sel.innerHTML = '<option value="">Unassigned</option><option value="operator">Me (Operator)</option>' +
+          knownAgents.map(a => '<option value="' + esc(a.agentId) + '">' + esc(a.seed?.displayName || a.agentId) + '</option>').join('');
+      }
       document.getElementById('create-modal').classList.add('open');
       setTimeout(() => document.getElementById('new-title').focus(), 100);
     }
@@ -1707,6 +2702,8 @@
       if (e.key === 'Escape') {
         closeDetailModal();
         closeCreateModal();
+        closeCreateChannelModal();
+        closeAgentDetailModal();
       }
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
       if (e.key === 'n') {
@@ -1734,6 +2731,12 @@
     });
     document.getElementById('create-modal').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) closeCreateModal();
+    });
+    document.getElementById('create-channel-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeCreateChannelModal();
+    });
+    document.getElementById('agent-detail-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeAgentDetailModal();
     });
 
     // Utilities
@@ -1795,8 +2798,15 @@
       }
     });
 
-    // Boot
+    // Boot: determine initial view from URL path
+    const initialView = location.pathname === '/comms' ? 'comms' : location.pathname === '/fleet' ? 'fleet' : 'tasks';
+    switchView(initialView);
     connect();
+
+    // Fleet auto-refresh when active
+    setInterval(() => {
+      if (currentView === 'fleet') refreshFleet();
+    }, 5000);
   </script>
 </body>
 </html>

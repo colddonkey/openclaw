@@ -8,6 +8,8 @@
  *   comms.messages.list   — List messages in a channel (with pagination)
  *   comms.messages.send   — Send a message to a channel
  *   comms.messages.edit   — Edit an existing message
+ *   comms.members.add     — Add an agent/user to a channel
+ *   comms.members.remove  — Remove an agent/user from a channel
  *   comms.mark-read       — Mark a channel as read for a member
  *
  * All methods are gated behind multiAgentOs.enabled.
@@ -180,6 +182,42 @@ export const commsHandlers: GatewayRequestHandlers = {
 
     context.broadcast("comms.message.edited", { channelId: message.channelId, message });
     respond(true, { message });
+  },
+
+  "comms.members.add": async ({ params, respond, context }) => {
+    const store = requireStore(respond);
+    if (!store) return;
+
+    const channelId = typeof params.channelId === "string" ? params.channelId : "";
+    const memberId = typeof params.memberId === "string" ? params.memberId : "";
+    const memberName = typeof params.memberName === "string" ? params.memberName : memberId;
+    const role = typeof params.role === "string" ? (params.role as "owner" | "member" | "observer") : "member";
+
+    if (!channelId || !memberId) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "missing params.channelId or params.memberId"));
+      return;
+    }
+
+    store.addMember(channelId, memberId, memberName, role);
+    context.broadcast("comms.member.added", { channelId, memberId, memberName, role });
+    respond(true, { channelId, memberId, memberName, role });
+  },
+
+  "comms.members.remove": async ({ params, respond, context }) => {
+    const store = requireStore(respond);
+    if (!store) return;
+
+    const channelId = typeof params.channelId === "string" ? params.channelId : "";
+    const memberId = typeof params.memberId === "string" ? params.memberId : "";
+
+    if (!channelId || !memberId) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "missing params.channelId or params.memberId"));
+      return;
+    }
+
+    store.removeMember(channelId, memberId);
+    context.broadcast("comms.member.removed", { channelId, memberId });
+    respond(true, { channelId, memberId });
   },
 
   "comms.mark-read": async ({ params, respond }) => {

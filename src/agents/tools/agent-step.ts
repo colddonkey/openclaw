@@ -40,7 +40,19 @@ export async function runAgentStep(params: {
   sourceSessionKey?: string;
   sourceChannel?: string;
   sourceTool?: string;
+  /** Override model for this step (e.g. "anthropic/claude-haiku-3.5"). */
+  model?: string;
 }): Promise<string | undefined> {
+  if (params.model) {
+    await callGateway({
+      method: "sessions.patch",
+      params: {
+        key: params.sessionKey,
+        model: params.model,
+      },
+      timeoutMs: 5_000,
+    }).catch(() => {});
+  }
   const stepIdem = crypto.randomUUID();
   const response = await callGateway<{ runId?: string }>({
     method: "agent",

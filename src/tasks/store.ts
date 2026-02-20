@@ -354,6 +354,17 @@ export class TaskStore {
     return this.get(id);
   }
 
+  delete(id: string): boolean {
+    const result = this.db.prepare(`DELETE FROM tasks WHERE id = ?`).run(id);
+    if (result.changes > 0) {
+      this.db.prepare(`DELETE FROM task_dependencies WHERE task_id = ? OR depends_on_id = ?`).run(id, id);
+      this.db.prepare(`DELETE FROM task_comments WHERE task_id = ?`).run(id);
+      this.db.prepare(`DELETE FROM task_history WHERE task_id = ?`).run(id);
+      return true;
+    }
+    return false;
+  }
+
   list(filter?: TaskFilter): Task[] {
     const conditions: string[] = [];
     const params: (string | number | null)[] = [];

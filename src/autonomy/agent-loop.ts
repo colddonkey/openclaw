@@ -45,6 +45,8 @@ export type WorkExecutor = (params: {
   stepDescription: string;
   stepIndex: number;
   totalSteps: number;
+  /** Optional model override for this step (e.g. "anthropic/claude-haiku-3.5"). */
+  model?: string;
 }) => Promise<{ output: string; success: boolean }>;
 
 /** Default executor that just acknowledges the step (no real work). */
@@ -57,7 +59,7 @@ export class AgentLoop {
   readonly agentId: string;
   private state: AgentState;
   private deps: AgentLoopDeps;
-  private config: Required<AutonomyConfig>;
+  private config: Required<Pick<AutonomyConfig, "enabled" | "tickIntervalMs" | "maxConsecutiveErrors" | "maxCyclesPerSession" | "completionCooldownMs" | "activeAgents">> & Pick<AutonomyConfig, "lightModel" | "workModel">;
   private timer: ReturnType<typeof setInterval> | null = null;
   private running = false;
 
@@ -66,11 +68,13 @@ export class AgentLoop {
     this.deps = deps;
     this.config = {
       enabled: config.enabled ?? false,
-      tickIntervalMs: config.tickIntervalMs ?? 10_000,
+      tickIntervalMs: config.tickIntervalMs ?? 3_600_000,
       maxConsecutiveErrors: config.maxConsecutiveErrors ?? 5,
       maxCyclesPerSession: config.maxCyclesPerSession ?? 100,
       completionCooldownMs: config.completionCooldownMs ?? 2_000,
       activeAgents: config.activeAgents ?? [],
+      lightModel: config.lightModel,
+      workModel: config.workModel,
     };
     this.state = this.initialState();
   }
@@ -261,7 +265,7 @@ export class AgentLoop {
         break;
 
       case "respond_message":
-        this.handleRespondMessage(decision.channelId, decision.text, result);
+        await this.handleRespondMessage(decision.channelId, decision.text, result);
         break;
 
       case "create_subtask":
@@ -273,7 +277,7 @@ export class AgentLoop {
         break;
 
       case "reflect":
-        this.handleReflect(decision.reflection);
+        await this.handleReflect(decision.reflection);
         break;
 
       case "ask_for_help":
@@ -317,6 +321,7 @@ export class AgentLoop {
         stepDescription: `TRIAGE: Analyze "${task.title}" (${task.type}). Review the description, understand scope, identify risks, and produce a plan. If this is a story or epic, list subtasks to create.`,
         stepIndex: 0,
         totalSteps: 1,
+        model: this.config.lightModel,
       });
 
       if (success && output) {
@@ -477,6 +482,7 @@ export class AgentLoop {
       stepDescription: step.description,
       stepIndex,
       totalSteps: this.state.workPlan.length,
+      model: this.config.workModel,
     });
 
     step.output = output;
@@ -561,12 +567,42 @@ export class AgentLoop {
     result.messagesPosted++;
   }
 
-  private handleRespondMessage(channelId: string, text: string, result: WorkCycleResult): void {
+  private async handleRespondMessage(channelId: string, messageContext: string, result: WorkCycleResult): Promise<void> {
     this.setPhase("communicating");
+    const executor = this.deps.workExecutor;
+    let responseText = messageContext;
+
+    if (executor) {
+      const identity = this.deps.identityStore.getOrCreate(this.agentId);
+      const personality = identity.seed?.personality || "a helpful and friendly AI agent";
+      const prompt = [
+        `You are ${identity.seed?.displayName || this.agentId}, ${personality}.`,
+        "Respond naturally and conversationally to the following channel messages.",
+        "Keep your reply concise (1-3 sentences). Be helpful and on-topic.",
+        "",
+        "Recent messages:",
+        messageContext,
+        "",
+        "Your reply:",
+      ].join("\n");
+
+      try {
+        const { output, success } = await executor({
+          agentId: this.agentId,
+          taskId: `comms:${channelId}`,
+          stepDescription: prompt,
+          stepIndex: 0,
+          totalSteps: 1,
+          model: this.config.lightModel,
+        });
+        if (success && output) responseText = output;
+      } catch {}
+    }
+
     sendAgentMessage(this.deps.commsStore, this.deps.identityStore, {
       channelId,
       agentId: this.agentId,
-      text,
+      text: responseText,
     });
     this.deps.commsStore.markRead(channelId, this.agentId);
     result.messagesPosted++;
@@ -617,9 +653,47 @@ export class AgentLoop {
     result.messagesPosted++;
   }
 
-  private handleReflect(reflection: string): void {
+  private async handleReflect(baseReflection: string): Promise<void> {
     this.setPhase("reflecting");
+    let reflection = baseReflection;
+
+    const executor = this.deps.workExecutor;
+    if (executor) {
+      const identity = this.deps.identityStore.getOrCreate(this.agentId);
+      const personality = identity.seed?.personality || "an autonomous agent";
+      const traits = identity.traits.slice(0, 5).map(t => `${t.key} (${(t.strength * 100).toFixed(0)}%)`).join(", ");
+      const skills = identity.skills.slice(0, 5).map(s => `${s.domain} (${(s.level * 100).toFixed(0)}%)`).join(", ");
+
+      const prompt = [
+        `You are ${identity.seed?.displayName || this.agentId}, ${personality}.`,
+        "Take a moment for self-reflection. Think about:",
+        "- What you've accomplished recently",
+        "- What you could improve at",
+        "- Any patterns you've noticed in your work",
+        "- How you want to grow or what skills to develop",
+        "",
+        `Current context: ${baseReflection}`,
+        traits ? `Your traits: ${traits}` : "No strong traits yet.",
+        skills ? `Your skills: ${skills}` : "No skills developed yet.",
+        "",
+        "Write 2-4 sentences of genuine introspection. Be specific, not generic.",
+      ].join("\n");
+
+      try {
+        const { output, success } = await executor({
+          agentId: this.agentId,
+          taskId: `reflection:${this.agentId}`,
+          stepDescription: prompt,
+          stepIndex: 0,
+          totalSteps: 1,
+          model: this.config.lightModel,
+        });
+        if (success && output) reflection = output;
+      } catch {}
+    }
+
     this.deps.identityStore.updateSelfReflection(this.agentId, reflection);
+    this.deps.identityStore.incrementStat(this.agentId, "reflections");
     this.deps.identityStore.decayTraits(this.agentId);
   }
 

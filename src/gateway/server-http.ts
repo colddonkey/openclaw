@@ -569,8 +569,7 @@ export function createGatewayHttpServer(opts: {
       }
       // Multi-agent OS UI routes: /kanban, /comms, /fleet
       if ((requestPath === "/kanban" || requestPath === "/comms" || requestPath === "/fleet") && isMultiAgentOsEnabled(configSnapshot)) {
-        const fileMap: Record<string, string> = { "/kanban": "index.html", "/comms": "comms.html", "/fleet": "fleet.html" };
-        const fileName = fileMap[requestPath] ?? "index.html";
+        const fileName = "index.html";
         // Resolve from both source and dist locations
         const moduleDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);
         const candidates = [

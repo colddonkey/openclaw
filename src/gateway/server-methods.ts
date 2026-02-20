@@ -72,6 +72,8 @@ const READ_METHODS = new Set([
   "voicewake.get",
   "sessions.list",
   "sessions.preview",
+  "agents.identities.list",
+  "agents.identities.get",
   "autonomy.status",
   "autonomy.cycles",
   "autonomy.agent.state",

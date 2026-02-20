@@ -46,7 +46,7 @@ export function createLlmExecutor(config: LlmExecutorConfig = {}): WorkExecutor 
     : DEFAULT_SYSTEM_PROMPT;
   const stepTimeoutMs = config.stepTimeoutMs ?? DEFAULT_STEP_TIMEOUT_MS;
 
-  return async ({ agentId, taskId, stepDescription, stepIndex, totalSteps }) => {
+  return async ({ agentId, taskId, stepDescription, stepIndex, totalSteps, model }) => {
     const sessionKey = `autonomy:${agentId}`;
     const message = buildStepMessage(taskId, stepDescription, stepIndex, totalSteps);
 
@@ -59,6 +59,7 @@ export function createLlmExecutor(config: LlmExecutorConfig = {}): WorkExecutor 
         channel: config.channel ?? "internal",
         lane: "autonomy",
         sourceTool: "autonomy-executor",
+        model,
       });
 
       if (!reply) {

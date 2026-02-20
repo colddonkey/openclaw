@@ -110,7 +110,7 @@ export type WorkCycleResult = {
 export type AutonomyConfig = {
   /** Enable the autonomy loop. Default: false (must be explicitly enabled). */
   enabled?: boolean;
-  /** How often each agent's loop ticks, in milliseconds. Default: 10000 (10s). */
+  /** How often each agent's loop ticks, in milliseconds. Default: 3600000 (1 hour). */
   tickIntervalMs?: number;
   /** Max consecutive errors before an agent is paused. Default: 5. */
   maxConsecutiveErrors?: number;
@@ -120,4 +120,8 @@ export type AutonomyConfig = {
   completionCooldownMs?: number;
   /** Agent IDs to activate. Empty = all registered agents. */
   activeAgents?: string[];
+  /** Model for lightweight actions (chat, reflection, triage summaries). */
+  lightModel?: string;
+  /** Model for heavy work (task execution, code changes). */
+  workModel?: string;
 };
