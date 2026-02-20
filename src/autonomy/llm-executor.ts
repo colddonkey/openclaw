@@ -8,8 +8,13 @@
  *
  * Each agent gets its own session keyed by `autonomy:<agentId>`,
  * so conversation context persists across steps within a task.
+ *
+ * The system prompt is built dynamically per execution to include
+ * the agent's identity (name, personality, traits, skills, focus).
  */
 
+import type { AgentIdentityStore } from "../tasks/agent-identity.js";
+import { getSharedIdentityStore } from "../tasks/store-registry.js";
 import type { WorkExecutor } from "./agent-loop.js";
 import { runAgentStep } from "../agents/tools/agent-step.js";
 
@@ -20,35 +25,87 @@ export type LlmExecutorConfig = {
   stepTimeoutMs?: number;
   /** Channel hint for formatting. Default: "internal". */
   channel?: string;
+  /** Optional identity store reference (falls back to shared singleton). */
+  identityStore?: AgentIdentityStore;
 };
 
 const DEFAULT_STEP_TIMEOUT_MS = 120_000;
 
-const DEFAULT_SYSTEM_PROMPT = [
-  "You are an autonomous agent working on a task step.",
+const BASE_SYSTEM_PROMPT = [
   "Focus on completing the specific step described below.",
   "Be thorough but concise. Complete the work and report what you did.",
   "If you encounter a blocker, describe it clearly.",
   "Do not ask clarifying questions — make reasonable assumptions and proceed.",
+  "After completing work, post a brief summary to the task's comms channel.",
 ].join("\n");
+
+/**
+ * Build a dynamic system prompt that includes agent identity, personality,
+ * focus areas, traits, and skills. Falls back to a generic prompt if
+ * the identity store is unavailable.
+ */
+function buildIdentityPrompt(agentId: string, store?: AgentIdentityStore): string {
+  try {
+    const ids = store ?? getSharedIdentityStore();
+    const identity = ids.get(agentId);
+    if (!identity) return `You are ${agentId}, an autonomous agent.\n${BASE_SYSTEM_PROMPT}`;
+
+    const parts: string[] = [];
+    const name = identity.seed?.displayName || agentId;
+    const personality = identity.seed?.personality;
+    const focus = identity.seed?.focus;
+
+    parts.push(`You are ${name}${personality ? `, ${personality}` : ", an autonomous agent"}.`);
+
+    if (focus && focus.length > 0) {
+      parts.push(`Your focus areas: ${focus.join(", ")}.`);
+    }
+
+    const strongTraits = identity.traits.filter(t => t.strength >= 0.3);
+    if (strongTraits.length > 0) {
+      const traitList = strongTraits.map(t => t.key).join(", ");
+      parts.push(`Your defining traits: ${traitList}.`);
+    }
+
+    const topSkills = identity.skills.filter(s => s.level >= 0.1).slice(0, 5);
+    if (topSkills.length > 0) {
+      const skillList = topSkills.map(s => `${s.domain} (${(s.level * 100).toFixed(0)}%)`).join(", ");
+      parts.push(`Your skills: ${skillList}.`);
+    }
+
+    if (identity.selfReflection) {
+      parts.push(`Your self-reflection: ${identity.selfReflection.slice(0, 300)}`);
+    }
+
+    parts.push("");
+    parts.push(BASE_SYSTEM_PROMPT);
+
+    return parts.join("\n");
+  } catch {
+    return `You are ${agentId}, an autonomous agent.\n${BASE_SYSTEM_PROMPT}`;
+  }
+}
 
 /**
  * Create a WorkExecutor that delegates to the AI agent pipeline.
  *
  * The executor:
- * 1. Builds a prompt from the step description and task context
- * 2. Calls `runAgentStep` (gateway RPC → full agent pipeline with tools)
+ * 1. Builds a dynamic system prompt from agent identity + step context
+ * 2. Calls `runAgentStep` (gateway RPC -> full agent pipeline with tools)
  * 3. Returns the AI's response as the step output
  */
 export function createLlmExecutor(config: LlmExecutorConfig = {}): WorkExecutor {
-  const systemPrompt = config.extraSystemPrompt
-    ? `${DEFAULT_SYSTEM_PROMPT}\n\n${config.extraSystemPrompt}`
-    : DEFAULT_SYSTEM_PROMPT;
   const stepTimeoutMs = config.stepTimeoutMs ?? DEFAULT_STEP_TIMEOUT_MS;
+  const identityStore = config.identityStore;
 
   return async ({ agentId, taskId, stepDescription, stepIndex, totalSteps, model }) => {
     const sessionKey = `autonomy:${agentId}`;
     const message = buildStepMessage(taskId, stepDescription, stepIndex, totalSteps);
+
+    const dynamicPrompt = buildIdentityPrompt(agentId, identityStore);
+    const systemPrompt = config.extraSystemPrompt
+      ? `${dynamicPrompt}\n\n${config.extraSystemPrompt}`
+      : dynamicPrompt;
 
     try {
       const reply = await runAgentStep({

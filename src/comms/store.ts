@@ -206,10 +206,11 @@ export class CommsStore {
   getOrCreateTaskChannel(taskId: string, taskTitle: string): Channel {
     const existing = this.getChannelForTask(taskId);
     if (existing) return existing;
+    const truncatedTitle = taskTitle.length > 40 ? `${taskTitle.slice(0, 39)}...` : taskTitle;
     return this.createChannel({
-      name: `task-${taskId.slice(0, 12)}`,
+      name: truncatedTitle,
       kind: "task",
-      description: `Discussion for: ${taskTitle}`,
+      description: `Discussion for: ${taskTitle} (${taskId})`,
       taskId,
     });
   }

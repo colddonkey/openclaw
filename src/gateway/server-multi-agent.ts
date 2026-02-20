@@ -4,14 +4,12 @@
  * Wires together:
  *   1. Auto task generation hooks (conversation -> tasks)
  *   2. Scheduler service (ready tasks -> agent assignment)
- *   3. Telegram comms forwarding (comms messages -> Telegram)
+ *   3. Autonomy service (agent loops that pick up and execute tasks)
+ *   4. Telegram comms forwarding (comms messages -> Telegram)
  */
 
-import path from "node:path";
 import { loadConfig } from "../config/config.js";
-import { resolveStateDir } from "../config/paths.js";
 import type { OpenClawConfig } from "../config/types.js";
-import { CommsStore } from "../comms/store.js";
 import {
   forwardToTelegram,
   isTelegramForwardEnabled,
@@ -24,6 +22,9 @@ import {
   unregisterAutoTaskGenerationHooks,
 } from "../tasks/auto-generate-hook.js";
 import { isMultiAgentOsEnabled, resolveMultiAgentOsGate } from "../tasks/feature-gate.js";
+import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore, resetSharedStores } from "../tasks/store-registry.js";
+import { AutonomyService } from "../autonomy/service.js";
+import { createLlmExecutor } from "../autonomy/llm-executor.js";
 
 const log = createSubsystemLogger("multi-agent");
 
@@ -31,15 +32,8 @@ export type MultiAgentHandle = {
   stop: () => void;
 };
 
-let _commsStore: CommsStore | null = null;
-
-function getCommsStore(cfg: OpenClawConfig): CommsStore | null {
-  if (_commsStore) return _commsStore;
-  const base = cfg.multiAgentOs?.dbPath
-    ? path.dirname(cfg.multiAgentOs.dbPath)
-    : path.join(resolveStateDir(), "tasks");
-  _commsStore = new CommsStore(path.join(base, "comms.sqlite"));
-  return _commsStore;
+function getCommsStore(_cfg: OpenClawConfig) {
+  return getSharedCommsStore();
 }
 
 /**
@@ -86,8 +80,10 @@ export function startMultiAgentServices(opts: {
   cfg: OpenClawConfig;
   telegramSender?: TelegramForwardConfig["sender"];
   telegramChatId?: string;
+  /** Optional broadcast callback so scheduler/autonomy changes reach the kanban UI. */
+  broadcast?: (event: string, payload: unknown) => void;
 }): MultiAgentHandle {
-  const { cfg, telegramSender, telegramChatId } = opts;
+  const { cfg, telegramSender, telegramChatId, broadcast } = opts;
   const teardowns: Array<() => void> = [];
 
   if (!isMultiAgentOsEnabled(cfg)) {
@@ -106,6 +102,13 @@ export function startMultiAgentServices(opts: {
   try {
     scheduler = createSchedulerFromConfig();
     if (scheduler) {
+      // Subscribe to the scheduler's TaskStore so changes broadcast to the kanban UI.
+      if (broadcast) {
+        const unsub = scheduler.subscribeTaskChanges((event) => {
+          broadcast("tasks.changed", event);
+        });
+        teardowns.push(unsub);
+      }
       scheduler.start();
       teardowns.push(() => scheduler?.stop());
       log.info("scheduler started");
@@ -116,8 +119,35 @@ export function startMultiAgentServices(opts: {
     log.error(`scheduler failed to start: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // 3. Telegram comms forwarding
+  // 3. Autonomy (auto-start agent loops on gateway boot)
   const gate = resolveMultiAgentOsGate(cfg);
+  if (gate.autonomyEnabled) {
+    try {
+      const autonomyCfg = {
+        ...cfg.multiAgentOs?.autonomy,
+        tickIntervalMs: cfg.multiAgentOs?.autonomy?.tickIntervalMs ?? 30_000,
+      };
+
+      const autonomySvc = new AutonomyService(
+        {
+          taskStore: getSharedTaskStore(),
+          identityStore: getSharedIdentityStore(),
+          commsStore: getSharedCommsStore(),
+          workExecutor: createLlmExecutor(),
+        },
+        autonomyCfg,
+      );
+      autonomySvc.start();
+      teardowns.push(() => autonomySvc.stop());
+      log.info(`autonomy auto-started (tick: ${autonomyCfg.tickIntervalMs}ms)`);
+    } catch (err) {
+      log.error(`autonomy failed to auto-start: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  } else {
+    log.info("autonomy disabled by config (set multiAgentOs.autonomy.enabled = true to auto-start)");
+  }
+
+  // 4. Telegram comms forwarding
   const commsTargetChatId = gate.commsTelegramGroupId ?? telegramChatId;
   if (gate.commsTelegramForward && telegramSender && commsTargetChatId) {
     try {
@@ -146,7 +176,7 @@ export function startMultiAgentServices(opts: {
           fn();
         } catch {}
       }
-      _commsStore = null;
+      resetSharedStores();
       log.info("multi-agent OS services stopped");
     },
   };

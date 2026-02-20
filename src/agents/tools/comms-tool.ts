@@ -12,17 +12,13 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import path from "node:path";
-import { resolveStateDir } from "../../config/paths.js";
 import {
   autoJoinChannels,
   postAgentSystemNotification,
-  postTaskStatusUpdate,
   resolveAgentContext,
   sendAgentMessage,
 } from "../../comms/agent-bridge.js";
-import { CommsStore } from "../../comms/store.js";
-import { AgentIdentityStore } from "../../tasks/agent-identity.js";
+import { getSharedCommsStore, getSharedIdentityStore } from "../../tasks/store-registry.js";
 import { resolveSessionAgentId } from "../agent-scope.js";
 import { stringEnum } from "../schema/typebox.js";
 import { type AnyAgentTool, ToolInputError, jsonResult, readStringParam } from "./common.js";
@@ -66,25 +62,12 @@ type CommsToolOptions = {
   config?: Record<string, unknown>;
 };
 
-let _commsStore: CommsStore | null = null;
-let _identityStore: AgentIdentityStore | null = null;
-
-function getCommsStore(): CommsStore {
-  if (!_commsStore) {
-    const stateDir = resolveStateDir(process.env);
-    const dbPath = path.join(stateDir, "tasks", "comms.sqlite");
-    _commsStore = new CommsStore(dbPath);
-  }
-  return _commsStore;
+function getCommsStore() {
+  return getSharedCommsStore();
 }
 
-function getIdentityStore(): AgentIdentityStore {
-  if (!_identityStore) {
-    const stateDir = resolveStateDir(process.env);
-    const dbPath = path.join(stateDir, "tasks", "identities.sqlite");
-    _identityStore = new AgentIdentityStore(dbPath);
-  }
-  return _identityStore;
+function getIdentityStore() {
+  return getSharedIdentityStore();
 }
 
 function resolveActorId(opts?: CommsToolOptions): string {

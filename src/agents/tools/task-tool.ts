@@ -5,10 +5,7 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import path from "node:path";
-import { resolveStateDir } from "../../config/paths.js";
-import { AgentIdentityStore } from "../../tasks/agent-identity.js";
-import { TaskStore } from "../../tasks/store.js";
+import { getSharedIdentityStore, getSharedTaskStore } from "../../tasks/store-registry.js";
 import type { TaskPriority, TaskStatus, TaskType } from "../../tasks/types.js";
 import { resolveSessionAgentId } from "../agent-scope.js";
 import { optionalStringEnum, stringEnum } from "../schema/typebox.js";
@@ -76,25 +73,12 @@ type TaskToolOptions = {
   config?: Record<string, unknown>;
 };
 
-let _taskStore: TaskStore | null = null;
-let _identityStore: AgentIdentityStore | null = null;
-
-function getTaskStore(): TaskStore {
-  if (!_taskStore) {
-    const stateDir = resolveStateDir(process.env);
-    const dbPath = path.join(stateDir, "tasks", "tasks.sqlite");
-    _taskStore = new TaskStore(dbPath);
-  }
-  return _taskStore;
+function getTaskStore() {
+  return getSharedTaskStore();
 }
 
-function getIdentityStore(): AgentIdentityStore {
-  if (!_identityStore) {
-    const stateDir = resolveStateDir(process.env);
-    const dbPath = path.join(stateDir, "tasks", "identities.sqlite");
-    _identityStore = new AgentIdentityStore(dbPath);
-  }
-  return _identityStore;
+function getIdentityStore() {
+  return getSharedIdentityStore();
 }
 
 function resolveActorId(params: Record<string, unknown>, opts?: TaskToolOptions): string {

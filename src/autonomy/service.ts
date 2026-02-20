@@ -45,7 +45,7 @@ export type FleetStatus = {
 export class AutonomyService {
   private loops = new Map<string, AgentLoop>();
   private deps: AutonomyServiceDeps;
-  private config: Required<AutonomyConfig>;
+  private config: Required<Pick<AutonomyConfig, "enabled" | "tickIntervalMs" | "maxConsecutiveErrors" | "maxCyclesPerSession" | "completionCooldownMs" | "activeAgents">> & Pick<AutonomyConfig, "lightModel" | "workModel">;
   private running = false;
   private cycleLog: WorkCycleResult[] = [];
   private maxCycleLogSize = 500;
@@ -54,11 +54,13 @@ export class AutonomyService {
     this.deps = deps;
     this.config = {
       enabled: config.enabled ?? false,
-      tickIntervalMs: config.tickIntervalMs ?? 3_600_000,
+      tickIntervalMs: config.tickIntervalMs ?? 30_000,
       maxConsecutiveErrors: config.maxConsecutiveErrors ?? 5,
       maxCyclesPerSession: config.maxCyclesPerSession ?? 100,
       completionCooldownMs: config.completionCooldownMs ?? 2_000,
       activeAgents: config.activeAgents ?? [],
+      lightModel: config.lightModel,
+      workModel: config.workModel,
     };
   }
 

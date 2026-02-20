@@ -2058,11 +2058,11 @@
           <div class="detail-field">
             <div class="detail-label">Assignee</div>
             <div class="detail-value">
-              <select class="detail-editable" id="edit-assignee" data-field="assigneeName"
+              <select class="detail-editable" id="edit-assignee" data-field="assigneeId"
                       onchange="scheduleAutoSave('${esc(t.id)}')">
                 <option value="">Unassigned</option>
-                <option value="operator" ${(t.assigneeName||'')==='operator'?'selected':''}>Me (Operator)</option>
-                ${knownAgents.map(a => '<option value="' + esc(a.agentId) + '"' + ((t.assigneeName||'')===a.agentId?' selected':'') + '>' + esc(a.seed?.displayName || a.agentId) + '</option>').join('')}
+                <option value="operator" ${(t.assigneeId||'')==='operator'?'selected':''}>Me (Operator)</option>
+                ${knownAgents.map(a => '<option value="' + esc(a.agentId) + '"' + ((t.assigneeId||'')===a.agentId?' selected':'') + '>' + esc(a.seed?.displayName || a.agentId) + '</option>').join('')}
               </select>
             </div>
           </div>
@@ -2138,7 +2138,10 @@
       if (desc !== undefined) fields.description = desc;
       if (status) fields.status = status;
       if (priority) fields.priority = priority;
-      fields.assigneeName = assignee || '';
+      // Send both assigneeId and assigneeName so the scheduler recognizes the assignment
+      fields.assigneeId = assignee || '';
+      const agentMatch = knownAgents.find(a => a.agentId === assignee);
+      fields.assigneeName = agentMatch ? (agentMatch.seed?.displayName || assignee) : (assignee || '');
 
       const res = await send('tasks.update', { id: taskId, ...fields });
       if (res.ok) {
@@ -2262,7 +2265,11 @@
         type: taskType,
         labels: newLabels.length > 0 ? newLabels : undefined,
       };
-      if (assignee) params.assigneeName = assignee;
+      if (assignee) {
+        params.assigneeId = assignee;
+        const agentMatch = knownAgents.find(a => a.agentId === assignee);
+        params.assigneeName = agentMatch ? (agentMatch.seed?.displayName || assignee) : assignee;
+      }
       const res = await send('tasks.create', params);
       if (res.ok) {
         toast('Task created', 'success');
@@ -2803,9 +2810,12 @@
     switchView(initialView);
     connect();
 
-    // Fleet auto-refresh when active
+    // Periodic refresh for views — catches changes from scheduler, task-tool,
+    // and autonomy that bypass the WebSocket broadcast path.
     setInterval(() => {
       if (currentView === 'fleet') refreshFleet();
+      if (currentView === 'tasks') loadBoard();
+      if (currentView === 'comms') loadChannels();
     }, 5000);
   </script>
 </body>

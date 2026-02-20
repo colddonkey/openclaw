@@ -10,21 +10,12 @@
  * - Inline keyboard: up to 100 buttons total
  */
 
-import path from "node:path";
-import { resolveStateDir } from "../config/paths.js";
-import { TaskStore } from "../tasks/store.js";
-import { PRIORITY_WEIGHT, STATUS_WEIGHT } from "../tasks/state-machine.js";
+import { getSharedTaskStore } from "../tasks/store-registry.js";
 import type { Task, TaskStatus } from "../tasks/types.js";
 import type { TelegramInlineButton, TelegramInlineButtons } from "./button-types.js";
 
-let _boardStore: TaskStore | null = null;
-
-function getBoardStore(): TaskStore {
-  if (!_boardStore) {
-    const stateDir = resolveStateDir(process.env);
-    _boardStore = new TaskStore(path.join(stateDir, "tasks", "tasks.sqlite"));
-  }
-  return _boardStore;
+function getBoardStore() {
+  return getSharedTaskStore();
 }
 
 const STATUS_EMOJI: Record<TaskStatus, string> = {

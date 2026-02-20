@@ -13,28 +13,18 @@
  * All methods are gated behind multiAgentOs.enabled.
  */
 
-import path from "node:path";
-import { resolveStateDir } from "../../config/paths.js";
 import { loadConfig } from "../../config/config.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
-import { PRIORITY_WEIGHT, STATUS_WEIGHT } from "../../tasks/state-machine.js";
-import { TaskStore } from "../../tasks/store.js";
+import { getSharedTaskStore } from "../../tasks/store-registry.js";
+import type { TaskStore } from "../../tasks/store.js";
 import type { TaskFilter, TaskStatus } from "../../tasks/types.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 
-let _store: TaskStore | null = null;
-
 function getStore(): TaskStore | null {
   const cfg = loadConfig();
   if (!isMultiAgentOsEnabled(cfg)) return null;
-
-  if (!_store) {
-    const dbPath = cfg.multiAgentOs?.dbPath ??
-      path.join(resolveStateDir(), "tasks", "tasks.sqlite");
-    _store = new TaskStore(dbPath);
-  }
-  return _store;
+  return getSharedTaskStore();
 }
 
 function requireStore(respond: RespondFn): TaskStore | null {

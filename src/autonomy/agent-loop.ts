@@ -68,7 +68,7 @@ export class AgentLoop {
     this.deps = deps;
     this.config = {
       enabled: config.enabled ?? false,
-      tickIntervalMs: config.tickIntervalMs ?? 3_600_000,
+      tickIntervalMs: config.tickIntervalMs ?? 30_000,
       maxConsecutiveErrors: config.maxConsecutiveErrors ?? 5,
       maxCyclesPerSession: config.maxCyclesPerSession ?? 100,
       completionCooldownMs: config.completionCooldownMs ?? 2_000,
@@ -111,13 +111,19 @@ export class AgentLoop {
     this.deps.identityStore.getOrCreate(this.agentId);
     autoJoinChannels(this.deps.commsStore, this.deps.identityStore, this.agentId);
 
+    // Restore in-flight work state from SQLite (survives gateway restarts)
+    this.restoreWorkState();
+
+    const resumed = this.state.currentTaskId ? ` (resuming: ${this.state.currentTaskTitle})` : "";
     postAgentSystemNotification(
       this.deps.commsStore,
       this.deps.identityStore,
       this.agentId,
-      "Autonomy loop started",
+      `Autonomy loop started${resumed}`,
     );
 
+    // Fire the first tick immediately instead of waiting for the interval
+    setTimeout(() => this.tick(), 0);
     this.timer = setInterval(() => this.tick(), this.config.tickIntervalMs);
   }
 
@@ -128,6 +134,9 @@ export class AgentLoop {
       clearInterval(this.timer);
       this.timer = null;
     }
+
+    // Persist current state so the loop can resume after gateway restart
+    this.persistWorkState();
 
     postAgentSystemNotification(
       this.deps.commsStore,
@@ -488,6 +497,7 @@ export class AgentLoop {
     step.output = output;
     step.completedAt = Date.now();
     step.status = success ? "done" : "failed";
+    this.persistWorkState();
 
     if (!success) {
       result.errors.push(`Step ${stepIndex} failed: ${output}`);
@@ -542,12 +552,13 @@ export class AgentLoop {
       evidence: `Completed: ${task.title}`,
     });
 
-    // Reset state
+    // Reset state and clear persisted work plan
     this.state.currentTaskId = null;
     this.state.currentTaskTitle = null;
     this.state.workPlan = [];
     this.state.currentStepIndex = 0;
     this.setPhase("idle");
+    this.deps.identityStore.clearWorkState(this.agentId);
 
     result.tasksCompleted++;
 
@@ -705,6 +716,7 @@ export class AgentLoop {
     this.state.phase = phase;
     this.state.phaseChangedAt = Date.now();
     this.deps.onPhaseChange?.(this.agentId, old, phase);
+    this.persistWorkState();
   }
 
   private finalizeCycleResult(result: WorkCycleResult, start: number): WorkCycleResult {
@@ -712,6 +724,49 @@ export class AgentLoop {
     result.phase = this.state.phase;
     this.deps.onCycleComplete?.(result);
     return result;
+  }
+
+  // ── State persistence ──────────────────────────────────────────
+
+  private persistWorkState(): void {
+    try {
+      this.deps.identityStore.saveWorkState(this.agentId, {
+        currentTaskId: this.state.currentTaskId,
+        currentTaskTitle: this.state.currentTaskTitle,
+        workPlan: this.state.workPlan,
+        currentStepIndex: this.state.currentStepIndex,
+        phase: this.state.phase,
+        cyclesCompleted: this.state.cyclesCompleted,
+      });
+    } catch {}
+  }
+
+  private restoreWorkState(): void {
+    try {
+      const saved = this.deps.identityStore.loadWorkState(this.agentId);
+      if (!saved?.currentTaskId) return;
+
+      // Verify the task still exists and isn't completed
+      const task = this.deps.taskStore.get(saved.currentTaskId as string);
+      if (!task || task.status === "done" || task.status === "archived") {
+        this.deps.identityStore.clearWorkState(this.agentId);
+        return;
+      }
+
+      this.state.currentTaskId = saved.currentTaskId as string;
+      this.state.currentTaskTitle = (saved.currentTaskTitle as string) ?? task.title;
+      this.state.currentStepIndex = (saved.currentStepIndex as number) ?? 0;
+      this.state.cyclesCompleted = (saved.cyclesCompleted as number) ?? 0;
+
+      if (Array.isArray(saved.workPlan)) {
+        this.state.workPlan = saved.workPlan as AgentState["workPlan"];
+      }
+
+      const savedPhase = saved.phase as AgentPhase;
+      if (savedPhase && savedPhase !== "idle") {
+        this.state.phase = savedPhase === "working" ? "planning" : savedPhase;
+      }
+    } catch {}
   }
 }
 

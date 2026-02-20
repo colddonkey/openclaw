@@ -5,13 +5,9 @@
  * matching the existing TaskStore/CommsStore pattern.
  */
 
-import path from "node:path";
 import { loadConfig } from "../../config/config.js";
-import { resolveStateDir } from "../../config/paths.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
-import { TaskStore } from "../../tasks/store.js";
-import { AgentIdentityStore } from "../../tasks/agent-identity.js";
-import { CommsStore } from "../../comms/store.js";
+import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore } from "../../tasks/store-registry.js";
 import { AutonomyService } from "../../autonomy/service.js";
 import { createLlmExecutor } from "../../autonomy/llm-executor.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
@@ -30,19 +26,11 @@ function getService(): AutonomyService | null {
   const autonomyCfg = cfg.multiAgentOs?.autonomy;
   if (autonomyCfg?.enabled !== true) return null;
 
-  const base = cfg.multiAgentOs?.dbPath
-    ? path.dirname(cfg.multiAgentOs.dbPath)
-    : path.join(resolveStateDir(), "tasks");
-
-  const taskStore = new TaskStore(path.join(base, "tasks.sqlite"));
-  const identityStore = new AgentIdentityStore(path.join(base, "identities.sqlite"));
-  const commsStore = new CommsStore(path.join(base, "comms.sqlite"));
-
   _service = new AutonomyService(
     {
-      taskStore,
-      identityStore,
-      commsStore,
+      taskStore: getSharedTaskStore(),
+      identityStore: getSharedIdentityStore(),
+      commsStore: getSharedCommsStore(),
       workExecutor: createLlmExecutor(),
     },
     autonomyCfg,
@@ -69,13 +57,10 @@ function requireService(
   return svc;
 }
 
-function getIdentityStore(): AgentIdentityStore | null {
+function getIdentityStore() {
   const cfg = loadConfig();
   if (!isMultiAgentOsEnabled(cfg)) return null;
-  const base = cfg.multiAgentOs?.dbPath
-    ? path.dirname(cfg.multiAgentOs.dbPath)
-    : path.join(resolveStateDir(), "tasks");
-  return new AgentIdentityStore(path.join(base, "identities.sqlite"));
+  return getSharedIdentityStore();
 }
 
 export const autonomyHandlers: GatewayRequestHandlers = {

@@ -15,29 +15,18 @@
  * All methods are gated behind multiAgentOs.enabled.
  */
 
-import path from "node:path";
-import { resolveStateDir } from "../../config/paths.js";
 import { loadConfig } from "../../config/config.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
-import { CommsStore } from "../../comms/store.js";
+import { getSharedCommsStore } from "../../tasks/store-registry.js";
+import type { CommsStore } from "../../comms/store.js";
 import type { Channel, MessageFilter } from "../../comms/types.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 
-let _store: CommsStore | null = null;
-
 function getStore(): CommsStore | null {
   const cfg = loadConfig();
   if (!isMultiAgentOsEnabled(cfg)) return null;
-
-  if (!_store) {
-    const base = cfg.multiAgentOs?.dbPath
-      ? path.dirname(cfg.multiAgentOs.dbPath)
-      : path.join(resolveStateDir(), "tasks");
-    const dbPath = path.join(base, "comms.sqlite");
-    _store = new CommsStore(dbPath);
-  }
-  return _store;
+  return getSharedCommsStore();
 }
 
 function requireStore(respond: RespondFn): CommsStore | null {

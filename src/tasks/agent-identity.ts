@@ -18,6 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { requireNodeSqlite } from "../memory/sqlite.js";
+import { normalizeAgentId } from "../routing/session-key.js";
 
 const log = createSubsystemLogger("agent-identity");
 
@@ -114,6 +115,14 @@ function ensureIdentitySchema(db: DatabaseSync): void {
     );
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_work_state (
+      agent_id TEXT PRIMARY KEY,
+      state_json TEXT NOT NULL DEFAULT '{}',
+      updated_at INTEGER NOT NULL
+    );
+  `);
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_traits_agent ON agent_traits(agent_id);`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_skills_agent ON agent_skills(agent_id);`);
 }
@@ -149,6 +158,11 @@ export class AgentIdentityStore {
     log.info(`agent identity store opened: ${dbPath}`);
   }
 
+  /** Normalize agent IDs so "Bee", "BEE", "bee" all resolve to the same identity. */
+  private norm(agentId: string): string {
+    return normalizeAgentId(agentId);
+  }
+
   close(): void {
     this.db.close();
   }
@@ -160,7 +174,8 @@ export class AgentIdentityStore {
    * Agents spring into existence on first access — no pre-registration needed.
    */
   getOrCreate(agentId: string, seed?: AgentSeed): AgentIdentity {
-    const existing = this.get(agentId);
+    const id = this.norm(agentId);
+    const existing = this.get(id);
     if (existing) return existing;
 
     const now = Date.now();
@@ -168,26 +183,27 @@ export class AgentIdentityStore {
       INSERT INTO agent_identities (agent_id, seed, self_reflection, stats, created_at, updated_at)
       VALUES (?, ?, '', ?, ?, ?)
     `).run(
-      agentId,
+      id,
       JSON.stringify(seed ?? {}),
       JSON.stringify(DEFAULT_STATS),
       now,
       now,
     );
 
-    log.info(`new agent identity created: ${agentId}`);
-    return this.get(agentId)!;
+    log.info(`new agent identity created: ${id}`);
+    return this.get(id)!;
   }
 
   get(agentId: string): AgentIdentity | null {
+    const id = this.norm(agentId);
     const row = this.db.prepare(`
       SELECT * FROM agent_identities WHERE agent_id = ?
-    `).get(agentId) as Record<string, unknown> | undefined;
+    `).get(id) as Record<string, unknown> | undefined;
 
     if (!row) return null;
 
-    const traits = this.getTraits(agentId);
-    const skills = this.getSkills(agentId);
+    const traits = this.getTraits(id);
+    const skills = this.getSkills(id);
 
     return {
       agentId: row.agent_id as string,
@@ -216,12 +232,13 @@ export class AgentIdentityStore {
    * Strength grows with each reinforcement, capped at 1.0.
    */
   reinforceTrait(agentId: string, reinforcement: TraitReinforcement): AgentTrait {
-    this.getOrCreate(agentId);
+    const id = this.norm(agentId);
+    this.getOrCreate(id);
     const now = Date.now();
 
     const existing = this.db.prepare(`
       SELECT * FROM agent_traits WHERE agent_id = ? AND key = ?
-    `).get(agentId, reinforcement.key) as Record<string, unknown> | undefined;
+    `).get(id, reinforcement.key) as Record<string, unknown> | undefined;
 
     if (existing) {
       let evidence: string[] = JSON.parse((existing.evidence as string) || "[]");
@@ -239,7 +256,7 @@ export class AgentIdentityStore {
         UPDATE agent_traits
         SET strength = ?, evidence = ?, last_reinforced = ?
         WHERE agent_id = ? AND key = ?
-      `).run(newStrength, JSON.stringify(evidence), now, agentId, reinforcement.key);
+      `).run(newStrength, JSON.stringify(evidence), now, id, reinforcement.key);
 
       return {
         key: reinforcement.key,
@@ -255,9 +272,9 @@ export class AgentIdentityStore {
     this.db.prepare(`
       INSERT INTO agent_traits (agent_id, key, strength, evidence, first_seen, last_reinforced)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(agentId, reinforcement.key, strength, JSON.stringify([reinforcement.evidence]), now, now);
+    `).run(id, reinforcement.key, strength, JSON.stringify([reinforcement.evidence]), now, now);
 
-    log.info(`new trait emerged for ${agentId}: ${reinforcement.key} (${strength.toFixed(2)})`);
+    log.info(`new trait emerged for ${id}: ${reinforcement.key} (${strength.toFixed(2)})`);
 
     return {
       key: reinforcement.key,
@@ -273,8 +290,9 @@ export class AgentIdentityStore {
    * Traits that aren't practiced fade slowly.
    */
   decayTraits(agentId: string): number {
+    const id = this.norm(agentId);
     const now = Date.now();
-    const traits = this.getTraits(agentId);
+    const traits = this.getTraits(id);
     let decayed = 0;
 
     for (const trait of traits) {
@@ -286,12 +304,12 @@ export class AgentIdentityStore {
 
       if (newStrength < 0.01) {
         this.db.prepare(`DELETE FROM agent_traits WHERE agent_id = ? AND key = ?`)
-          .run(agentId, trait.key);
-        log.info(`trait faded for ${agentId}: ${trait.key}`);
+          .run(id, trait.key);
+        log.info(`trait faded for ${id}: ${trait.key}`);
       } else {
         this.db.prepare(`
           UPDATE agent_traits SET strength = ? WHERE agent_id = ? AND key = ?
-        `).run(newStrength, agentId, trait.key);
+        `).run(newStrength, id, trait.key);
       }
       decayed++;
     }
@@ -300,9 +318,10 @@ export class AgentIdentityStore {
   }
 
   getTraits(agentId: string): AgentTrait[] {
+    const id = this.norm(agentId);
     const rows = this.db.prepare(`
       SELECT * FROM agent_traits WHERE agent_id = ? ORDER BY strength DESC
-    `).all(agentId) as Array<Record<string, unknown>>;
+    `).all(id) as Array<Record<string, unknown>>;
 
     return rows.map((r) => ({
       key: r.key as string,
@@ -320,12 +339,13 @@ export class AgentIdentityStore {
    * successful task completions in specific domains.
    */
   recordSkillUpdate(agentId: string, update: SkillUpdate): AgentSkill {
-    this.getOrCreate(agentId);
+    const id = this.norm(agentId);
+    this.getOrCreate(id);
     const now = Date.now();
 
     const existing = this.db.prepare(`
       SELECT * FROM agent_skills WHERE agent_id = ? AND domain = ?
-    `).get(agentId, update.domain) as Record<string, unknown> | undefined;
+    `).get(id, update.domain) as Record<string, unknown> | undefined;
 
     if (existing) {
       const taskCount = (existing.task_count as number) + 1;
@@ -337,7 +357,7 @@ export class AgentIdentityStore {
         UPDATE agent_skills
         SET level = ?, task_count = ?, success_count = ?, last_practiced = ?
         WHERE agent_id = ? AND domain = ?
-      `).run(newLevel, taskCount, successCount, now, agentId, update.domain);
+      `).run(newLevel, taskCount, successCount, now, id, update.domain);
 
       return {
         domain: update.domain,
@@ -353,9 +373,9 @@ export class AgentIdentityStore {
     this.db.prepare(`
       INSERT INTO agent_skills (agent_id, domain, level, task_count, success_count, last_practiced)
       VALUES (?, ?, ?, 1, ?, ?)
-    `).run(agentId, update.domain, level, update.success ? 1 : 0, now);
+    `).run(id, update.domain, level, update.success ? 1 : 0, now);
 
-    log.info(`new skill for ${agentId}: ${update.domain}`);
+    log.info(`new skill for ${id}: ${update.domain}`);
 
     return {
       domain: update.domain,
@@ -367,9 +387,10 @@ export class AgentIdentityStore {
   }
 
   getSkills(agentId: string): AgentSkill[] {
+    const id = this.norm(agentId);
     const rows = this.db.prepare(`
       SELECT * FROM agent_skills WHERE agent_id = ? ORDER BY level DESC
-    `).all(agentId) as Array<Record<string, unknown>>;
+    `).all(id) as Array<Record<string, unknown>>;
 
     return rows.map((r) => ({
       domain: r.domain as string,
@@ -383,7 +404,8 @@ export class AgentIdentityStore {
   // ── Stats ────────────────────────────────────────────────────────
 
   incrementStat(agentId: string, stat: keyof AgentStats, amount = 1): void {
-    const identity = this.getOrCreate(agentId);
+    const id = this.norm(agentId);
+    const identity = this.getOrCreate(id);
     const stats = { ...identity.stats };
 
     if (stat === "lastActive") {
@@ -395,24 +417,26 @@ export class AgentIdentityStore {
 
     this.db.prepare(`
       UPDATE agent_identities SET stats = ?, updated_at = ? WHERE agent_id = ?
-    `).run(JSON.stringify(stats), Date.now(), agentId);
+    `).run(JSON.stringify(stats), Date.now(), id);
   }
 
   // ── Self-reflection ──────────────────────────────────────────────
 
   updateSeed(agentId: string, patch: Partial<AgentSeed>): void {
-    const identity = this.getOrCreate(agentId);
+    const id = this.norm(agentId);
+    const identity = this.getOrCreate(id);
     const merged = { ...identity.seed, ...patch };
     this.db.prepare(`
       UPDATE agent_identities SET seed = ?, updated_at = ? WHERE agent_id = ?
-    `).run(JSON.stringify(merged), Date.now(), agentId);
+    `).run(JSON.stringify(merged), Date.now(), id);
   }
 
   updateSelfReflection(agentId: string, reflection: string): void {
-    this.getOrCreate(agentId);
+    const id = this.norm(agentId);
+    this.getOrCreate(id);
     this.db.prepare(`
       UPDATE agent_identities SET self_reflection = ?, updated_at = ? WHERE agent_id = ?
-    `).run(reflection, Date.now(), agentId);
+    `).run(reflection, Date.now(), id);
   }
 
   // ── Identity summary (for prompts/display) ───────────────────────
@@ -422,8 +446,9 @@ export class AgentIdentityStore {
    * Used for system prompts, Telegram board display, etc.
    */
   summarize(agentId: string): string {
-    const identity = this.get(agentId);
-    if (!identity) return `Agent ${agentId} (no identity yet)`;
+    const id = this.norm(agentId);
+    const identity = this.get(id);
+    if (!identity) return `Agent ${id} (no identity yet)`;
 
     const parts: string[] = [];
 
@@ -458,6 +483,45 @@ export class AgentIdentityStore {
     }
 
     return parts.join("\n");
+  }
+
+  // ── Work state persistence (survives gateway restarts) ──────────
+
+  /**
+   * Save the agent's in-flight work state (current task, work plan, step index).
+   * Called by AgentLoop on phase changes and step completions.
+   */
+  saveWorkState(agentId: string, state: Record<string, unknown>): void {
+    const id = this.norm(agentId);
+    const now = Date.now();
+    this.db.prepare(`
+      INSERT INTO agent_work_state (agent_id, state_json, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(agent_id) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at
+    `).run(id, JSON.stringify(state), now);
+  }
+
+  /**
+   * Load previously saved work state for an agent.
+   * Returns null if no saved state exists.
+   */
+  loadWorkState(agentId: string): Record<string, unknown> | null {
+    const id = this.norm(agentId);
+    const row = this.db.prepare(`
+      SELECT state_json FROM agent_work_state WHERE agent_id = ?
+    `).get(id) as { state_json: string } | undefined;
+    if (!row) return null;
+    try {
+      return JSON.parse(row.state_json);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Clear saved work state (e.g. when work is complete or loop is stopped cleanly). */
+  clearWorkState(agentId: string): void {
+    const id = this.norm(agentId);
+    this.db.prepare(`DELETE FROM agent_work_state WHERE agent_id = ?`).run(id);
   }
 
   /**

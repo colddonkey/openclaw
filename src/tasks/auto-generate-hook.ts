@@ -8,9 +8,7 @@
  * across consecutive messages in the same session.
  */
 
-import path from "node:path";
 import type { OpenClawConfig } from "../config/types.js";
-import { resolveStateDir } from "../config/paths.js";
 import {
   type InternalHookEvent,
   isMessageReceivedEvent,
@@ -21,7 +19,7 @@ import {
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { extractTasksFromText, fingerprint, toTaskCreateInputs, type ExtractionContext } from "./auto-generate.js";
 import { resolveMultiAgentOsGate } from "./feature-gate.js";
-import { TaskStore } from "./store.js";
+import { getSharedTaskStore } from "./store-registry.js";
 
 const log = createSubsystemLogger("tasks:auto-generate");
 
@@ -33,15 +31,10 @@ type FingerprintEntry = {
   ts: number;
 };
 
-let _store: TaskStore | null = null;
 const recentFingerprints: FingerprintEntry[] = [];
 
-function getStore(): TaskStore {
-  if (!_store) {
-    const dbPath = path.join(resolveStateDir(), "tasks", "tasks.sqlite");
-    _store = new TaskStore(dbPath);
-  }
-  return _store;
+function getStore() {
+  return getSharedTaskStore();
 }
 
 function pruneOldFingerprints(): void {
@@ -177,7 +170,6 @@ export function unregisterAutoTaskGenerationHooks(): void {
   unregisterInternalHook("message:received", handleMessage);
   unregisterInternalHook("message:sent", handleMessage);
   registered = false;
-  _store = null;
   recentFingerprints.length = 0;
   log.info("auto task generation hooks unregistered");
 }
@@ -192,5 +184,4 @@ export function isAutoTaskGenerationActive(): boolean {
 /** Reset internal state (for tests). */
 export function resetAutoTaskGenerationState(): void {
   recentFingerprints.length = 0;
-  _store = null;
 }

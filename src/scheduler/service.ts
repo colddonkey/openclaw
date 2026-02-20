@@ -11,21 +11,21 @@
  * The scheduler respects agent load limits and minimum score thresholds.
  */
 
-import path from "node:path";
-import { resolveStateDir } from "../config/paths.js";
 import { loadConfig } from "../config/config.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
-import { AgentIdentityStore } from "../tasks/agent-identity.js";
+import type { AgentIdentityStore } from "../tasks/agent-identity.js";
 import { isMultiAgentOsEnabled } from "../tasks/feature-gate.js";
-import { TaskStore } from "../tasks/store.js";
+import type { TaskStore } from "../tasks/store.js";
+import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore } from "../tasks/store-registry.js";
 import type { Task, TaskStatus } from "../tasks/types.js";
-import { CommsStore } from "../comms/store.js";
+import type { CommsStore } from "../comms/store.js";
 import {
   autoJoinChannels,
   postAgentSystemNotification,
 } from "../comms/agent-bridge.js";
 import { rankAgentsForTask } from "./scoring.js";
 import type { SchedulerConfig, SchedulerDecision, SchedulerRunResult } from "./types.js";
+import type { TaskChangeListener } from "../tasks/store.js";
 
 const log = createSubsystemLogger("scheduler");
 
@@ -80,6 +80,11 @@ export class SchedulerService {
   /** Get the result of the last scheduling run. */
   getLastRun(): SchedulerRunResult | null {
     return this.lastRun;
+  }
+
+  /** Subscribe to task mutations from the scheduler's TaskStore. */
+  subscribeTaskChanges(listener: TaskChangeListener): () => void {
+    return this.taskStore.onChange(listener);
   }
 
   /** Run a single scheduling pass. */
@@ -264,19 +269,10 @@ export function createSchedulerFromConfig(): SchedulerService | null {
   const schedConfig = cfg.multiAgentOs?.scheduler;
   if (schedConfig?.enabled === false) return null;
 
-  const stateDir = resolveStateDir(process.env);
-  const basePath = cfg.multiAgentOs?.dbPath
-    ? path.dirname(cfg.multiAgentOs.dbPath)
-    : path.join(stateDir, "tasks");
-
-  const taskStore = new TaskStore(path.join(basePath, "tasks.sqlite"));
-  const identityStore = new AgentIdentityStore(path.join(basePath, "identities.sqlite"));
-  const commsStore = new CommsStore(path.join(basePath, "comms.sqlite"));
-
   return new SchedulerService({
-    taskStore,
-    identityStore,
-    commsStore,
+    taskStore: getSharedTaskStore(),
+    identityStore: getSharedIdentityStore(),
+    commsStore: getSharedCommsStore(),
     config: schedConfig,
   });
 }
