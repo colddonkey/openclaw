@@ -92,11 +92,16 @@ export class AgentLoop {
       errorCount: 0,
       lastError: null,
       sessionStartedAt: Date.now(),
+      lastTickAt: null,
     };
   }
 
   getState(): AgentState {
     return { ...this.state };
+  }
+
+  getTickIntervalMs(): number {
+    return this.config.tickIntervalMs;
   }
 
   isRunning(): boolean {
@@ -203,6 +208,7 @@ export class AgentLoop {
     }
 
     this.state.cyclesCompleted++;
+    this.state.lastTickAt = Date.now();
     return this.finalizeCycleResult(result, start);
   }
 

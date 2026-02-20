@@ -567,8 +567,8 @@ export function createGatewayHttpServer(opts: {
           return;
         }
       }
-      // Multi-agent OS UI routes: /kanban, /comms, /fleet
-      if ((requestPath === "/kanban" || requestPath === "/comms" || requestPath === "/fleet") && isMultiAgentOsEnabled(configSnapshot)) {
+      // Multi-agent OS UI routes: /kanban, /comms, /fleet, /agent/*
+      if ((requestPath === "/kanban" || requestPath === "/comms" || requestPath === "/fleet" || requestPath.startsWith("/agent/")) && isMultiAgentOsEnabled(configSnapshot)) {
         const fileName = "index.html";
         // Resolve from multiple locations: source tree, dist, and relative to module
         const moduleDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);

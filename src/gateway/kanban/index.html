@@ -173,6 +173,7 @@
       color: var(--accent-hover);
       border-left: 3px solid var(--accent);
     }
+    .nav-unread-badge { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; margin-left: auto; }
     .sidebar-nav-item .nav-icon {
       font-size: 16px;
       width: 20px;
@@ -1274,7 +1275,7 @@
     }
 
     /* View containers when visible */
-    #view-tasks, #view-comms, #view-fleet {
+    #view-tasks, #view-comms, #view-fleet, #view-agent {
       display: flex;
       flex-direction: column;
       flex: 1;
@@ -1293,8 +1294,12 @@
     .channel-icon.system { color: var(--warning); }
     .channel-icon.task { color: var(--info); }
     .channel-icon.direct { color: var(--success); }
-    .channel-name { font-size: clamp(13px, 0.9vw + 12px, 15px); font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .channel-name { font-size: clamp(13px, 0.9vw + 12px, 15px); font-weight: 500; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; max-height: 2.6em; word-break: break-word; }
     .channel-item.active .channel-name { color: var(--text); }
+    .channel-item.has-unread .channel-name { color: var(--text); font-weight: 600; }
+    .channel-item.channel-done { opacity: 0.5; }
+    .channel-item.channel-done:hover { opacity: 0.75; }
+    .unread-badge { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
     .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
     .chat-header { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .chat-header-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--accent-glow); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; }
@@ -1347,7 +1352,9 @@
     .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
     .agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all 0.2s; }
     .agent-card:hover { border-color: var(--accent); }
-    .agent-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .agent-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .agent-card-header .agent-phase { margin-left: auto; }
+    .agent-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; object-fit: cover; }
     .agent-name { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; }
     .agent-phase { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
     .phase-idle { background: var(--border); color: var(--text-dim); }
@@ -1357,12 +1364,44 @@
     .phase-reflecting { background: var(--warning-dim); color: #fbbf24; }
     .phase-paused { background: var(--warning); color: var(--bg); }
     .phase-error { background: var(--danger-dim); color: #f87171; }
-    .agent-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+    .agent-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px; }
     .agent-meta-item { display: flex; justify-content: space-between; color: var(--text-dim); }
     .agent-meta-item .val { color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; }
     .agent-task { margin-top: 10px; padding: 8px 10px; background: var(--bg); border-radius: 6px; font-size: 12px; }
     .agent-task .label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 2px; }
     .agent-task .title { color: #4ade80; }
+    .work-progress { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .work-progress-bar { height: 100%; background: linear-gradient(90deg, #818cf8, #4ade80); border-radius: 2px; transition: width 0.4s ease; }
+    .work-progress-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; text-align: right; }
+    .agent-error { margin-top: 6px; padding: 4px 8px; background: var(--danger-dim); border-radius: 4px; font-size: 11px; color: #f87171; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .agent-card-active { border-color: #4ade80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.15); }
+    .agent-meta-item .val-error { color: #f87171; font-weight: 600; }
+    .sparkline-wrap { margin-top: 8px; }
+    .sparkline-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
+    .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 22px; }
+    .spark-bar { width: 4px; border-radius: 1px; min-height: 3px; transition: height 0.3s; }
+    @keyframes pulse-border { 0%,100% { border-color: #4ade80; } 50% { border-color: var(--border); } }
+    .agent-card-active { animation: pulse-border 2s ease-in-out infinite; }
+
+    /* Agent Workspace */
+    .agent-workspace { padding: 24px; overflow-y: auto; flex: 1; }
+    .agent-ws-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .agent-ws-identity { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .agent-ws-identity .agent-avatar { width: 48px; height: 48px; font-size: 18px; }
+    .agent-ws-identity .agent-ws-name { font-size: 22px; font-weight: 700; }
+    .agent-ws-identity .agent-ws-personality { font-size: 13px; color: var(--text-dim); max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .agent-ws-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .agent-ws-grid { grid-template-columns: 1fr; } }
+    .agent-ws-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .agent-ws-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+    .agent-ws-task-item { padding: 8px 10px; background: var(--bg); border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .agent-ws-task-item .task-status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .agent-ws-cycle-row { display: grid; grid-template-columns: 80px 70px 1fr 60px; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; align-items: center; }
+    .agent-ws-cycle-row:last-child { border-bottom: none; }
+    .agent-ws-channel-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .agent-ws-channel-item:hover { background: var(--surface-hover); }
+    .agent-ws-sparkline { display: flex; align-items: flex-end; gap: 2px; height: 40px; margin-bottom: 12px; }
+    .agent-ws-sparkline .spark-bar { width: 6px; border-radius: 2px; }
     .agent-actions { display: flex; gap: 6px; margin-top: 10px; }
     .cycle-log { margin-top: 24px; overflow: hidden; }
     .cycle-log h2 { font-size: clamp(16px, 1vw + 14px, 18px); font-weight: 600; margin-bottom: 12px; }
@@ -1440,6 +1479,7 @@
         <button class="sidebar-nav-item" data-view="comms" onclick="switchView('comms')">
           <span class="nav-icon">&#x1F4AC;</span>
           Comms
+          <span class="nav-unread-badge" id="comms-nav-badge" style="display:none"></span>
         </button>
         <button class="sidebar-nav-item" data-view="fleet" onclick="switchView('fleet')">
           <span class="nav-icon">&#x1F680;</span>
@@ -1493,7 +1533,7 @@
           <h1 id="page-title">Tasks <span>Board</span><span id="board-title-count"></span></h1>
           <div class="mobile-nav">
             <button class="nav-pill active" data-view="tasks" onclick="switchView('tasks')">Tasks</button>
-            <button class="nav-pill" data-view="comms" onclick="switchView('comms')">Comms</button>
+            <button class="nav-pill" data-view="comms" onclick="switchView('comms')">Comms <span class="nav-unread-badge" id="comms-mobile-badge" style="display:none"></span></button>
             <button class="nav-pill" data-view="fleet" onclick="switchView('fleet')">Fleet</button>
           </div>
         </div>
@@ -1535,6 +1575,34 @@
                 <thead><tr><th>Agent</th><th>Phase</th><th>Decision</th><th>Reason</th><th>Tasks</th><th>Msgs</th><th>Duration</th></tr></thead>
                 <tbody id="cycle-tbody"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT WORKSPACE VIEW -->
+      <div id="view-agent" style="display:none">
+        <div class="agent-workspace">
+          <div class="agent-ws-header">
+            <button class="btn" onclick="switchView('fleet')" style="font-size:13px">&larr; Back to Fleet</button>
+            <div class="agent-ws-identity" id="agent-ws-identity"></div>
+          </div>
+          <div class="agent-ws-grid">
+            <div class="agent-ws-panel agent-ws-status" id="agent-ws-status">
+              <h3>Autonomy Status</h3>
+              <div id="agent-ws-status-body"></div>
+            </div>
+            <div class="agent-ws-panel agent-ws-tasks" id="agent-ws-tasks">
+              <h3>Assigned Tasks</h3>
+              <div id="agent-ws-tasks-body"></div>
+            </div>
+            <div class="agent-ws-panel agent-ws-activity" id="agent-ws-activity">
+              <h3>Recent Activity</h3>
+              <div id="agent-ws-activity-body"></div>
+            </div>
+            <div class="agent-ws-panel agent-ws-comms" id="agent-ws-comms">
+              <h3>Agent Channels</h3>
+              <div id="agent-ws-comms-body"></div>
             </div>
           </div>
         </div>
@@ -1689,28 +1757,36 @@
     let activeChannelId = null;
     let knownAgents = [];
     let currentView = 'tasks';
+    let recentCycles = [];
+
+    let activeAgentWorkspace = null;
 
     // Router
     function switchView(name) {
-      if (!['tasks','comms','fleet'].includes(name)) name = 'tasks';
+      if (!['tasks','comms','fleet','agent'].includes(name)) name = 'tasks';
       currentView = name;
-      const pathMap = { tasks: '/kanban', comms: '/comms', fleet: '/fleet' };
-      history.replaceState(null, '', pathMap[name]);
+
+      if (name !== 'agent') {
+        const pathMap = { tasks: '/kanban', comms: '/comms', fleet: '/fleet' };
+        history.replaceState(null, '', pathMap[name]);
+      }
 
       document.getElementById('view-tasks').style.display = name === 'tasks' ? '' : 'none';
       document.getElementById('view-comms').style.display = name === 'comms' ? 'flex' : 'none';
       document.getElementById('view-fleet').style.display = name === 'fleet' ? 'flex' : 'none';
+      document.getElementById('view-agent').style.display = name === 'agent' ? 'flex' : 'none';
 
-      document.getElementById('sidebar-tasks').style.display = name === 'tasks' ? '' : 'none';
-      document.getElementById('sidebar-comms').style.display = name === 'comms' ? '' : 'none';
-      document.getElementById('sidebar-fleet').style.display = name === 'fleet' ? '' : 'none';
+      const sidebarView = name === 'agent' ? 'fleet' : name;
+      document.getElementById('sidebar-tasks').style.display = sidebarView === 'tasks' ? '' : 'none';
+      document.getElementById('sidebar-comms').style.display = sidebarView === 'comms' ? '' : 'none';
+      document.getElementById('sidebar-fleet').style.display = sidebarView === 'fleet' ? '' : 'none';
 
       document.querySelectorAll('.sidebar-nav-item').forEach(a => a.classList.remove('active'));
-      const navItem = document.querySelector('.sidebar-nav-item[data-view="' + name + '"]');
+      const navItem = document.querySelector('.sidebar-nav-item[data-view="' + sidebarView + '"]');
       if (navItem) navItem.classList.add('active');
 
       document.querySelectorAll('.mobile-nav .nav-pill').forEach(a => a.classList.remove('active'));
-      const mobilePill = document.querySelector('.mobile-nav .nav-pill[data-view="' + name + '"]');
+      const mobilePill = document.querySelector('.mobile-nav .nav-pill[data-view="' + sidebarView + '"]');
       if (mobilePill) mobilePill.classList.add('active');
 
       const title = document.getElementById('page-title');
@@ -1718,6 +1794,7 @@
         if (name === 'tasks') title.innerHTML = 'Tasks <span>Board</span><span id="board-title-count"></span>';
         else if (name === 'comms') title.innerHTML = 'Communication';
         else if (name === 'fleet') title.innerHTML = 'Fleet <span>Dashboard</span>';
+        else if (name === 'agent') title.innerHTML = 'Agent <span>Workspace</span>';
       }
 
       document.getElementById('task-stats').style.display = name === 'tasks' ? '' : 'none';
@@ -1776,6 +1853,13 @@
               scrollToBottom();
             }
             if (msg.event === 'comms.channel.created') loadChannels();
+            if (msg.event === 'autonomy.cycle' || msg.event === 'autonomy.phase') {
+              if (currentView === 'fleet') refreshFleet();
+              if (currentView === 'agent' && activeAgentWorkspace) {
+                const eventAgentId = msg.payload?.cycle?.agentId || msg.payload?.agent?.agentId || msg.payload?.agentId;
+                if (eventAgentId === activeAgentWorkspace) loadAgentWorkspace(activeAgentWorkspace);
+              }
+            }
           }
         } catch {}
       };
@@ -2355,29 +2439,53 @@
     }
 
     async function loadChannels() {
-      const res = await send('comms.channels.list', {});
+      const res = await send('comms.channels.list', { viewerId: 'operator' });
       if (!res.ok) return;
       channels = res.payload.channels || [];
       renderChannelList();
     }
+    let showCompletedTasks = false;
     function renderChannelList() {
       const list = document.getElementById('channel-list');
       if (!list) return;
-      const grouped = { general: [], system: [], task: [], direct: [] };
-      for (const ch of channels) (grouped[ch.kind] || grouped.general).push(ch);
+      const grouped = { general: [], system: [], task: [], taskDone: [], direct: [] };
+      for (const ch of channels) {
+        if (ch.kind === 'task' && (ch.taskStatus === 'done' || ch.taskStatus === 'archived')) {
+          grouped.taskDone.push(ch);
+        } else {
+          (grouped[ch.kind] || grouped.general).push(ch);
+        }
+      }
       let html = '';
       const kindIcons = { general: '#', system: '!', task: 'T', direct: '@' };
-      const kindLabels = { general: 'Channels', system: 'System', task: 'Tasks', direct: 'Direct' };
+      const kindLabels = { general: 'Channels', system: 'System', task: 'Active Tasks', direct: 'Direct' };
       for (const kind of ['general', 'task', 'direct', 'system']) {
         const items = grouped[kind];
         if (!items || items.length === 0) continue;
         html += '<div class="channel-group-label">' + kindLabels[kind] + '</div>';
         for (const ch of items) {
           const active = ch.id === activeChannelId ? 'active' : '';
-          html += '<div class="channel-item ' + active + '" onclick="selectChannel(\'' + ch.id + '\')"><div class="channel-icon ' + ch.kind + '">' + kindIcons[ch.kind] + '</div><span class="channel-name">' + esc(ch.name) + '</span></div>';
+          const unreadBadge = ch.unreadCount > 0 ? '<span class="unread-badge">' + (ch.unreadCount > 99 ? '99+' : ch.unreadCount) + '</span>' : '';
+          html += '<div class="channel-item ' + active + (ch.unreadCount > 0 ? ' has-unread' : '') + '" onclick="selectChannel(\'' + ch.id + '\')"><div class="channel-icon ' + ch.kind + '">' + kindIcons[ch.kind] + '</div><span class="channel-name">' + esc(ch.name) + '</span>' + unreadBadge + '</div>';
+        }
+      }
+      // Completed task channels — collapsible
+      if (grouped.taskDone.length > 0) {
+        html += '<div class="channel-group-label" style="cursor:pointer;user-select:none" onclick="showCompletedTasks=!showCompletedTasks;renderChannelList()">Completed Tasks <span style="opacity:0.5;font-size:9px">' + grouped.taskDone.length + '</span> <span style="font-size:9px;opacity:0.5">' + (showCompletedTasks ? '&#9660;' : '&#9654;') + '</span></div>';
+        if (showCompletedTasks) {
+          for (const ch of grouped.taskDone) {
+            const active = ch.id === activeChannelId ? 'active' : '';
+            html += '<div class="channel-item channel-done ' + active + '" onclick="selectChannel(\'' + ch.id + '\')"><div class="channel-icon task">T</div><span class="channel-name">' + esc(ch.name) + '</span></div>';
+          }
         }
       }
       list.innerHTML = html;
+      // Update nav unread badges
+      const totalUnread = channels.reduce((sum, ch) => sum + (ch.unreadCount || 0), 0);
+      const navBadge = document.getElementById('comms-nav-badge');
+      const mobileBadge = document.getElementById('comms-mobile-badge');
+      if (navBadge) { navBadge.style.display = totalUnread > 0 ? '' : 'none'; navBadge.textContent = totalUnread > 99 ? '99+' : String(totalUnread); }
+      if (mobileBadge) { mobileBadge.style.display = totalUnread > 0 ? '' : 'none'; mobileBadge.textContent = totalUnread > 99 ? '99+' : String(totalUnread); }
     }
     async function selectChannel(id) {
       activeChannelId = id;
@@ -2387,6 +2495,10 @@
       if (!res.ok) return;
       const { channel, members, recentMessages } = res.payload;
       renderChat(channel, members, recentMessages || []);
+      send('comms.members.add', { channelId: id, memberId: 'operator', memberName: 'Operator' }).catch(() => {});
+      send('comms.mark-read', { channelId: id, memberId: 'operator' }).catch(() => {});
+      const ch = channels.find(c => c.id === id);
+      if (ch) { ch.unreadCount = 0; renderChannelList(); }
     }
     function renderChat(channel, members, messages) {
       const area = document.getElementById('chat-area');
@@ -2522,10 +2634,10 @@
         const statusRes = await send('autonomy.status', {});
         if (!statusRes.ok) { renderFleetEmpty(statusRes.error?.message || 'Autonomy not available'); return; }
         const status = statusRes.payload;
+        const cyclesRes = await send('autonomy.cycles', { limit: 50 });
+        recentCycles = cyclesRes.ok && Array.isArray(cyclesRes.payload) ? cyclesRes.payload : [];
         renderFleetStatus(status);
-        const cyclesRes = await send('autonomy.cycles', { limit: 30 });
-        const cycles = cyclesRes.ok && Array.isArray(cyclesRes.payload) ? cyclesRes.payload : [];
-        renderFleetCycles(cycles);
+        renderFleetCycles(recentCycles);
       } catch (e) { renderFleetEmpty(e.message || 'Autonomy not available'); }
     }
     function renderFleetStatus(s) {
@@ -2558,21 +2670,83 @@
     }
     function agentLabel(a) { return a.displayName || a.seed?.displayName || a.agentId; }
 
+    function timeAgo(ts) {
+      if (!ts) return 'never';
+      const s = Math.floor((Date.now() - ts) / 1000);
+      if (s < 5) return 'just now';
+      if (s < 60) return s + 's ago';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      return Math.floor(s / 86400) + 'd ago';
+    }
+    function formatInterval(ms) {
+      if (!ms) return '?';
+      if (ms < 60000) return (ms / 1000) + 's';
+      return (ms / 60000) + 'm';
+    }
+
+    function renderSparkline(agentId) {
+      const agentCycles = recentCycles.filter(c => c.agentId === agentId).slice(-20);
+      if (agentCycles.length < 2) return '';
+      const decColors = { idle: 'var(--border)', pick_task: '#818cf8', continue_work: '#4ade80', complete_task: '#facc15', triage_task: '#38bdf8', report_progress: '#a78bfa', respond_message: '#34d399', reflect: '#f472b6', create_subtask: '#fb923c' };
+      const maxDur = Math.max(...agentCycles.map(c => c.durationMs || 1), 1);
+      const bars = agentCycles.map(c => {
+        const h = Math.max(3, Math.round(((c.durationMs || 0) / maxDur) * 20));
+        const color = decColors[c.decision?.type] || 'var(--text-dim)';
+        const title = (c.decision?.type || '?') + ' ' + (c.durationMs || 0) + 'ms';
+        return '<div class="spark-bar" style="height:' + h + 'px;background:' + color + '" title="' + title + '"></div>';
+      }).join('');
+      return '<div class="sparkline-wrap"><div class="sparkline-label">Activity</div><div class="sparkline">' + bars + '</div></div>';
+    }
+
     function renderAgentCard(a) {
       const phaseClass = 'phase-' + (a.phase || 'idle');
       const name = agentLabel(a);
-      const taskHtml = a.currentTaskId ? '<div class="agent-task"><div class="label">Current Task</div><div class="title">' + esc(a.currentTaskId) + '</div></div>' : '';
-      return '<div class="agent-card" onclick="openAgentDetail(\'' + esc(a.agentId) + '\')" style="cursor:pointer">' +
+
+      // Activity pulse: highlight if ticked recently (within 2x interval)
+      const isRecentlyActive = a.lastTickAt && (Date.now() - a.lastTickAt) < (a.tickIntervalMs || 60000) * 2;
+      const pulseClass = isRecentlyActive ? ' agent-card-active' : '';
+
+      // Current task display
+      const taskTitle = a.currentTaskTitle || a.currentTaskId;
+      let taskHtml = '';
+      if (taskTitle) {
+        const progress = a.workPlanSteps > 0
+          ? '<div class="work-progress"><div class="work-progress-bar" style="width:' + Math.round(((a.currentStepIndex || 0) / a.workPlanSteps) * 100) + '%"></div></div>' +
+            '<div class="work-progress-label">Step ' + ((a.currentStepIndex || 0) + 1) + '/' + a.workPlanSteps + '</div>'
+          : '';
+        taskHtml = '<div class="agent-task"><div class="label">Current Task</div><div class="title">' + esc(taskTitle) + '</div>' + progress + '</div>';
+      }
+
+      // Last error display
+      const errorHtml = a.lastError ? '<div class="agent-error" title="' + esc(a.lastError) + '">' + esc(a.lastError.slice(0, 60)) + '</div>' : '';
+
+      // Generate a deterministic color from agentId
+      const avatarColors = ['#818cf8','#4ade80','#f472b6','#fb923c','#38bdf8','#a78bfa','#facc15','#34d399','#f87171','#22d3ee'];
+      const colorIdx = (a.agentId || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+      const avatarBg = avatarColors[Math.abs(colorIdx) % avatarColors.length];
+      const initials = name.split(/[\s-]+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+      const avatarHtml = a.avatarUrl
+        ? '<img class="agent-avatar" src="' + esc(a.avatarUrl) + '" alt="' + esc(name) + '" />'
+        : '<div class="agent-avatar" style="background:' + avatarBg + '">' + esc(initials) + '</div>';
+
+      return '<div class="agent-card' + pulseClass + '" onclick="openAgentDetail(\'' + esc(a.agentId) + '\')" style="cursor:pointer">' +
         '<div class="agent-card-header">' +
+          avatarHtml +
           '<span class="agent-name">' + esc(name) + '</span>' +
           '<span class="agent-phase ' + phaseClass + '">' + (a.phase || 'idle') + '</span>' +
         '</div>' +
         '<div class="agent-meta">' +
+          '<div class="agent-meta-item"><span>Last Tick</span><span class="val">' + timeAgo(a.lastTickAt) + '</span></div>' +
+          '<div class="agent-meta-item"><span>Interval</span><span class="val">' + formatInterval(a.tickIntervalMs) + '</span></div>' +
           '<div class="agent-meta-item"><span>Cycles</span><span class="val">' + (a.cyclesCompleted ?? 0) + '</span></div>' +
-          '<div class="agent-meta-item"><span>Errors</span><span class="val">' + (a.errorCount ?? 0) + '</span></div>' +
-          '<div class="agent-meta-item"><span>Running</span><span class="val">' + (a.running ? 'yes' : 'no') + '</span></div>' +
+          '<div class="agent-meta-item"><span>Errors</span><span class="val' + (a.errorCount > 0 ? ' val-error' : '') + '">' + (a.errorCount ?? 0) + '</span></div>' +
+          '<div class="agent-meta-item"><span>Uptime</span><span class="val">' + timeAgo(a.sessionStartedAt) + '</span></div>' +
+          '<div class="agent-meta-item"><span>Phase for</span><span class="val">' + timeAgo(a.phaseChangedAt) + '</span></div>' +
         '</div>' +
         taskHtml +
+        errorHtml +
+        renderSparkline(a.agentId) +
         '<div class="agent-actions">' +
           '<button class="btn btn-primary" onclick="event.stopPropagation(); tickAgent(\'' + esc(a.agentId) + '\')">Run Now</button>' +
           '<button class="btn btn-danger" onclick="event.stopPropagation(); removeAgent(\'' + esc(a.agentId) + '\')">Remove</button>' +
@@ -2601,61 +2775,177 @@
     async function tickAgent(id) { const res = await send('autonomy.agent.tick', { agentId: id }); if (res.ok) { toast('Agent tick triggered', 'success'); setTimeout(refreshFleet, 1500); } }
     async function removeAgent(id) { const res = await send('autonomy.agent.remove', { agentId: id }); if (res.ok) refreshFleet(); }
 
-    async function openAgentDetail(agentId) {
-      const titleEl = document.getElementById('agent-detail-title');
-      const bodyEl = document.getElementById('agent-detail-body');
-      if (titleEl) titleEl.textContent = agentId;
-      if (bodyEl) bodyEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim)">Loading...</div>';
-      document.getElementById('agent-detail-modal')?.classList.add('open');
-      const res = await send('agents.identities.get', { agentId });
-      if (!res.ok || !res.payload?.agent) {
-        if (bodyEl) bodyEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger)">Failed to load agent identity</div>';
-        return;
-      }
-      const agent = res.payload.agent;
-      const seed = agent.seed || {};
-      if (titleEl) titleEl.textContent = seed.displayName || agentId;
-      if (bodyEl) bodyEl.innerHTML =
-        '<div class="form-field">' +
-          '<label class="form-label">Display Name</label>' +
-          '<input class="form-input" id="agent-display-name" value="' + esc(seed.displayName || '') + '" placeholder="Give this agent a name..." />' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label" style="font-size:11px;color:var(--text-dim)">Agent ID: ' + esc(agentId) + '</label>' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label">Personality</label>' +
-          '<textarea class="form-textarea" id="agent-personality" rows="3" placeholder="Describe this agent\'s personality...">' + esc(seed.personality || '') + '</textarea>' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label">Self-Reflection</label>' +
-          '<textarea class="form-textarea" id="agent-reflection" rows="3" placeholder="Agent\'s latest self-reflection..." readonly style="opacity:0.8">' + esc(agent.selfReflection || '') + '</textarea>' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label">Traits</label>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
-            (agent.traits?.length ? agent.traits.map(t => '<span class="tag label-tag" title="Strength: ' + ((t.strength || 0) * 100).toFixed(0) + '%">' + esc(t.key || String(t)) + ' <small style="opacity:0.6">' + ((t.strength || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span class="text-dim">No traits discovered yet</span>') +
-          '</div>' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label">Skills</label>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
-            (agent.skills?.length ? agent.skills.map(s => '<span class="tag label-tag" title="Level: ' + ((s.level || 0) * 100).toFixed(0) + '% (' + (s.taskCount || 0) + ' tasks)">' + esc(s.domain || String(s)) + ' <small style="opacity:0.6">' + ((s.level || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span class="text-dim">No skills discovered yet</span>') +
-          '</div>' +
-        '</div>' +
-        '<div class="form-field">' +
-          '<label class="form-label">Stats</label>' +
-          '<div class="agent-meta">' +
-            '<div class="agent-meta-item"><span>Tasks Completed</span><span class="val">' + (agent.stats?.tasksCompleted ?? 0) + '</span></div>' +
-            '<div class="agent-meta-item"><span>Messages Sent</span><span class="val">' + (agent.stats?.messagesSent ?? 0) + '</span></div>' +
-            '<div class="agent-meta-item"><span>Reflections</span><span class="val">' + (agent.stats?.reflections ?? 0) + '</span></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="form-actions">' +
-          '<button class="action-btn" onclick="closeAgentDetailModal()">Cancel</button>' +
-          '<button class="action-btn primary" onclick="saveAgentDetail(\'' + esc(agentId) + '\')">Save Changes</button>' +
-        '</div>';
+    function openAgentDetail(agentId) {
+      activeAgentWorkspace = agentId;
+      switchView('agent');
+      history.replaceState(null, '', '/agent/' + encodeURIComponent(agentId));
+      loadAgentWorkspace(agentId);
     }
+
+    function agentAvatarHtml(name, agentId, avatarUrl, size) {
+      const avatarColors = ['#818cf8','#4ade80','#f472b6','#fb923c','#38bdf8','#a78bfa','#facc15','#34d399','#f87171','#22d3ee'];
+      const colorIdx = (agentId || '').split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+      const avatarBg = avatarColors[Math.abs(colorIdx) % avatarColors.length];
+      const initials = (name || '?').split(/[\s-]+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+      const s = size || 48;
+      if (avatarUrl) return '<img class="agent-avatar" style="width:' + s + 'px;height:' + s + 'px" src="' + esc(avatarUrl) + '" />';
+      return '<div class="agent-avatar" style="width:' + s + 'px;height:' + s + 'px;font-size:' + Math.round(s * 0.38) + 'px;background:' + avatarBg + '">' + esc(initials) + '</div>';
+    }
+
+    async function loadAgentWorkspace(agentId) {
+      const [identityRes, stateRes, cyclesRes, tasksRes, channelsRes] = await Promise.all([
+        send('agents.identities.get', { agentId }),
+        send('autonomy.agent.state', { agentId }),
+        send('autonomy.cycles', { limit: 50 }),
+        send('tasks.list', { assigneeId: agentId }),
+        send('comms.channels.list', { viewerId: agentId }),
+      ]);
+
+      const agent = identityRes.ok ? identityRes.payload.agent : null;
+      const loopState = stateRes.ok ? stateRes.payload : null;
+      const allCycles = cyclesRes.ok && Array.isArray(cyclesRes.payload) ? cyclesRes.payload : [];
+      const agentCycles = allCycles.filter(c => c.agentId === agentId);
+      const tasks = tasksRes.ok ? (tasksRes.payload.tasks || []) : [];
+      const agentChannels = channelsRes.ok ? (channelsRes.payload.channels || []) : [];
+
+      const seed = agent?.seed || {};
+      const name = seed.displayName || agentId;
+
+      // Identity header
+      const identityEl = document.getElementById('agent-ws-identity');
+      if (identityEl) {
+        identityEl.innerHTML =
+          agentAvatarHtml(name, agentId, seed.avatarUrl, 48) +
+          '<div>' +
+            '<div class="agent-ws-name">' + esc(name) + '</div>' +
+            '<div class="agent-ws-personality">' + esc(seed.personality || 'No personality set') + '</div>' +
+            '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">ID: ' + esc(agentId) + '</div>' +
+          '</div>' +
+          (loopState ? '<span class="agent-phase phase-' + (loopState.phase || 'idle') + '" style="margin-left:auto;font-size:13px;padding:4px 12px">' + (loopState.phase || 'idle') + '</span>' : '') +
+          '<button class="btn btn-primary" style="margin-left:8px" onclick="event.stopPropagation(); tickAgent(\'' + esc(agentId) + '\'); setTimeout(() => loadAgentWorkspace(\'' + esc(agentId) + '\'), 2000)">Run Tick</button>';
+      }
+
+      // Status panel
+      const statusEl = document.getElementById('agent-ws-status-body');
+      if (statusEl) {
+        const decColors = { idle: 'var(--border)', pick_task: '#818cf8', continue_work: '#4ade80', complete_task: '#facc15', triage_task: '#38bdf8', report_progress: '#a78bfa', respond_message: '#34d399', reflect: '#f472b6', create_subtask: '#fb923c' };
+        const maxDur = Math.max(...agentCycles.map(c => c.durationMs || 1), 1);
+        const sparkHtml = agentCycles.slice(-30).map(c => {
+          const h = Math.max(4, Math.round(((c.durationMs || 0) / maxDur) * 38));
+          const color = decColors[c.decision?.type] || 'var(--text-dim)';
+          return '<div class="spark-bar" style="height:' + h + 'px;background:' + color + '" title="' + (c.decision?.type || '?') + ' ' + (c.durationMs || 0) + 'ms"></div>';
+        }).join('');
+
+        let statusHtml = '<div class="agent-ws-sparkline">' + (sparkHtml || '<span style="color:var(--text-dim);font-size:12px">No activity yet</span>') + '</div>';
+
+        if (loopState) {
+          statusHtml +=
+            '<div class="agent-meta" style="grid-template-columns:1fr 1fr 1fr">' +
+              '<div class="agent-meta-item"><span>Last Tick</span><span class="val">' + timeAgo(loopState.lastTickAt) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Cycles</span><span class="val">' + (loopState.cyclesCompleted ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Errors</span><span class="val' + (loopState.errorCount > 0 ? ' val-error' : '') + '">' + (loopState.errorCount ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Session</span><span class="val">' + timeAgo(loopState.sessionStartedAt) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Phase For</span><span class="val">' + timeAgo(loopState.phaseChangedAt) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Last Error</span><span class="val" style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(loopState.lastError || 'none') + '">' + esc(loopState.lastError ? loopState.lastError.slice(0, 30) : 'none') + '</span></div>' +
+            '</div>';
+
+          if (loopState.currentTaskTitle) {
+            statusHtml +=
+              '<div style="margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:8px">' +
+                '<div style="font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Current Task</div>' +
+                '<div style="color:#4ade80;font-weight:500">' + esc(loopState.currentTaskTitle) + '</div>' +
+                (loopState.workPlan?.length > 0 ? '<div class="work-progress" style="margin-top:8px"><div class="work-progress-bar" style="width:' + Math.round(((loopState.currentStepIndex || 0) / loopState.workPlan.length) * 100) + '%"></div></div><div class="work-progress-label">Step ' + ((loopState.currentStepIndex || 0) + 1) + '/' + loopState.workPlan.length + '</div>' : '') +
+              '</div>';
+          }
+        } else {
+          statusHtml += '<div style="color:var(--text-dim);font-size:13px">Agent loop not running</div>';
+        }
+
+        // Traits and skills
+        if (agent) {
+          statusHtml += '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Traits</div><div style="display:flex;flex-wrap:wrap;gap:4px">' +
+            (agent.traits?.length ? agent.traits.map(t => '<span class="tag label-tag" title="' + ((t.strength || 0) * 100).toFixed(0) + '%">' + esc(t.key) + ' <small style="opacity:0.6">' + ((t.strength || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span style="color:var(--text-dim);font-size:12px">None yet</span>') +
+            '</div></div>';
+          statusHtml += '<div style="margin-top:8px"><div style="font-size:11px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Skills</div><div style="display:flex;flex-wrap:wrap;gap:4px">' +
+            (agent.skills?.length ? agent.skills.map(s => '<span class="tag label-tag" title="' + ((s.level || 0) * 100).toFixed(0) + '% (' + (s.taskCount || 0) + ' tasks)">' + esc(s.domain) + ' <small style="opacity:0.6">' + ((s.level || 0) * 100).toFixed(0) + '%</small></span>').join('') : '<span style="color:var(--text-dim);font-size:12px">None yet</span>') +
+            '</div></div>';
+
+          // Self-reflection
+          if (agent.selfReflection) {
+            statusHtml += '<div style="margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-style:italic;color:var(--text-secondary)">"' + esc(agent.selfReflection) + '"</div>';
+          }
+
+          // Stats
+          statusHtml +=
+            '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Lifetime Stats</div>' +
+            '<div class="agent-meta" style="grid-template-columns:1fr 1fr 1fr">' +
+              '<div class="agent-meta-item"><span>Done</span><span class="val">' + (agent.stats?.tasksCompleted ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Failed</span><span class="val">' + (agent.stats?.tasksFailed ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Msgs</span><span class="val">' + (agent.stats?.messagesSent ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Reflect</span><span class="val">' + (agent.stats?.reflections ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Convos</span><span class="val">' + (agent.stats?.conversationsHad ?? 0) + '</span></div>' +
+              '<div class="agent-meta-item"><span>Minutes</span><span class="val">' + (agent.stats?.totalWorkMinutes ?? 0) + '</span></div>' +
+            '</div></div>';
+        }
+
+        statusEl.innerHTML = statusHtml;
+      }
+
+      // Tasks panel
+      const tasksEl = document.getElementById('agent-ws-tasks-body');
+      if (tasksEl) {
+        const statusColors = { triage: '#a78bfa', ready: '#38bdf8', in_progress: '#4ade80', review: '#facc15', done: 'var(--text-dim)', blocked: '#f87171', archived: 'var(--border)' };
+        if (tasks.length === 0) {
+          tasksEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">No tasks assigned</div>';
+        } else {
+          tasksEl.innerHTML = tasks.map(t =>
+            '<div class="agent-ws-task-item">' +
+              '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(t.title) + '">' + esc(t.title) + '</span>' +
+              '<span class="task-status-badge" style="background:' + (statusColors[t.status] || 'var(--border)') + ';color:#fff">' + (t.status || '?') + '</span>' +
+            '</div>'
+          ).join('');
+        }
+      }
+
+      // Activity panel (recent cycles for this agent)
+      const activityEl = document.getElementById('agent-ws-activity-body');
+      if (activityEl) {
+        const last20 = agentCycles.slice(-20).reverse();
+        if (last20.length === 0) {
+          activityEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">No recent activity</div>';
+        } else {
+          activityEl.innerHTML = last20.map(c => {
+            const decType = (c.decision?.type ?? 'unknown').replace(/[^a-z0-9_]/g, '_');
+            const reason = c.decision?.reason || c.decision?.summary || c.decision?.text || '';
+            return '<div class="agent-ws-cycle-row">' +
+              '<span class="agent-phase phase-' + (c.phase || 'idle') + '" style="font-size:10px;padding:2px 6px">' + (c.phase || 'idle') + '</span>' +
+              '<span class="decision-badge decision-' + decType + '" style="font-size:10px">' + decType + '</span>' +
+              '<span style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary)" title="' + esc(reason) + '">' + esc(reason.slice(0, 80)) + '</span>' +
+              '<span style="font-family:monospace;font-size:11px;color:var(--text-dim);text-align:right">' + (c.durationMs ?? 0) + 'ms</span>' +
+            '</div>';
+          }).join('');
+        }
+      }
+
+      // Comms panel
+      const commsEl = document.getElementById('agent-ws-comms-body');
+      if (commsEl) {
+        const agentChans = agentChannels.filter(ch => !ch.archived);
+        if (agentChans.length === 0) {
+          commsEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">No channels</div>';
+        } else {
+          const kindIcons = { general: '#', system: '!', task: 'T', direct: '@' };
+          commsEl.innerHTML = agentChans.map(ch =>
+            '<div class="agent-ws-channel-item" onclick="switchView(\'comms\'); setTimeout(() => selectChannel(\'' + ch.id + '\'), 100)">' +
+              '<div class="channel-icon ' + ch.kind + '">' + (kindIcons[ch.kind] || '#') + '</div>' +
+              '<span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + esc(ch.name) + '</span>' +
+              (ch.messageCount ? '<span style="font-size:11px;color:var(--text-dim)">' + ch.messageCount + ' msgs</span>' : '') +
+            '</div>'
+          ).join('');
+        }
+      }
+    }
+
     async function saveAgentDetail(agentId) {
       const personality = document.getElementById('agent-personality')?.value?.trim();
       const displayName = document.getElementById('agent-display-name')?.value?.trim();
@@ -2665,8 +2955,8 @@
       const res = await send('agents.identities.update', params);
       if (res.ok) {
         toast('Agent updated', 'success');
-        closeAgentDetailModal();
         loadAgents();
+        if (activeAgentWorkspace === agentId) loadAgentWorkspace(agentId);
       } else {
         toast('Failed to update agent', 'error');
       }
@@ -2806,17 +3096,28 @@
     });
 
     // Boot: determine initial view from URL path
-    const initialView = location.pathname === '/comms' ? 'comms' : location.pathname === '/fleet' ? 'fleet' : 'tasks';
+    const agentMatch = location.pathname.match(/^\/agent\/(.+)/);
+    let initialView = 'tasks';
+    if (location.pathname === '/comms') initialView = 'comms';
+    else if (location.pathname === '/fleet') initialView = 'fleet';
+    else if (agentMatch) initialView = 'agent';
+
     switchView(initialView);
+    if (agentMatch) {
+      activeAgentWorkspace = decodeURIComponent(agentMatch[1]);
+      loadAgentWorkspace(activeAgentWorkspace);
+    }
     connect();
 
-    // Periodic refresh for views — catches changes from scheduler, task-tool,
-    // and autonomy that bypass the WebSocket broadcast path.
+    // Fast poll for tasks/comms (5s), slow fallback for fleet (30s since WS is primary)
+    setInterval(() => {
+      if (currentView === 'tasks') loadBoard();
+      loadChannels();
+    }, 5000);
     setInterval(() => {
       if (currentView === 'fleet') refreshFleet();
-      if (currentView === 'tasks') loadBoard();
-      if (currentView === 'comms') loadChannels();
-    }, 5000);
+      if (currentView === 'agent' && activeAgentWorkspace) loadAgentWorkspace(activeAgentWorkspace);
+    }, 30000);
   </script>
 </body>
 </html>

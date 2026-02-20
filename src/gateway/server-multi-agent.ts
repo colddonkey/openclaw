@@ -23,6 +23,7 @@ import {
 } from "../tasks/auto-generate-hook.js";
 import { isMultiAgentOsEnabled, resolveMultiAgentOsGate } from "../tasks/feature-gate.js";
 import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore, resetSharedStores } from "../tasks/store-registry.js";
+import type { CommsStore } from "../comms/store.js";
 import { AutonomyService } from "../autonomy/service.js";
 import { createLlmExecutor } from "../autonomy/llm-executor.js";
 
@@ -32,7 +33,7 @@ export type MultiAgentHandle = {
   stop: () => void;
 };
 
-function getCommsStore(_cfg: OpenClawConfig) {
+function getCommsStore(_cfg: OpenClawConfig): CommsStore {
   return getSharedCommsStore();
 }
 
@@ -134,6 +135,12 @@ export function startMultiAgentServices(opts: {
           identityStore: getSharedIdentityStore(),
           commsStore: getSharedCommsStore(),
           workExecutor: createLlmExecutor(),
+          onFleetCycle: broadcast ? (result, agentStatus) => {
+            broadcast("autonomy.cycle", { cycle: result, agent: agentStatus });
+          } : undefined,
+          onFleetPhaseChange: broadcast ? (agentId, from, to) => {
+            broadcast("autonomy.phase", { agentId, from, to });
+          } : undefined,
         },
         autonomyCfg,
       );

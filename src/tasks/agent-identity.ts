@@ -44,6 +44,8 @@ export type AgentStats = {
   tasksCreated: number;
   commentsGiven: number;
   conversationsHad: number;
+  messagesSent: number;
+  reflections: number;
   totalWorkMinutes: number;
   lastActive: number;
 };
@@ -133,6 +135,8 @@ const DEFAULT_STATS: AgentStats = {
   tasksCreated: 0,
   commentsGiven: 0,
   conversationsHad: 0,
+  messagesSent: 0,
+  reflections: 0,
   totalWorkMinutes: 0,
   lastActive: 0,
 };

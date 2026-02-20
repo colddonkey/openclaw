@@ -346,7 +346,8 @@ export class CommsStore {
 
   getUnreadCount(channelId: string, memberId: string): number {
     const member = this.getMember(channelId, memberId);
-    if (!member || !member.lastReadAt) {
+    if (!member) return 0;
+    if (!member.lastReadAt) {
       const row = this.db.prepare(`SELECT COUNT(*) as count FROM messages WHERE channel_id = ?`).get(channelId) as { count: number };
       return row.count;
     }

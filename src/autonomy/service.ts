@@ -23,20 +23,34 @@ export type AutonomyServiceDeps = {
   identityStore: AgentIdentityStore;
   commsStore: CommsStore;
   workExecutor?: WorkExecutor;
+  /** Called after each agent cycle completes — use for WebSocket broadcasts. */
+  onFleetCycle?: (result: WorkCycleResult, agentStatus: FleetAgentStatus) => void;
+  /** Called on agent phase transitions — use for WebSocket broadcasts. */
+  onFleetPhaseChange?: (agentId: string, from: AgentPhase, to: AgentPhase) => void;
+};
+
+export type FleetAgentStatus = {
+  agentId: string;
+  displayName?: string;
+  phase: AgentPhase;
+  running: boolean;
+  currentTaskId: string | null;
+  currentTaskTitle: string | null;
+  cyclesCompleted: number;
+  errorCount: number;
+  lastError: string | null;
+  lastTickAt: number | null;
+  phaseChangedAt: number;
+  sessionStartedAt: number;
+  tickIntervalMs: number;
+  workPlanSteps: number;
+  currentStepIndex: number;
 };
 
 export type FleetStatus = {
   running: boolean;
   agentCount: number;
-  agents: Array<{
-    agentId: string;
-    displayName?: string;
-    phase: AgentPhase;
-    running: boolean;
-    currentTaskId: string | null;
-    cyclesCompleted: number;
-    errorCount: number;
-  }>;
+  agents: FleetAgentStatus[];
   totalCyclesCompleted: number;
   totalTasksCompleted: number;
   totalErrors: number;
@@ -157,7 +171,7 @@ export class AutonomyService {
     let totalTasks = 0;
     let totalErrors = 0;
 
-    const agents = [...this.loops.entries()].map(([id, loop]) => {
+    const agents: FleetAgentStatus[] = [...this.loops.entries()].map(([id, loop]) => {
       const state = loop.getState();
       totalCycles += state.cyclesCompleted;
       totalErrors += state.errorCount;
@@ -173,8 +187,16 @@ export class AutonomyService {
         phase: state.phase,
         running: loop.isRunning(),
         currentTaskId: state.currentTaskId,
+        currentTaskTitle: state.currentTaskTitle,
         cyclesCompleted: state.cyclesCompleted,
         errorCount: state.errorCount,
+        lastError: state.lastError,
+        lastTickAt: state.lastTickAt,
+        phaseChangedAt: state.phaseChangedAt,
+        sessionStartedAt: state.sessionStartedAt,
+        tickIntervalMs: loop.getTickIntervalMs(),
+        workPlanSteps: state.workPlan.length,
+        currentStepIndex: state.currentStepIndex,
       };
     });
 
@@ -224,6 +246,32 @@ export class AutonomyService {
     if (this.cycleLog.length > this.maxCycleLogSize) {
       this.cycleLog = this.cycleLog.slice(-this.maxCycleLogSize);
     }
+
+    if (this.deps.onFleetCycle) {
+      const loop = this.loops.get(result.agentId);
+      if (loop) {
+        const state = loop.getState();
+        const identity = this.deps.identityStore.get(result.agentId);
+        const agentStatus: FleetAgentStatus = {
+          agentId: result.agentId,
+          displayName: identity?.seed?.displayName,
+          phase: state.phase,
+          running: loop.isRunning(),
+          currentTaskId: state.currentTaskId,
+          currentTaskTitle: state.currentTaskTitle,
+          cyclesCompleted: state.cyclesCompleted,
+          errorCount: state.errorCount,
+          lastError: state.lastError,
+          lastTickAt: state.lastTickAt,
+          phaseChangedAt: state.phaseChangedAt,
+          sessionStartedAt: state.sessionStartedAt,
+          tickIntervalMs: loop.getTickIntervalMs(),
+          workPlanSteps: state.workPlan.length,
+          currentStepIndex: state.currentStepIndex,
+        };
+        this.deps.onFleetCycle(result, agentStatus);
+      }
+    }
   }
 
   private onAgentPhaseChange(agentId: string, from: AgentPhase, to: AgentPhase): void {
@@ -236,6 +284,7 @@ export class AutonomyService {
         "Agent paused due to repeated errors",
       );
     }
+    this.deps.onFleetPhaseChange?.(agentId, from, to);
   }
 }
 

@@ -17,7 +17,7 @@
 
 import { loadConfig } from "../../config/config.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
-import { getSharedCommsStore } from "../../tasks/store-registry.js";
+import { getSharedCommsStore, getSharedTaskStore } from "../../tasks/store-registry.js";
 import type { CommsStore } from "../../comms/store.js";
 import type { Channel, MessageFilter } from "../../comms/types.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
@@ -47,9 +47,19 @@ export const commsHandlers: GatewayRequestHandlers = {
     const includeArchived = params.includeArchived === true;
     const channels = store.listChannels({ kind, includeArchived });
 
+    const viewerId = typeof params.viewerId === "string" ? params.viewerId : "operator";
+    let taskStore: ReturnType<typeof getSharedTaskStore> | null = null;
+    try { taskStore = getSharedTaskStore(); } catch {}
+
     const enriched = channels.map((ch) => {
       const stats = store.getChannelStats(ch.id);
-      return { ...ch, ...stats };
+      const unreadCount = store.getUnreadCount(ch.id, viewerId);
+      let taskStatus: string | null = null;
+      if (ch.taskId && taskStore) {
+        const task = taskStore.get(ch.taskId);
+        taskStatus = task?.status ?? null;
+      }
+      return { ...ch, ...stats, unreadCount, taskStatus };
     });
 
     respond(true, { channels: enriched });

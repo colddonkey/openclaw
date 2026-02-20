@@ -43,6 +43,8 @@ export type AgentState = {
   lastError: string | null;
   /** Timestamp of session start. */
   sessionStartedAt: number;
+  /** Timestamp of last completed tick. */
+  lastTickAt: number | null;
 };
 
 // ── Work Planning ───────────────────────────────────────────────────
