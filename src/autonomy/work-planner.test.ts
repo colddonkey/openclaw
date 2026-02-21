@@ -144,6 +144,47 @@ describe("decide", () => {
     expect(decision.type).toBe("complete_task");
   });
 
+  it("blocks task when ALL steps failed", () => {
+    const task = makeTask({ id: "task-1", status: "in_progress" });
+    const steps: WorkStep[] = [
+      { id: "s0", description: "step 0", status: "failed", output: "Network error", startedAt: null, completedAt: null },
+      { id: "s1", description: "step 1", status: "failed", output: "Timeout", startedAt: null, completedAt: null },
+    ];
+    const state = makeState({
+      phase: "working",
+      currentTaskId: "task-1",
+      workPlan: steps,
+    });
+    const ctx = makeContext({ state, assignedTasks: [task] });
+    const decision = decide(ctx);
+    expect(decision.type).toBe("block_task");
+    if (decision.type === "block_task") {
+      expect(decision.taskId).toBe("task-1");
+      expect(decision.reason).toContain("failed");
+    }
+  });
+
+  it("completes task with partial failure noted in summary", () => {
+    const task = makeTask({ id: "task-1", status: "in_progress" });
+    const steps: WorkStep[] = [
+      { id: "s0", description: "step 0", status: "done", output: "ok", startedAt: null, completedAt: null },
+      { id: "s1", description: "step 1", status: "failed", output: "Timeout", startedAt: null, completedAt: null },
+      { id: "s2", description: "step 2", status: "done", output: "ok", startedAt: null, completedAt: null },
+    ];
+    const state = makeState({
+      phase: "working",
+      currentTaskId: "task-1",
+      workPlan: steps,
+    });
+    const ctx = makeContext({ state, assignedTasks: [task] });
+    const decision = decide(ctx);
+    expect(decision.type).toBe("complete_task");
+    if (decision.type === "complete_task") {
+      expect(decision.summary).toContain("2/3 steps succeeded");
+      expect(decision.summary).toContain("1 failed");
+    }
+  });
+
   it("returns idle when paused", () => {
     const state = makeState({ phase: "paused" });
     const ctx = makeContext({ state, assignedTasks: [makeTask()] });

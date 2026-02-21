@@ -213,6 +213,27 @@ function continueWork(state: AgentState, task: Task): Decision {
   );
 
   if (pendingStep === -1) {
+    const failedSteps = state.workPlan.filter((s) => s.status === "failed");
+    const doneSteps = state.workPlan.filter((s) => s.status === "done");
+
+    if (failedSteps.length === state.workPlan.length) {
+      // Every step failed — block the task instead of completing it
+      return {
+        type: "block_task",
+        taskId: task.id,
+        reason: `All ${failedSteps.length} steps failed. Last: ${failedSteps.at(-1)?.output?.slice(0, 200) ?? "unknown"}`,
+      };
+    }
+
+    if (failedSteps.length > 0) {
+      // Partial failure — complete but note the failures in the summary
+      return {
+        type: "complete_task",
+        taskId: task.id,
+        summary: `${doneSteps.length}/${state.workPlan.length} steps succeeded, ${failedSteps.length} failed for "${task.title}"`,
+      };
+    }
+
     return {
       type: "complete_task",
       taskId: task.id,

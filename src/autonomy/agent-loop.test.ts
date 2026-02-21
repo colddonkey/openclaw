@@ -3,10 +3,22 @@ import { AgentLoop, type WorkExecutor } from "./agent-loop.js";
 import { TaskStore } from "../tasks/store.js";
 import { AgentIdentityStore } from "../tasks/agent-identity.js";
 import { CommsStore } from "../comms/store.js";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+let sqliteAvailable = false;
+try {
+  require("node:sqlite");
+  sqliteAvailable = true;
+} catch {}
+
+const describeSqlite = sqliteAvailable ? describe : describe.skip;
 
 let taskStore: TaskStore;
 let identityStore: AgentIdentityStore;
 let commsStore: CommsStore;
+
+describeSqlite("AgentLoop", () => {
 
 beforeEach(() => {
   taskStore = new TaskStore(":memory:");
@@ -28,14 +40,12 @@ function makeLoop(executor?: WorkExecutor) {
     workExecutor: executor,
   }, {
     enabled: true,
-    tickIntervalMs: 100_000, // won't auto-fire in tests
+    tickIntervalMs: 100_000,
     maxConsecutiveErrors: 3,
     maxCyclesPerSession: 50,
     completionCooldownMs: 0,
   });
 }
-
-describe("AgentLoop", () => {
   it("starts in idle phase", () => {
     const loop = makeLoop();
     const state = loop.getState();

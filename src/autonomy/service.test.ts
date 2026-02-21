@@ -4,12 +4,24 @@ import { TaskStore } from "../tasks/store.js";
 import { AgentIdentityStore } from "../tasks/agent-identity.js";
 import { CommsStore } from "../comms/store.js";
 import type { WorkExecutor } from "./agent-loop.js";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+let sqliteAvailable = false;
+try {
+  require("node:sqlite");
+  sqliteAvailable = true;
+} catch {}
+
+const describeSqlite = sqliteAvailable ? describe : describe.skip;
 
 let taskStore: TaskStore;
 let identityStore: AgentIdentityStore;
 let commsStore: CommsStore;
 
 const fastExecutor: WorkExecutor = async () => ({ output: "ok", success: true });
+
+describeSqlite("AutonomyService", () => {
 
 beforeEach(() => {
   taskStore = new TaskStore(":memory:");
@@ -36,8 +48,6 @@ function makeService(overrides: Record<string, unknown> = {}) {
     },
   );
 }
-
-describe("AutonomyService", () => {
   it("starts with no agents", () => {
     const svc = makeService();
     const status = svc.getStatus();
