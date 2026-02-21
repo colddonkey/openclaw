@@ -31,7 +31,7 @@ describe("createLlmExecutor", () => {
 
     expect(mockRunAgentStep).toHaveBeenCalledWith(
       expect.objectContaining({
-        sessionKey: "autonomy:agent-1",
+        sessionKey: "agent:agent-1:autonomy",
         lane: "autonomy",
         sourceTool: "autonomy-executor",
       }),

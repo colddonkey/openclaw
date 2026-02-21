@@ -6,7 +6,7 @@
  * (file editing, shell commands, etc.) and works on the step
  * description within a persistent session.
  *
- * Each agent gets its own session keyed by `autonomy:<agentId>`,
+ * Each agent gets its own session keyed by `agent:<agentId>:autonomy`,
  * so conversation context persists across steps within a task.
  *
  * The system prompt is built dynamically per execution to include
@@ -99,7 +99,7 @@ export function createLlmExecutor(config: LlmExecutorConfig = {}): WorkExecutor 
   const identityStore = config.identityStore;
 
   return async ({ agentId, taskId, stepDescription, stepIndex, totalSteps, model }) => {
-    const sessionKey = `autonomy:${agentId}`;
+    const sessionKey = `agent:${agentId}:autonomy`;
     const message = buildStepMessage(taskId, stepDescription, stepIndex, totalSteps);
 
     const dynamicPrompt = buildIdentityPrompt(agentId, identityStore);
