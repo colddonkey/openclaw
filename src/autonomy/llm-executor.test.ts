@@ -74,14 +74,61 @@ describe("createLlmExecutor", () => {
     expect(result.output).toContain("timeout");
   });
 
-  it("returns failure when response looks like an error", async () => {
-    mockRunAgentStep.mockResolvedValueOnce("I cannot complete this because the file does not exist");
+  it("detects failure when response starts with a weak error signal", async () => {
+    mockRunAgentStep.mockResolvedValueOnce("I cannot complete this step due to missing dependencies.");
     const executor = createLlmExecutor();
 
     const result = await executor({
       agentId: "a1",
       taskId: "t1",
       stepDescription: "Edit missing file",
+      stepIndex: 0,
+      totalSteps: 1,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("detects failure on strong signals anywhere in response", async () => {
+    mockRunAgentStep.mockResolvedValueOnce("I tried everything but got: permission denied when writing the output");
+    const executor = createLlmExecutor();
+
+    const result = await executor({
+      agentId: "a1",
+      taskId: "t1",
+      stepDescription: "Write output",
+      stepIndex: 0,
+      totalSteps: 1,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("does NOT false-positive on 'not found' in a success report", async () => {
+    mockRunAgentStep.mockResolvedValueOnce(
+      "I completed the migration. The old config file was not found so I created a new one from the template.",
+    );
+    const executor = createLlmExecutor();
+
+    const result = await executor({
+      agentId: "a1",
+      taskId: "t1",
+      stepDescription: "Migrate config",
+      stepIndex: 0,
+      totalSteps: 1,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("detects failure on very short/empty responses", async () => {
+    mockRunAgentStep.mockResolvedValueOnce("  ");
+    const executor = createLlmExecutor();
+
+    const result = await executor({
+      agentId: "a1",
+      taskId: "t1",
+      stepDescription: "Do something",
       stepIndex: 0,
       totalSteps: 1,
     });

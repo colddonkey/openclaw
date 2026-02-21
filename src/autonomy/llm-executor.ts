@@ -173,22 +173,44 @@ function buildStepMessage(
 
 /**
  * Heuristic to detect failure responses from the AI.
- * This is intentionally conservative — most responses are considered successful.
+ *
+ * Uses two tiers:
+ * - Strong signals: patterns that almost always indicate failure regardless of position
+ * - Weak signals: patterns that only count if they appear in the opening of the response,
+ *   since these phrases often appear mid-report when describing resolved issues
  */
 function looksLikeFailure(reply: string): boolean {
-  const lower = reply.toLowerCase();
-  const failurePatterns = [
+  const trimmed = reply.trim();
+  if (trimmed.length < 5) return true;
+
+  const lower = trimmed.toLowerCase();
+
+  // Strong signals — failure regardless of position
+  const strongPatterns = [
+    "blocker:",
+    "blocked by",
+    "permission denied",
+    "access denied",
+    "rate limit",
+    "quota exceeded",
+    "connection refused",
+    "timed out",
+    "authentication failed",
+  ];
+  if (strongPatterns.some((p) => lower.includes(p))) return true;
+
+  // Weak signals — only count in the opening (first ~300 chars) to avoid
+  // false positives from mid-report mentions of resolved issues
+  const opening = lower.slice(0, 300);
+  const weakPatterns = [
     "i cannot",
     "i'm unable to",
     "i am unable to",
     "error:",
     "failed to",
-    "permission denied",
-    "access denied",
-    "not found",
-    "does not exist",
-    "blocker:",
-    "blocked by",
+    "i was unable",
+    "i couldn't",
+    "unable to complete",
   ];
-  return failurePatterns.some((p) => lower.includes(p));
+  return weakPatterns.some((p) => opening.includes(p));
 }
