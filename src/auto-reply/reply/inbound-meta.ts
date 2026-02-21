@@ -31,6 +31,8 @@ export function buildInboundMetaSystemPrompt(ctx: TemplateContext): string {
     provider: safeTrim(ctx.Provider),
     surface: safeTrim(ctx.Surface),
     chat_type: chatType ?? (isDirect ? "direct" : undefined),
+    // Human-readable forum topic name (set by group admin, not by message sender).
+    thread_name: ctx.IsForum && ctx.ThreadLabel ? safeTrim(ctx.ThreadLabel) : undefined,
     flags: {
       is_group_chat: !isDirect ? true : undefined,
       was_mentioned: ctx.WasMentioned === true ? true : undefined,

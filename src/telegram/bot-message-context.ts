@@ -58,6 +58,7 @@ import {
 } from "./bot/helpers.js";
 import type { StickerMetadata, TelegramContext } from "./bot/types.js";
 import { evaluateTelegramGroupBaseAccess } from "./group-access.js";
+import { getForumTopicName } from "./forum-topic-cache.js";
 
 export type TelegramMediaRef = {
   path: string;
@@ -551,7 +552,11 @@ export const buildTelegramMessageContext = async ({
         forwardOrigin.date ? ` at ${new Date(forwardOrigin.date * 1000).toISOString()}` : ""
       }]\n`
     : "";
-  const groupLabel = isGroup ? buildGroupLabel(msg, chatId, resolvedThreadId) : undefined;
+  const forumTopicName =
+    isForum && resolvedThreadId != null ? getForumTopicName(chatId, resolvedThreadId) : undefined;
+  const groupLabel = isGroup
+    ? buildGroupLabel(msg, chatId, resolvedThreadId, forumTopicName)
+    : undefined;
   const senderName = buildSenderName(msg);
   const conversationLabel = isGroup
     ? (groupLabel ?? `group:${chatId}`)
@@ -629,6 +634,8 @@ export const buildTelegramMessageContext = async ({
     ConversationLabel: conversationLabel,
     GroupSubject: isGroup ? (msg.chat.title ?? undefined) : undefined,
     GroupSystemPrompt: isGroup ? groupSystemPrompt : undefined,
+    // Human-readable forum topic name (populated once bot has seen the forum_topic_created event).
+    ThreadLabel: forumTopicName,
     SenderName: senderName,
     SenderId: senderId || undefined,
     SenderUsername: senderUsername || undefined,

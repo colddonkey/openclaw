@@ -1,4 +1,5 @@
 import type { Message, ReactionTypeEmoji } from "@grammyjs/types";
+import { cacheForumTopicName } from "./forum-topic-cache.js";
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { hasControlCommand } from "../auto-reply/command-detection.js";
 import {
@@ -1131,6 +1132,30 @@ export const registerTelegramHandlers = ({
       }
     } catch (err) {
       runtime.error?.(danger(`[telegram] Group migration handler failed: ${String(err)}`));
+    }
+  });
+
+  // Cache forum topic names from service messages so inbound metadata can include human-readable names.
+  bot.on("message:forum_topic_created", (ctx) => {
+    try {
+      const msg = ctx.message;
+      if (!msg?.forum_topic_created) return;
+      // The topic ID equals the message_id of the forum_topic_created service message.
+      cacheForumTopicName(msg.chat.id, msg.message_id, msg.forum_topic_created.name);
+    } catch (err) {
+      logVerbose(`[telegram] forum_topic_created cache failed: ${String(err)}`);
+    }
+  });
+
+  bot.on("message:forum_topic_edited", (ctx) => {
+    try {
+      const msg = ctx.message;
+      const name = msg?.forum_topic_edited?.name;
+      const topicId = msg?.message_thread_id;
+      if (!name || topicId == null) return;
+      cacheForumTopicName(msg.chat.id, topicId, name);
+    } catch (err) {
+      logVerbose(`[telegram] forum_topic_edited cache failed: ${String(err)}`);
     }
   });
 

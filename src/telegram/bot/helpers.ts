@@ -245,9 +245,15 @@ export function buildSenderLabel(msg: Message, senderId?: number | string) {
   return idPart ?? "id:unknown";
 }
 
-export function buildGroupLabel(msg: Message, chatId: number | string, messageThreadId?: number) {
+export function buildGroupLabel(
+  msg: Message,
+  chatId: number | string,
+  messageThreadId?: number,
+  topicName?: string,
+) {
   const title = msg.chat?.title;
-  const topicSuffix = messageThreadId != null ? ` topic:${messageThreadId}` : "";
+  const topicNameSuffix = topicName ? ` (${topicName})` : "";
+  const topicSuffix = messageThreadId != null ? ` topic:${messageThreadId}${topicNameSuffix}` : "";
   if (title) {
     return `${title} id:${chatId}${topicSuffix}`;
   }
