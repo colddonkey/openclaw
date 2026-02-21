@@ -1,0 +1,98 @@
+---
+description: PR workflow rules - review, land, and merge patterns aligned with AGENTS.md conventions
+globs:
+  - "**/*.ts"
+  - "**/*.md"
+alwaysApply: false
+---
+
+# PR Workflow Rules
+
+Complements the PR workflow defined in AGENTS.md. These rules add the AskQuestion continuation pattern to PR operations.
+
+## PR Review Flow
+
+When given a PR link to review:
+
+1. Run `gh pr view` and `gh pr diff` (do NOT switch branches)
+2. Analyze the changes thoroughly
+3. Present findings
+4. End with AskQuestion:
+
+```
+AskQuestion({
+  title: "PR Review Complete",
+  questions: [
+    {
+      id: "action",
+      prompt: "Review complete. What should we do with this PR?",
+      options: [
+        { id: "land", label: "Land it - create integration branch and merge" },
+        { id: "request-changes", label: "Request changes - leave review comments" },
+        { id: "approve", label: "Approve as-is" },
+        { id: "discuss", label: "Discuss specific concerns before deciding" },
+        { id: "custom", label: "Other action" }
+      ]
+    }
+  ]
+})
+```
+
+## PR Landing Flow
+
+When landing a PR (per AGENTS.md):
+
+1. Create temp branch from main
+2. Merge PR branch (prefer squash for messy history, rebase for clean)
+3. Add changelog entry with PR # and contributor thanks
+4. Run full gate: `pnpm build && pnpm check && pnpm test`
+5. Commit, merge back to main, delete temp branch
+6. Check if contributor needs adding to clawtributors
+7. End with AskQuestion:
+
+```
+AskQuestion({
+  title: "PR Landed",
+  questions: [
+    {
+      id: "post-merge",
+      prompt: "PR merged successfully. What's next?",
+      options: [
+        { id: "comment", label: "Leave merge comment on the PR with SHA details" },
+        { id: "clawtributors", label: "Update clawtributors (new contributor)" },
+        { id: "next-pr", label: "Review another PR" },
+        { id: "release", label: "Start release process" },
+        { id: "custom", label: "Other" }
+      ]
+    }
+  ]
+})
+```
+
+## PR Creation Flow
+
+When creating a PR:
+
+1. Check git status, diff, and log
+2. Draft PR summary
+3. Before creating, AskQuestion to confirm:
+
+```
+AskQuestion({
+  title: "PR Ready to Create",
+  questions: [
+    {
+      id: "confirm",
+      prompt: "PR draft ready. Confirm or adjust?",
+      options: [
+        { id: "create", label: "Create it as-is" },
+        { id: "edit-title", label: "Edit the title" },
+        { id: "edit-body", label: "Edit the description" },
+        { id: "add-labels", label: "Add labels before creating" },
+        { id: "draft", label: "Create as draft PR" },
+        { id: "custom", label: "Other" }
+      ]
+    }
+  ]
+})
+```

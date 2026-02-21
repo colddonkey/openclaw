@@ -1,0 +1,70 @@
+---
+description: Code review patterns and quality checks during development
+globs:
+  - "src/**/*.ts"
+  - "extensions/**/*.ts"
+  - "apps/**/*.swift"
+  - "apps/**/*.kt"
+alwaysApply: false
+---
+
+# Code Review Patterns
+
+Active code quality review during development. Not just when reviewing PRs - during ALL code work.
+
+## Continuous Review Checklist
+
+While reading or writing code, actively check for:
+
+### TypeScript (src/, extensions/)
+- Strict typing (no `any` unless absolutely necessary)
+- ESM imports (no CommonJS require)
+- Error handling (try/catch with meaningful messages, not swallowed errors)
+- Null safety (optional chaining, nullish coalescing)
+- File size (flag files approaching ~500-700 LOC)
+- Dead code / unused imports
+- Tool schema guardrails: no `Type.Union` in tool input schemas, no `anyOf`/`oneOf`/`allOf`
+- Tool schema: avoid raw `format` property name (reserved keyword in some validators)
+
+### Swift (apps/macos/, apps/ios/)
+- Prefer `Observation` framework (`@Observable`, `@Bindable`) over `ObservableObject`/`@StateObject`
+- Migrate existing `ObservableObject` when touching related code
+
+### General
+- No hardcoded colors (use `src/terminal/palette.ts`)
+- No hand-rolled spinners (use `src/cli/progress.ts`)
+- No secrets/real phone numbers/personal data in code or tests
+- Brief comments for tricky logic
+- Consistent naming with existing patterns
+
+## After Reviewing Code
+
+When you've read through code and have observations:
+
+```
+AskQuestion({
+  title: "Code Review Observations",
+  questions: [
+    {
+      id: "findings",
+      prompt: "I found some things during review. Which should I address?",
+      options: [
+        { id: "fix-all", label: "Fix everything you found" },
+        { id: "critical-only", label: "Fix critical issues only" },
+        { id: "list-them", label: "List all findings and let me pick" },
+        { id: "skip", label: "Skip - focus on the original task" },
+        { id: "custom", label: "Other" }
+      ],
+      allow_multiple: false
+    }
+  ]
+})
+```
+
+## Refactoring Opportunities
+
+When you spot refactoring opportunities during work, always mention them. Common patterns in this codebase:
+- Extract shared logic from channel implementations
+- Consolidate duplicate routing/allowlist patterns across channels
+- Extract CLI option patterns into shared helpers
+- Unify error handling patterns

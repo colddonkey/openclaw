@@ -1,0 +1,81 @@
+---
+description: Phoenix NPU development constraints and patterns for AMD XDNA 1.0
+globs:
+  - "**/*.py"
+alwaysApply: false
+---
+
+# Phoenix NPU Development (AMD XDNA 1.0)
+
+Constraints discovered through extensive testing on AMD Ryzen 9 8945HS (Hawk Point). These are hard rules — violating any one will cause silent CPU fallback or compilation failure.
+
+## Hardware
+
+- NPU: AMD XDNA 1.0, 16 TOPS INT8, AIE2 4x4 overlay (16 tiles)
+- Per-tile SRAM: ~32-64KB, total on-chip ~512KB-1MB
+- Weights stream from system DDR; no hard model size limit
+- SDK: Ryzen AI SDK 1.7.0 at `C:\Program Files\RyzenAI\1.7.0`
+- xclbin: `C:\Program Files\RyzenAI\1.7.0\voe-4.0-win_amd64\xclbins\phoenix\4x4.xclbin`
+- Conda env: `ryzen-ai-1.7.0`
+
+## Model Architecture Rules
+
+**Supported ops**: Conv2D, Relu, MaxPool, GlobalAveragePool, Flatten, Gemm, Add
+**NOT supported**: ReduceMean, AveragePool, Reshape, dynamic shapes, If nodes, depthwise-separable convolutions
+
+- Standard Conv2D only — no depthwise-separable
+- Conv nodes MUST have explicit `kernel_shape` attribute (PyTorch's new ONNX exporter omits it — fix manually)
+- Simple sequential architectures only — no multi-branch (YOLOv8, Silero VAD fail)
+- Replace ReduceMean with GlobalAveragePool
+- Replace Reshape with Flatten where possible
+
+## Quantization Format (Critical)
+
+- Activations: **uint8** with zero_point = **128** exactly (NOT 127)
+- Weights: **int8** with zero_point = **0**
+- Format: QDQ (QuantizeLinear / DequantizeLinear pairs)
+- ORT's `ActivationSymmetric=True` produces zp=127 — MUST be force-fixed to 128
+- Use `vai_q_onnx` or ONNX Runtime quantization
+
+## Provider Options (All Required)
+
+```python
+provider_options = [{
+    "target": "X1",                    # Force Phoenix targeting (auto-detect broken in SDK 1.7.0)
+    "xlnx_enable_py3_round": "0",      # Use DPU_ROUND (Phoenix has no PY3_ROUND kernels)
+    "xclbin": r"C:\Program Files\RyzenAI\1.7.0\voe-4.0-win_amd64\xclbins\phoenix\4x4.xclbin",
+    "cache_dir": "vitisai_cache",
+    "cache_key": "<unique_key>",
+}]
+```
+
+## Known Issues
+
+- SDK 1.7.0 auto-detects Phoenix as Strix Point (AIE2P 4x8) — `target: "X1"` is mandatory
+- `xlnx_enable_py3_round` defaults to 1, but Phoenix 4x4 overlay only has DPU_ROUND kernels
+- AMD's own `quicktest.py` fails without `target: "X1"` after SDK repair
+- For small models (<2M params), CPU may match or beat NPU due to data transfer overhead
+- "NO DPU Subgraph Create!" warning = all ops fell back to CPU (model architecture incompatible)
+- "invalid map<K, T> key" = VitisAI compiler can't map the graph to the overlay
+
+## Export Pipeline Checklist
+
+1. Export PyTorch -> ONNX (float32)
+2. Fix ONNX ops for NPU (add kernel_shape, replace ReduceMean/Reshape)
+3. Quantize to INT8 (symmetric: uint8 zp=128, int8 zp=0)
+4. Force-fix zero points (ORT gives 127, NPU needs exactly 128)
+5. Verify all constraints pass
+6. Benchmark CPU vs NPU (confirm NPU is actually being used — check Task Manager NPU %)
+
+## What Works vs What Doesn't
+
+| Works on NPU | Fails on NPU |
+|--------------|--------------|
+| Simple sequential CNNs | YOLOv8 (multi-branch) |
+| AudioNet (custom 1.2M classifier) | Silero VAD (dynamic shapes, If nodes) |
+| ResNet-style (simplified) | Whisper (transformer) |
+| AMD quicktest model | MobileNet (depthwise-separable) |
+
+## Reference Implementation
+
+Working example: `~/.openclaw/npu-demo/` — AudioNet audio classifier running on NPU at ~0.9ms inference.

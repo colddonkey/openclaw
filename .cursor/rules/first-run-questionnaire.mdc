@@ -1,0 +1,112 @@
+# First-Run Questionnaire
+
+When starting a brand new development session with no prior context (user hasn't specified what to work on, or explicitly asks to "set up" / "get started" / "initialize"), run through these batched AskQuestion calls to capture preferences.
+
+**Skip this if the user already has a specific task.** Only run when bootstrapping a new session or when explicitly requested.
+
+## Batch 1: Session Identity
+
+```
+AskQuestion({
+ title: "Session Setup - What Are We Building?",
+ questions: [
+ {
+ id: "domain",
+ prompt: "What area of openclaw are we working on today?",
+ options: [
+ { id: "cli", label: "CLI commands / flags" },
+ { id: "gateway", label: "Gateway / server runtime" },
+ { id: "channels", label: "Messaging channels (Telegram, Discord, Signal, etc.)" },
+ { id: "extensions", label: "Extensions / plugins" },
+ { id: "apps", label: "Native apps (macOS, iOS, Android)" },
+ { id: "web-ui", label: "Web UI / provider-web" },
+ { id: "infra", label: "Infrastructure / CI / Docker" },
+ { id: "docs", label: "Documentation" },
+ { id: "testing", label: "Test coverage / test infrastructure" },
+ { id: "bug", label: "Bug fix / investigation" },
+ { id: "pr-review", label: "PR review / landing" },
+ { id: "custom", label: "Other (type below)" }
+ ]
+ },
+ {
+ id: "scope",
+ prompt: "How big is this effort?",
+ options: [
+ { id: "quick", label: "Quick fix (< 30 min)" },
+ { id: "feature", label: "Feature / enhancement (1-3 hours)" },
+ { id: "epic", label: "Large effort / multi-session" },
+ { id: "explore", label: "Just exploring / learning the codebase" }
+ ]
+ }
+ ]
+})
+```
+
+## Batch 2: Risk & Mutation Policy
+
+```
+AskQuestion({
+ title: "Session Setup - Safety Preferences",
+ questions: [
+ {
+ id: "mutation",
+ prompt: "How aggressive should I be with changes?",
+ options: [
+ { id: "auto-safe", label: "Auto-apply safe changes, ask for risky ones (recommended)" },
+ { id: "propose-all", label: "Propose all changes as diffs first" },
+ { id: "full-auto", label: "Full auto - just do it, I'll review at the end" },
+ { id: "read-only", label: "Read-only - analysis and suggestions only" }
+ ]
+ },
+ {
+ id: "testing",
+ prompt: "Should I run tests after changes?",
+ options: [
+ { id: "always", label: "Always run related tests after changes" },
+ { id: "ask", label: "Ask me before running tests" },
+ { id: "end", label: "Run tests at the end of the session only" },
+ { id: "skip", label: "Skip tests (I'll run them manually)" }
+ ]
+ }
+ ]
+})
+```
+
+## Batch 3: Development Style
+
+```
+AskQuestion({
+ title: "Session Setup - Development Style",
+ questions: [
+ {
+ id: "commits",
+ prompt: "How should I handle commits?",
+ options: [
+ { id: "ask-each", label: "Ask before each commit" },
+ { id: "bundle", label: "Bundle changes and commit at logical checkpoints" },
+ { id: "end-only", label: "Only commit when I explicitly ask" },
+ { id: "never", label: "Don't commit - I'll handle git myself" }
+ ]
+ },
+ {
+ id: "verbosity",
+ prompt: "How verbose should explanations be?",
+ options: [
+ { id: "terse", label: "Terse - just the code and minimal context" },
+ { id: "moderate", label: "Moderate - brief explanations of key decisions" },
+ { id: "detailed", label: "Detailed - explain reasoning and alternatives" }
+ ]
+ }
+ ]
+})
+```
+
+## After Collection
+
+Store the answers mentally for the session and adjust behavior accordingly. Reference them when making decisions about:
+- Whether to auto-apply vs propose
+- When to run tests
+- How to handle git operations
+- How much explanation to provide
+
+These preferences carry through the entire session until explicitly changed.

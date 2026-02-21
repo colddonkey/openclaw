@@ -1,0 +1,83 @@
+---
+description: Testing conventions and patterns for openclaw development
+globs:
+  - "**/*.test.ts"
+  - "**/*.e2e.test.ts"
+  - "src/**/*.ts"
+alwaysApply: false
+---
+
+# Testing Conventions
+
+Aligns with AGENTS.md testing guidelines + adds AskQuestion-driven test workflow.
+
+## Core Rules
+
+- Framework: Vitest with V8 coverage (70% threshold for lines/branches/functions/statements)
+- Test files: colocated `*.test.ts`, e2e in `*.e2e.test.ts`
+- Run: `pnpm test` before pushing when touching logic
+- Live tests: `CLAWDBOT_LIVE_TEST=1 pnpm test:live` or `LIVE=1 pnpm test:live`
+
+## After Writing Code
+
+When implementation is done and tests are relevant, proactively suggest testing:
+
+```
+AskQuestion({
+  title: "Implementation Done - Testing",
+  questions: [
+    {
+      id: "test-action",
+      prompt: "Code changes complete. How should we handle testing?",
+      options: [
+        { id: "run-related", label: "Run tests related to changed files" },
+        { id: "run-all", label: "Run full test suite (pnpm test)" },
+        { id: "write-tests", label: "Write/update tests for the new code" },
+        { id: "coverage", label: "Check coverage (pnpm test:coverage)" },
+        { id: "skip", label: "Skip testing for now" },
+        { id: "custom", label: "Other" }
+      ]
+    }
+  ]
+})
+```
+
+## After Test Failures
+
+When tests fail, present actionable options:
+
+```
+AskQuestion({
+  title: "Test Failures Detected",
+  questions: [
+    {
+      id: "fix-strategy",
+      prompt: "Tests failed. How should I proceed?",
+      options: [
+        { id: "auto-fix", label: "Auto-fix the failures (recommended for obvious fixes)" },
+        { id: "show-errors", label: "Show me the full error details first" },
+        { id: "revert", label: "Revert changes and try a different approach" },
+        { id: "skip", label: "Skip failing tests and continue" },
+        { id: "custom", label: "Other strategy" }
+      ]
+    }
+  ]
+})
+```
+
+## Test Writing Patterns
+
+When writing tests for openclaw:
+- Use `describe/it` blocks with clear descriptions
+- Mock external dependencies (channels, APIs, file system)
+- Test both happy path and edge cases
+- For CLI commands: test flag parsing, output formatting, error handling
+- For channels: test message routing, allowlists, pairing
+- For gateway: test lifecycle, health checks, connection management
+
+## Proactive Test Suggestions
+
+When reading code that lacks tests, flag it in AskQuestion options:
+- "I noticed [file] has no test coverage - want me to add tests?"
+- "The [function] handles auth but has no edge case tests - should I add them?"
+- "This new code path isn't covered by existing tests - want me to scaffold a test file?"
