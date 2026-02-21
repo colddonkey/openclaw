@@ -22,9 +22,8 @@ import {
   unregisterAutoTaskGenerationHooks,
 } from "../tasks/auto-generate-hook.js";
 import { isMultiAgentOsEnabled, resolveMultiAgentOsGate } from "../tasks/feature-gate.js";
-import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore, resetSharedStores } from "../tasks/store-registry.js";
+import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore, initSharedAutonomyService, resetSharedStores } from "../tasks/store-registry.js";
 import type { CommsStore } from "../comms/store.js";
-import { AutonomyService } from "../autonomy/service.js";
 import { createLlmExecutor } from "../autonomy/llm-executor.js";
 
 const log = createSubsystemLogger("multi-agent");
@@ -129,7 +128,7 @@ export function startMultiAgentServices(opts: {
         tickIntervalMs: cfg.multiAgentOs?.autonomy?.tickIntervalMs ?? 30_000,
       };
 
-      const autonomySvc = new AutonomyService(
+      const autonomySvc = initSharedAutonomyService(
         {
           taskStore: getSharedTaskStore(),
           identityStore: getSharedIdentityStore(),
@@ -145,7 +144,7 @@ export function startMultiAgentServices(opts: {
         autonomyCfg,
       );
       autonomySvc.start();
-      teardowns.push(() => autonomySvc.stop());
+      // No manual teardown needed — resetSharedStores() handles it
       log.info(`autonomy auto-started (tick: ${autonomyCfg.tickIntervalMs}ms)`);
     } catch (err) {
       log.error(`autonomy failed to auto-start: ${err instanceof Error ? err.message : String(err)}`);

@@ -1,42 +1,21 @@
 /**
  * WebSocket API methods for the autonomy system.
  *
- * Uses lazy initialization for the AutonomyService,
- * matching the existing TaskStore/CommsStore pattern.
+ * Uses the shared AutonomyService singleton from store-registry,
+ * which is initialized during gateway boot in server-multi-agent.ts.
  */
 
 import { loadConfig } from "../../config/config.js";
 import { isMultiAgentOsEnabled } from "../../tasks/feature-gate.js";
-import { getSharedCommsStore, getSharedIdentityStore, getSharedTaskStore } from "../../tasks/store-registry.js";
-import { AutonomyService } from "../../autonomy/service.js";
-import { createLlmExecutor } from "../../autonomy/llm-executor.js";
+import { getSharedAutonomyService, getSharedIdentityStore } from "../../tasks/store-registry.js";
+import type { AutonomyService } from "../../autonomy/service.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 
-let _service: AutonomyService | null = null;
-let _initAttempted = false;
-
-function getService(): AutonomyService | null {
-  if (_initAttempted) return _service;
-  _initAttempted = true;
-
+function getService() {
   const cfg = loadConfig();
   if (!isMultiAgentOsEnabled(cfg)) return null;
-
-  const autonomyCfg = cfg.multiAgentOs?.autonomy;
-  if (autonomyCfg?.enabled !== true) return null;
-
-  _service = new AutonomyService(
-    {
-      taskStore: getSharedTaskStore(),
-      identityStore: getSharedIdentityStore(),
-      commsStore: getSharedCommsStore(),
-      workExecutor: createLlmExecutor(),
-    },
-    autonomyCfg,
-  );
-
-  return _service;
+  return getSharedAutonomyService();
 }
 
 function requireService(
