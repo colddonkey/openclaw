@@ -57,7 +57,10 @@ export async function runExec(
           encoding: "utf8" as const,
         };
   try {
-    const { stdout, stderr } = await execFileAsync(resolveCommand(command), args, options);
+    const { stdout, stderr } = await execFileAsync(resolveCommand(command), args, {
+      ...options,
+      windowsHide: true,
+    });
     if (shouldLogVerbose()) {
       if (stdout.trim()) {
         logDebug(stdout.trim());
@@ -138,6 +141,7 @@ export async function runCommandWithTimeout(
     stdio,
     cwd,
     env: resolvedEnv,
+    windowsHide: true,
     windowsVerbatimArguments,
     ...(shouldSpawnWithShell({ resolvedCommand, platform: process.platform })
       ? { shell: true }
