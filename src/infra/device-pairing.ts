@@ -163,17 +163,6 @@ function scopesAllow(requested: string[], allowed: string[]): boolean {
   return requested.every((scope) => allowedSet.has(scope));
 }
 
-function scopesAllow(requested: string[], allowed: string[]): boolean {
-  if (requested.length === 0) {
-    return true;
-  }
-  if (allowed.length === 0) {
-    return false;
-  }
-  const allowedSet = new Set(allowed);
-  return requested.every((scope) => allowedSet.has(scope));
-}
-
 const DEVICE_SCOPE_IMPLICATIONS: Readonly<Record<string, readonly string[]>> = {
   "operator.admin": ["operator.read", "operator.write", "operator.approvals", "operator.pairing"],
   "operator.write": ["operator.read"],
