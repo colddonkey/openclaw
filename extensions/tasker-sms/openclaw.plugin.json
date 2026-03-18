@@ -1,0 +1,27 @@
+{
+  "id": "tasker-sms",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "tasker-sms": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "webhookToken": {
+            "type": "string",
+            "description": "Secret token for authenticating Tasker webhook requests (x-tasker-token header)"
+          },
+          "telegramBotToken": {
+            "type": "string",
+            "description": "Telegram bot token for sending SMS messages to forum topics"
+          },
+          "telegramChatId": {
+            "type": "string",
+            "description": "Telegram supergroup/forum chat ID to create topics in"
+          }
+        }
+      }
+    }
+  }
+}
