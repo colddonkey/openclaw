@@ -1,7 +1,36 @@
 import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { readJsonBodyWithLimit } from "openclaw/plugin-sdk";
 import type { TaskerSmsConfig } from "./config.js";
+
+type ReadJsonBodyResult = { ok: true; value: unknown } | { ok: false; error: string };
+
+async function readJsonBodyWithLimit(
+  req: IncomingMessage,
+  opts: { maxBytes: number },
+): Promise<ReadJsonBodyResult> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > opts.maxBytes) {
+        req.destroy();
+        resolve({ ok: false, error: "body too large" });
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => {
+      try {
+        const raw = Buffer.concat(chunks).toString("utf-8");
+        resolve({ ok: true, value: JSON.parse(raw) });
+      } catch {
+        resolve({ ok: false, error: "invalid JSON" });
+      }
+    });
+    req.on("error", () => resolve({ ok: false, error: "read error" }));
+  });
+}
 import { tryHandleAdmin } from "./admin.js";
 import { shouldIgnoreMessage, isLikelySpam } from "./filtering.js";
 import {
@@ -278,6 +307,8 @@ function formatSmsForTelegram(payload: TaskerSmsPayload, isSpam: boolean): strin
   return lines.join("\n");
 }
 
+let readyLogged = false;
+
 export function createTaskerSmsWebhookHandler(config: TaskerSmsConfig) {
   const expectedToken = config.webhookToken || null;
   const tg: TelegramConfig = {
@@ -285,7 +316,10 @@ export function createTaskerSmsWebhookHandler(config: TaskerSmsConfig) {
     chatId: config.telegramChatId,
   };
 
-  console.log(`[tasker-sms] Ready -- forwarding SMS to Telegram group ${tg.chatId}`);
+  if (!readyLogged) {
+    console.log(`[tasker-sms] Ready -- forwarding SMS to Telegram group ${tg.chatId}`);
+    readyLogged = true;
+  }
 
   return async function handleTaskerSmsWebhook(
     req: IncomingMessage,

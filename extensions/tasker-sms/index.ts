@@ -19,12 +19,19 @@ const plugin = {
       return;
     }
 
-    // Admin endpoints are handled inside the webhook handler (single handler
-    // avoids gateway multi-handler routing quirks).
-    api.registerHttpHandler(createTaskerSmsWebhookHandler(config));
-
+    const webhookHandler = createTaskerSmsWebhookHandler(config);
     const { handleReplyHttp, setNodeRegistry } = createSmsReplyHttpHandler(config);
-    api.registerHttpHandler(handleReplyHttp);
+
+    api.registerHttpRoute({
+      path: "/tasker-sms",
+      auth: "plugin",
+      match: "prefix",
+      handler: async (req, res) => {
+        const handled = await webhookHandler(req, res);
+        if (handled) return true;
+        return handleReplyHttp(req, res);
+      },
+    });
 
     const gatewayMethodHandler = createSmsReplyGatewayMethod();
     api.registerGatewayMethod("tasker-sms.reply", (opts) => {
